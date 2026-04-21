@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,384 +20,179 @@
       --border: rgba(255, 255, 255, 0.08);
       --border-hover: rgba(255, 255, 255, 0.15);
       --shadow: 0 16px 34px rgba(0,0,0,.3);
-
-      /* Base Work Blue */
       --primary: #8dc2ff;
-      --primary-soft: rgba(141, 194, 255, 0.15);
-
-      --radius-xl: 28px;
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      
-      --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      --primary-soft: rgba(141, 194, 255, 0.1);
     }
 
-    * { box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      margin: 0;
-      font-family: 'Outfit', sans-serif;
       background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(141, 194, 255, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(141, 194, 255, 0.03) 0%, transparent 40%);
       color: var(--text);
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    /* Ambient Background Glow */
-    body::before, body::after {
-      content: "";
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      filter: blur(120px);
-      z-index: -1;
-      opacity: 0.12;
-      pointer-events: none;
-    }
-
-    body::before { background: var(--primary); top: -100px; left: -100px; }
-    body::after { background: #c5a8ff; bottom: 10%; right: -200px; }
-
-    /* Entrance Animations */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .animate-in { animation: fadeInUp 0.8s var(--transition-smooth) forwards; opacity: 0; }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.3s; }
-    .delay-4 { animation-delay: 0.4s; }
-
-    .container {
-      max-width: 980px; /* Leicht schmaler gehalten wie in deiner Vorlage */
-      margin: 0 auto;
-      padding: 32px 20px 60px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
+      font-family: 'Outfit', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-    }
-
-    .brand-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: .02em;
-      background: linear-gradient(90deg, #fff, #aab4c3);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand-subtitle {
-      color: var(--primary);
-      font-size: .95rem;
-      font-weight: 400;
-      letter-spacing: 0.02em;
-    }
-
-    .nav {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .nav a {
-      text-decoration: none;
-      color: var(--text);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 10px 18px;
-      border-radius: 999px;
-      backdrop-filter: blur(12px);
-      font-size: .95rem;
-      font-weight: 400;
-      transition: all var(--transition-smooth);
-      display: inline-flex;
       align-items: center;
-      gap: 8px;
+      padding: 4rem 2rem;
     }
 
-    .nav a:hover {
-      transform: translateY(-2px);
-      background: var(--surface-soft);
-      border-color: var(--border-hover);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+      max-width: 700px;
     }
 
-    .hero {
-      background: var(--surface);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow);
-      padding: 48px 40px;
-      margin-bottom: 40px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
+    h1 {
       font-size: 3.5rem;
-      line-height: 1.1;
-      letter-spacing: -0.02em;
       font-weight: 700;
-      background: linear-gradient(135deg, #ffffff 0%, #aab4c3 100%);
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      background: linear-gradient(to bottom, #fff 30%, var(--primary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .hero-subtitle {
-      font-size: 1.4rem;
-      font-weight: 400;
-      color: var(--primary);
-      margin: 0 0 20px;
-      letter-spacing: -0.01em;
-    }
-
-    .hero p {
-      margin: 0;
-      max-width: 760px;
+    .subtitle {
       color: var(--muted);
-      line-height: 1.6;
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 300;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      width: 100%;
+      max-width: 1100px;
     }
 
-    /* Dynamisches Card-Theming über CSS Variablen */
     .card {
       background: var(--surface);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 28px 24px;
+      border-radius: 24px;
+      padding: 2.5rem;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      min-height: 260px;
-      transition: all var(--transition-smooth);
       position: relative;
       overflow: hidden;
     }
 
-    /* Individuelle Farben für die Tools */
-    .card-spuel { --c-theme: #8dc2ff; --c-soft: rgba(141, 194, 255, 0.15); }
-    .card-placeholder { --c-theme: #64748b; --c-soft: rgba(100, 116, 139, 0.15); border-style: dashed; }
-
-    /* Glow Hover Effekt basierend auf individueller Farbe */
     .card:hover {
-      transform: translateY(-5px);
-      border-color: var(--c-theme);
-      box-shadow: 0 12px 30px var(--c-soft);
+      transform: translateY(-8px);
+      background: var(--surface-soft);
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow);
     }
 
     .icon-wrap {
-      width: 64px;
-      height: 64px;
-      border-radius: 18px;
+      width: 56px;
+      height: 56px;
+      background: var(--primary-soft);
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      background: var(--c-soft);
-      color: var(--c-theme);
-      transition: transform var(--transition-smooth);
-      flex-shrink: 0;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
     }
 
-    .card:hover .icon-wrap {
-      transform: scale(1.1) rotate(-4deg);
-    }
-
-    .card h2 {
-      margin: 0 0 12px;
-      font-size: 1.4rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
       color: #fff;
     }
 
-    .card p {
-      margin: 0 0 20px;
+    p {
       color: var(--muted);
-      line-height: 1.6;
-      font-weight: 300;
       font-size: 0.95rem;
+      margin-bottom: 2rem;
       flex-grow: 1;
     }
 
-    .meta {
-      display: inline-block;
-      font-size: .8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--c-theme);
-      background: var(--c-soft);
-      padding: 6px 12px;
-      border-radius: 999px;
-      margin-bottom: 24px;
-      border: 1px solid rgba(255,255,255,0.03);
-    }
-
-    .card-actions {
-      width: 100%;
-      margin-top: auto;
-    }
-
-    /* Card Button mit Shimmer Effekt */
     .btn-card {
-      display: block;
-      width: 100%;
-      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: #fff;
       text-decoration: none;
       font-weight: 600;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid transparent;
-      transition: all var(--transition-smooth);
-      position: relative;
-      overflow: hidden;
-      color: var(--c-theme);
-      background: var(--c-soft);
-    }
-
-    .btn-card::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 50%;
-      height: 100%;
-      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-      transform: skewX(-25deg);
-      transition: all 0.6s ease;
-    }
-
-    .btn-card:hover::after {
-      left: 150%;
-      transition: all 0.6s ease;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
     }
 
     .btn-card:hover {
-      background: var(--c-theme);
-      color: #102036;
-      box-shadow: 0 4px 15px var(--c-soft);
+      background: var(--primary);
+      color: var(--bg);
+      border-color: var(--primary);
     }
 
-    /* Spezial-Styling für den inaktiven Placeholder-Button */
-    .btn-card.inactive:hover {
-      background: var(--c-soft);
-      color: var(--c-theme);
-      box-shadow: none;
-      cursor: default;
-    }
-    .btn-card.inactive::after {
-      display: none;
-    }
-
-    .footer {
-      margin-top: 60px;
-      text-align: center;
-      color: var(--muted);
-      font-size: .95rem;
-      font-weight: 300;
-    }
-
-    @media (max-width: 960px){
-      .hero h1 { font-size: 2.8rem; }
-      .hero-subtitle { font-size: 1.2rem; }
-    }
-
-    @media (max-width: 640px){
-      .container { padding: 24px 16px 40px; }
-      .hero { padding: 32px 24px; }
-      .hero h1 { font-size: 2.2rem; }
-      .hero-subtitle { font-size: 1.1rem; }
-      .grid { grid-template-columns: 1fr; }
+    @media (max-width: 768px) {
+      h1 { font-size: 2.5rem; }
+      body { padding: 2rem 1rem; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header class="topbar animate-in">
-      <div class="brand">
-        <div class="brand-title">kaffeetrinker80</div>
-        <div class="brand-subtitle">Work Tools</div>
+
+  <header>
+    <h1>Work Tools</h1>
+    <p class="subtitle">Spezialisierte Werkzeuge für Trinkwasserhygiene und Anlagenverwaltung.</p>
+  </header>
+
+  <main class="grid">
+    
+    <article class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>
       </div>
-      <nav class="nav">
-        <a href="https://kaffeetrinker80.github.io/">← Back to Home</a>
-      </nav>
-    </header>
-
-    <section class="hero animate-in delay-1">
-      <h1>Work Tools</h1>
-      <div class="hero-subtitle">Practical tools for documentation and daily workflow.</div>
+      <h2>Thermische Desinfektion</h2>
       <p>
-        A small collection of browser-based tools for practical work, structured records
-        and simple mobile-friendly documentation.
+        Dokumentation gezielter Desinfektionsmaßnahmen für einzelne Objekte nach Grenzwertüberschreitungen.
       </p>
-    </section>
+      <div class="card-actions">
+        <a class="btn-card" href="/worktools/spuelprotokoll/">Tool öffnen</a>
+      </div>
+    </article>
 
-    <section class="grid">
-      <article class="card card-spuel animate-in delay-2">
-        <div class="icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path>
-          </svg>
-        </div>
-        <h2>Spülprotokoll</h2>
-        <p>
-          Mobile tool for flushing logs, temperature recording and compact work documentation.
-        </p>
-        <div class="meta">Current tool</div>
-        <div class="card-actions">
-          <a class="btn-card" href="/worktools/spuelprotokoll/">Open Tool</a>
-        </div>
-      </article>
+    <article class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><path d="M3 10h18"></path><path d="M12 14v4"></path><path d="M8 18h8"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect></svg>
+      </div>
+      <h2>Spülprotokoll Anlagen</h2>
+      <p>
+        Vorsorgliches, regelmäßiges Spülen zur Legionellenvorbeugung und Sicherstellung des bestimmungsgemäßen Betriebs.
+      </p>
+      <div class="card-actions">
+        <a class="btn-card" href="/worktools/spuelprotokoll-anlagen/">Tool öffnen</a>
+      </div>
+    </article>
 
-      <article class="card card-placeholder animate-in delay-3">
-        <div class="icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-          </svg>
-        </div>
-        <h2>More tools later</h2>
-        <p>
-          This area can later include additional work-related tools, logs or helper pages.
-        </p>
-        <div class="meta">Placeholder</div>
-        <div class="card-actions">
-          <a class="btn-card inactive" href="#" onclick="return false;">Coming Later</a>
-        </div>
-      </article>
-    </section>
+    <article class="card">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </div>
+      <h2>Terminverwaltung Labor</h2>
+      <p>
+        Verwaltung von Kunden mit mehreren Objekten zur Planung wiederkehrender Laboruntersuchungen und Probenahmen.
+      </p>
+      <div class="card-actions">
+        <a class="btn-card" href="/worktools/Terminverwaltung-labor/">Tool öffnen</a>
+      </div>
+    </article>
 
-    <div class="footer animate-in delay-4">
-      Made with Love © · kaffeetrinker80
-    </div>
-  </div>
+  </main>
+
 </body>
 </html>
