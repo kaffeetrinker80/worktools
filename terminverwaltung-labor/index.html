@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Terminverwaltung – Labor & Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f5f7;
+    margin: 0;
+    padding: 0;
+    color: #212529;
+}
+
+/* Header im NOVA-Stil */
+.header-main {
+    background: #163b5b;
+    color: #fff;
+    padding: 18px 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.header-title {
+    font-size: 24px;
+    font-weight: bold;
+}
+.header-subtitle {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+.editable-header {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 2px 6px;
+    transition: background 0.15s, outline 0.15s;
+}
+.editable-header:hover {
+    background: rgba(255,255,255,0.08);
+}
+.editable-header:focus {
+    outline: 2px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.12);
+}
+
+/* Topbar mit Suche & Export */
+.topbar {
+    background: #ffffff;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    border-bottom: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.topbar-left h2 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+#search-input {
+    width: 320px;
+    max-width: 100%;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    font-size: 14px;
+}
+.info-line {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #555;
+}
+.topbar-right {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+/* Autosave Status & Toggle */
+.autosave-status{
+    font-size: 12px;
+    color: #555;
+    padding: 6px 10px;
+    border: 1px dashed #ced4da;
+    border-radius: 6px;
+    background: #f8fafc;
+    line-height: 1;
+    align-self: center;
+}
+.autosave-status.on{
+    color: #198754;
+    border-color: #b7dfc2;
+    background: #eaf7ee;
+}
+.autosave-status.warn{
+    color: #b45309;
+    border-color: #f3d19c;
+    background: #fff7ed;
+}
+.autosave-status.off{
+    color: #6b7280;
+}
+
+.autosave-toggle{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+}
+.autosave-toggle input{
+    width: auto;
+    margin: 0;
+}
+
+/* Buttons */
+.btn {
+    padding: 7px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    background: #0d6efd;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.btn-secondary {
+    background: #6c757d;
+    color: #fff;
+}
+.btn-danger {
+    background: #dc3545;
+    color: #fff;
+}
+.btn-small {
+    padding: 5px 9px;
+    font-size: 12px;
+}
+.btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* Link-Button für klickbare Objekt-Namen */
+.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: #0d6efd;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+/* Tabs */
+.tab-nav {
+    display: flex;
+    gap: 10px;
+    padding: 10px 24px 0 24px;
+    background: #f3f5f7;
+}
+.tab-nav button {
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-bottom: none;
+    padding: 7px 14px;
+    border-radius: 6px 6px 0 0;
+    font-size: 13px;
+    cursor: pointer;
+}
+.tab-nav button.active {
+    background: #ffffff;
+    border-bottom: 1px solid #ffffff;
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+/* Container & Cards */
+.container {
+    padding: 0 24px 24px 24px;
+}
+
+.footer {
+    margin-top: 28px;
+    padding: 14px 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #6b7280;
+    border-top: 1px solid #d1d5db;
+    background: #f8fafc;
+}
+.card {
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    padding: 14px 16px 16px 16px;
+    margin-top: 12px;
+}
+.card h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+}
+.card-header-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Tabellen */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-top: 8px;
+}
+th, td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    text-align: left;
+}
+th {
+    background: #e9ecef;
+}
+tr:nth-child(even) {
+    background: #f8fafc;
+}
+.actions button {
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+/* Farbcodierung nach Fälligkeit */
+.status-green {
+    background: #d4edda !important;
+}
+.status-yellow {
+    background: #fff3cd !important;
+}
+.status-red {
+    background: #f8d7da !important;
+}
+
+/* Status-Icons letzte Untersuchung */
+.status-icon-ok {
+    color: #198754;
+    font-weight: bold;
+    text-align: center;
+}
+.status-icon-bad {
+    color: #dc3545;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Layout Kunden & Objekte */
+.split-layout {
+    display: flex;
+    gap: 18px;
+    margin-top: 10px;
+}
+.panel {
+    flex: 1;
+}
+.panel h4 {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+}
+.selected-row {
+    background: #e7f1ff !important;
+}
+
+/* Info-Text */
+.info-text {
+    font-size: 12px;
+    color: #555;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 60px;
+    z-index: 1000;
+}
+.modal-content {
+    background: #ffffff;
+    padding: 16px 18px 14px 18px;
+    width: 420px;
+    max-width: 95vw;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.modal-header {
+    font-size: 15px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+.modal-footer {
+    text-align: right;
+    margin-top: 8px;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 6px 7px;
+    margin-top: 3px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+}
+label {
+    font-size: 13px;
+}
+textarea {
+    resize: vertical;
+}
+.detail-actions {
+    margin-bottom: 6px;
+    display: flex;
+    gap: 6px;
+}
+
+/* Umfang-Checkboxen */
+.scope-group {
+    margin: 4px 0 8px 0;
+}
+.scope-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 6px;
+}
+.scope-checkboxes label {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+}
+.scope-checkboxes input {
+    width: auto;
+    margin-right: 4px;
+    margin-bottom: 0;
+}
+
+/* KW-Helfer */
+.kw-helper {
+    font-size: 12px;
+    margin-top: -4px;
+    margin-bottom: 4px;
+}
+.kw-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.kw-row input {
+    width: 80px;
+    margin-bottom: 0;
+}
+
+/* DETAILS-ANSICHT in "Anlagen & Termine" */
+.details-row {
+    display: none;
+    background: #f7f9fb !important;
+}
+.details-cell {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #333;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Kleinere Screens */
+@media (max-width: 800px) {
+    .topbar {
+        flex-direction: column;
+    }
+    .split-layout {
+        flex-direction: column;
+    }
+}
+
+/* Optional: Druck im Querformat */
+@media print {
+    @page {
+        size: A4 landscape;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="header-main">
+    <div id="editable-header-title" class="header-title editable-header" contenteditable="true" spellcheck="false">Terminverwaltung Labor</div>
+    <div id="editable-header-subtitle" class="header-subtitle editable-header" contenteditable="true" spellcheck="false">Wiederkehrende Termine, Einzelaufträge und Erinnerungen für kleine Labore</div>
+</header>
+
+<!-- TOP BAR: Suche + Import/Export -->
+<section class="topbar">
+    <div class="topbar-left">
+        <h2>Terminübersicht</h2>
+        <input type="text" id="search-input" placeholder="Suche nach Kunde, Objekt, PLZ, Ort..." />
+        <div class="info-line">
+            Gefunden: <span id="found-count">0</span> Einträge (bald fällige nächste Untersuchungen)
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button id="print-btn" class="btn btn-secondary">🖨 Gefilterte Einträge drucken</button>
+        <button id="import-btn" class="btn btn-secondary">⬆ Daten importieren</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none" />
+        <button id="choose-autosave-btn" class="btn btn-secondary">💾 Autosave-Datei wählen</button>
+        <button id="choose-backup-folder-btn" class="btn btn-secondary">🗂 Backup-Ordner wählen</button>
+
+        <label class="autosave-toggle" title="Autosave ein/aus (speichert in die gewählte Autosave-Datei)">
+            <input type="checkbox" id="autosave-toggle">
+            <span>Autosave</span>
+        </label>
+
+        <button id="export-btn" class="btn">⬇ Daten exportieren</button>
+        <span id="autosave-status" class="autosave-status off">Autosave: aus</span>
+</div>
+</section>
+
+<!-- TAB-NAVIGATION -->
+<nav class="tab-nav">
+    <button id="tab-customers" class="active">👤 Kunden &amp; Objekte</button>
+    <button id="tab-allobjects">📅 Anlagen &amp; Termine</button>
+</nav>
+
+<div class="container">
+
+    <!-- VIEW: KUNDEN & OBJEKTE -->
+    <div id="view-customers">
+        <!-- Bald fällige -->
+        <section class="card">
+            <h3>Bald fällige nächste Untersuchungen</h3>
+            <div class="info-text">
+                Es werden alle Objekte mit einem nächsten Termin innerhalb der nächsten 60 Tage (oder überfällig) angezeigt.
+                Farbcodierung: <b>Rot</b> = überfällig, <b>Gelb</b> = in den nächsten 14 Tagen, <b>Grün</b> = später.
+            </div>
+            <table id="upcoming-table">
+                <thead>
+                    <tr>
+                        <th>Kunde</th>
+                        <th>Objekt</th>
+                        <th>Art</th>
+                        <th>Ort</th>
+                        <th>Nächster Termin</th>
+                    </tr>
+                </thead>
+                <tbody id="upcoming-tbody"></tbody>
+            </table>
+        </section>
+
+        <!-- Kunden & Objekte -->
+        <section class="card">
+            <div class="card-header-line">
+                <h3>Kunden &amp; Objekte (Bearbeitung)</h3>
+                <button class="btn btn-small" id="new-customer-btn">+ Neuer Kunde</button>
+            </div>
+
+            <div class="split-layout">
+                <!-- Kundenliste -->
+                <div class="panel">
+                    <h4>Kunden</h4>
+                    <table id="customer-table">
+                        <thead>
+                            <tr>
+                                <th>Kunde</th>
+                                <th>Anzahl Objekte</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Detailbereich: ausgewählter Kunde -->
+                <div class="panel">
+                    <h4 id="detail-customer-title">Kein Kunde ausgewählt</h4>
+                    <p id="detail-customer-address" class="info-text"></p>
+                    <p id="detail-customer-notes" class="info-text"></p>
+                    <div class="detail-actions">
+                        <button id="edit-customer-btn" class="btn-secondary btn-small">Kunde bearbeiten</button>
+                        <button id="delete-customer-btn" class="btn-danger btn-small">Kunde löschen</button>
+                        <button id="new-object-btn" class="btn btn-small">+ Neues Objekt</button>
+                    </div>
+                    <table id="customer-objects-table">
+                        <thead>
+                            <tr>
+                                <th>Objekt</th>
+                                <th>Art</th>
+                                <th>Ort</th>
+                                <th>Letzte Untersuchung</th>
+                                <th>Nächster Termin</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- VIEW: ALLE ANLAGEN & TERMINE -->
+    <div id="view-allobjects" style="display:none;">
+        <section class="card">
+            <h3>Alle Anlagen &amp; Termine</h3>
+            <div class="info-text">
+                Alle Objekte, unabhängig davon, ob bereits ein Termin geplant ist. Sortiert nach nächster Untersuchung
+                (bald fällige zuerst, ohne Datum am Ende). Objektname ist klickbar, um direkt die Historie zu öffnen.
+            </div>
+            <table id="allobjects-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Kunde</th>
+                        <th>Objekt (Historie)</th>
+                        <th>Art</th>
+                        <th>Ort</th>
+                        <th>Letzte Untersuchung</th>
+                        <th>Nächste Untersuchung</th>
+                        <th>Routine (Monate)</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </div>
+
+</div>
+
+<!-- MODAL: KUNDE -->
+<div class="modal" id="customer-modal">
+    <div class="modal-content">
+        <div class="modal-header" id="customer-modal-title">Neuer Kunde</div>
+        <form id="customer-form">
+            <label for="customer-name">Name des Kunden</label>
+            <input type="text" id="customer-name" required>
+
+            <label for="customer-street">Straße / Hausnummer</label>
+            <input type="text" id="customer-street">
+
+            <label for="customer-zip">PLZ</label>
+            <input type="text" id="customer-zip">
+
+            <label for="customer-city">Ort</label>
+            <input type="text" id="customer-city">
+
+            <label for="customer-notes">Notizen (optional)</label>
+            <textarea id="customer-notes" rows="3"></textarea>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-small" id="customer-cancel">Abbrechen</button>
+                <button type="submit" class="btn btn-small">Speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: OBJEKT -->
+<div class="modal" id="object-modal">
+    <div class="modal-content">
+        <div class="modal-header" id="object-modal-title">Neues Objekt</div>
+        <form id="object-form">
+            <div class="info-text" id="object-modal-customer-label"></div>
+
+            <label for="obj-name">Objekt / Anlage</label>
+            <input type="text" id="obj-name" required>
+
+            <label for="obj-type">Art der Anlage</label>
+            <select id="obj-type">
+                <option value="">- bitte wählen -</option>
+                <option value="Schwimmbeckenuntersuchung">Schwimmbeckenuntersuchung</option>
+                <option value="Kühlwasser">Kühlwasser</option>
+                <option value="Eigenversorgungsanlage">Eigenversorgungsanlage</option>
+                <option value="Sonstige">Sonstige</option>
+            </select>
+
+            <label for="obj-city">Ort</label>
+            <input type="text" id="obj-city">
+
+            <label for="obj-last">Letzte Untersuchung (optional)</label>
+            <input type="date" id="obj-last">
+
+            <label for="obj-interval">Untersuchungsroutine (Monate)</label>
+            <select id="obj-interval">
+                <option value="0">Keine Routine</option>
+                <option value="1">Alle 1 Monat</option>
+                <option value="2">Alle 2 Monate</option>
+                <option value="3">Alle 3 Monate</option>
+                <option value="4">Alle 4 Monate</option>
+                <option value="5">Alle 5 Monate</option>
+                <option value="6">Alle 6 Monate</option>
+                <option value="7">Alle 7 Monate</option>
+                <option value="8">Alle 8 Monate</option>
+                <option value="9">Alle 9 Monate</option>
+                <option value="10">Alle 10 Monate</option>
+                <option value="11">Alle 11 Monate</option>
+                <option value="12">Alle 12 Monate</option>
+            </select>
+
+            <div class="scope-group">
+                <label>Untersuchungsumfang (Probenarten)</label>
+                <div class="scope-checkboxes">
+                    <label><input type="checkbox" id="scope-legionellen">Legionellen</label>
+                    <label><input type="checkbox" id="scope-mibi">Mibi</label>
+                    <label><input type="checkbox" id="scope-chemie">Chemie</label>
+                    <label><input type="checkbox" id="scope-vorort">Vorortparameter</label>
+                    <label><input type="checkbox" id="scope-sonstiges">Sonstiges</label>
+                </div>
+                <label for="scope-details">Stückzahl / Details</label>
+                <textarea id="scope-details" rows="2"
+                    placeholder="z.B. 3x Mibi, 1x Chemie"></textarea>
+            </div>
+
+            <label for="obj-notes">Notizen (z.B. Probennahme-Hinweise)</label>
+            <textarea id="obj-notes" rows="3"></textarea>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-small" id="object-cancel">Abbrechen</button>
+                <button type="submit" class="btn btn-small">Speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: TERMIN PLANEN -->
+<div class="modal" id="plan-modal">
+    <div class="modal-content">
+        <div class="modal-header">Termin planen</div>
+        <form id="plan-form">
+            <div class="info-text" id="plan-object-label"></div>
+
+            <div class="kw-helper">
+                Optional: Termin über Kalenderwoche setzen
+            </div>
+            <div class="kw-row">
+                <input type="number" id="plan-kw-year" placeholder="Jahr" min="2000" max="2100">
+                <input type="number" id="plan-kw" placeholder="KW" min="1" max="53">
+                <button type="button" id="kw-to-date-btn" class="btn-secondary btn-small">KW → Datum setzen</button>
+            </div>
+
+            <label for="plan-date">Datum</label>
+            <input type="date" id="plan-date" required>
+
+            <label for="plan-notes">Notizen zur Probennahme / Besonderheiten</label>
+            <textarea id="plan-notes" rows="3"></textarea>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-small" id="plan-cancel">Abbrechen</button>
+                <button type="submit" class="btn btn-small">Speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: HISTORIE -->
+<div class="modal" id="history-modal">
+    <div class="modal-content">
+        <div class="modal-header">Historie</div>
+        <div class="info-text" id="history-object-label" style="margin-bottom:6px; font-weight:bold;"></div>
+
+        <div id="history-list" style="max-height:180px; overflow-y:auto; border:1px solid #ddd; padding:6px; margin-bottom:8px; background:#fafafa; font-size:12px;">
+            <!-- Einträge -->
+        </div>
+
+        <form id="history-form">
+            <label for="history-date">Datum</label>
+            <input type="date" id="history-date" required>
+
+            <label for="history-type">Art der Untersuchung</label>
+            <input type="text" id="history-type" placeholder="z.B. Kühlwasserprüfung" required>
+
+            <label for="history-result">Ergebnis</label>
+            <select id="history-result">
+                <option value="Sauber">Sauber</option>
+                <option value="Überschreitung">Überschreitung</option>
+            </select>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-small" id="history-cancel">Schließen</button>
+                <button type="submit" class="btn btn-small">Eintrag speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- MODAL: SYNC / NEUERE DATEN ERKANNT -->
+<div class="modal" id="sync-modal">
+  <div class="modal-content">
+    <div class="modal-header">Neue Daten in OneDrive erkannt</div>
+    <div class="info-text" id="sync-modal-text" style="margin-bottom:10px;"></div>
+
+    <div class="detail-actions" style="justify-content:flex-end; flex-wrap:wrap;">
+      <button type="button" class="btn-secondary btn-small" id="sync-later-btn">Später</button>
+      <button type="button" class="btn-secondary btn-small" id="sync-keep-local-btn">Lokal behalten</button>
+      <button type="button" class="btn btn-small" id="sync-import-cloud-btn">Cloud übernehmen</button>
+    </div>
+
+    <div class="info-text" style="margin-top:8px;">
+      Hinweis: Beim Übernehmen wird (wenn möglich) automatisch ein lokales Backup erstellt.
+    </div>
+  </div>
+</div>
+
+
+<script>
+// Key für localStorage
+const STORAGE_KEY = "nova_sonderobjekte_v2";
+
+// Datenstrukturen
+// Kunde: {id, name, street, zip, city, notes, objects:[...]}
+// Objekt: {id, name, type, city, lastDate, nextDate, intervalMonths, notes, scope:{...}, history:[]}
+let customers = [];
+let appointments = []; // wird noch für Export / evtl. Nutzung behalten
+
+let nextCustomerId = 1;
+let nextObjectId = 1;
+let nextAppointmentId = 1;
+let selectedCustomerId = null;
+
+let editingCustomerId = null;
+let editingObjectCustomerId = null;
+let editingObjectId = null;
+
+let planCustomerId = null;
+let planObjectId = null;
+let historyCustomerId = null;
+let historyObjectId = null;
+
+let searchTerm = "";
+
+function getHeaderState() {
+    return {
+        headerTitle: document.getElementById("editable-header-title")?.innerText.trim() || "Terminverwaltung Labor",
+        headerSubtitle: document.getElementById("editable-header-subtitle")?.innerText.trim() || "Wiederkehrende Termine, Einzelaufträge und Erinnerungen für kleine Labore"
+    };
+}
+
+function applyHeaderState(data) {
+    const titleEl = document.getElementById("editable-header-title");
+    const subtitleEl = document.getElementById("editable-header-subtitle");
+    if (titleEl) {
+        titleEl.innerText = data?.headerTitle || "Terminverwaltung Labor";
+    }
+    if (subtitleEl) {
+        subtitleEl.innerText = data?.headerSubtitle || "Wiederkehrende Termine, Einzelaufträge und Erinnerungen für kleine Labore";
+    }
+}
+
+// --- Speicher-Funktionen (localStorage) -----------------------------
+function saveData() {
+    const payload = {
+        customers,
+        appointments,
+        ...getHeaderState()
+    };
+    try {
+        stampLocalUserEdit();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            try { scheduleAutoSave("change"); } catch(e) {}
+    } catch (e) {
+        console.warn("Konnte Daten nicht speichern:", e);
+    }
+}
+
+function ensureObjectScope(obj) {
+    if (!obj.scope) obj.scope = {};
+    if (typeof obj.scope.legionellen !== "boolean") obj.scope.legionellen = false;
+    if (typeof obj.scope.mibi !== "boolean") obj.scope.mibi = false;
+    if (typeof obj.scope.chemie !== "boolean") obj.scope.chemie = false;
+    if (typeof obj.scope.vorort !== "boolean") obj.scope.vorort = false;
+    if (typeof obj.scope.sonstiges !== "boolean") obj.scope.sonstiges = false;
+    if (typeof obj.scope.details !== "string") obj.scope.details = "";
+    if (typeof obj.intervalMonths !== "number") obj.intervalMonths = 0;
+}
+
+function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+        initDemoData();
+        saveData();
+        return;
+    }
+    try {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.customers)) {
+            customers = data.customers;
+        } else {
+            customers = [];
+        }
+        if (Array.isArray(data.appointments)) {
+            appointments = data.appointments;
+        } else {
+            appointments = [];
+        }
+        applyHeaderState(data);
+
+        nextCustomerId = customers.length ? Math.max(...customers.map(c => c.id || 0)) + 1 : 1;
+        let maxO = 0;
+        customers.forEach(c => {
+            if (!Array.isArray(c.objects)) c.objects = [];
+            if (!c.street) c.street = "";
+            if (!c.zip) c.zip = "";
+            if (!c.city) c.city = "";
+            c.objects.forEach(o => {
+                if (o.id && o.id > maxO) maxO = o.id;
+                if (!Array.isArray(o.history)) o.history = [];
+                ensureObjectScope(o);
+            });
+        });
+        nextObjectId = maxO + 1;
+        nextAppointmentId = appointments.length ? Math.max(...appointments.map(a => a.id || 0)) + 1 : 1;
+        selectedCustomerId = customers.length ? customers[0].id : null;
+    } catch (e) {
+        console.warn("Konnte gespeicherte Daten nicht lesen, Demo wird geladen:", e);
+        initDemoData();
+        saveData();
+    }
+}
+
+// Hilfsfunktionen Datum
+function toGermanDate(iso) {
+    if (!iso) return "";
+    const parts = iso.split("-");
+    if (parts.length !== 3) return "";
+    return parts[2] + "." + parts[1] + "." + parts[0];
+}
+function parseGermanDate(d) {
+    if (!d) return null;
+    const parts = d.split(".");
+    if (parts.length !== 3) return null;
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    const dt = new Date(year, month, day);
+    if (isNaN(dt.getTime())) return null;
+    return dt;
+}
+function getStatusClassForNext(dateGerman) {
+    if (!dateGerman) return "";
+    const d = parseGermanDate(dateGerman);
+    if (!d) return "";
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    d.setHours(0,0,0,0);
+    const diffDays = (d - today) / (1000*60*60*24);
+    if (diffDays < 0) return "status-red";
+    if (diffDays <= 14) return "status-yellow";
+    return "status-green";
+}
+
+// ISO-Woche -> Datum (Mittwoch der KW)
+function isoWeekToDate(year, week, weekday) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay(); // 0=So, 1=Mo,...
+    let isoMonday = new Date(simple);
+    const diff = (dow <= 4 ? dow - 1 : dow - 8);
+    isoMonday.setDate(simple.getDate() - diff);
+    const target = new Date(isoMonday);
+    target.setDate(isoMonday.getDate() + (weekday - 1));
+    return target;
+}
+
+// ISO-Datum + Monate
+function addMonthsToIso(isoDate, months) {
+    if (!isoDate) return "";
+    const parts = isoDate.split("-");
+    if (parts.length !== 3) return "";
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(year, month, day);
+    if (isNaN(d.getTime())) return "";
+    d.setMonth(d.getMonth() + months);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+}
+
+// Struktur-Helfer
+function getCustomerById(id) {
+    return customers.find(c => c.id === id) || null;
+}
+function getObjectById(customerId, objectId) {
+    const cust = getCustomerById(customerId);
+    if (!cust) return null;
+    return (cust.objects || []).find(o => o.id === objectId) || null;
+}
+function getAllObjects() {
+    const list = [];
+    customers.forEach(c => {
+        (c.objects || []).forEach(o => {
+            ensureObjectScope(o);
+            list.push({
+                customerId: c.id,
+                customerName: c.name,
+                customerStreet: c.street || "",
+                customerZip: c.zip || "",
+                customerCity: c.city || "",
+                objectId: o.id,
+                name: o.name,
+                type: o.type,
+                city: o.city,
+                lastDate: o.lastDate,
+                nextDate: o.nextDate,
+                intervalMonths: o.intervalMonths || 0,
+                notes: o.notes,
+                scope: o.scope,
+                history: o.history || []
+            });
+        });
+    });
+    return list;
+}
+
+// Rendering: Bald fällige nächste Untersuchungen
+function renderUpcoming() {
+    const tbody = document.getElementById("upcoming-tbody");
+    tbody.innerHTML = "";
+
+    const all = getAllObjects();
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const maxAheadDays = 60;
+
+    let relevant = all.filter(o => o.nextDate);
+    relevant = relevant.filter(o => {
+        const d = parseGermanDate(o.nextDate);
+        if (!d) return false;
+        const diffDays = (d - today) / (1000*60*60*24);
+        return diffDays <= maxAheadDays;
+    });
+
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        relevant = relevant.filter(o => {
+            const txt = (
+                o.customerName + " " +
+                o.name + " " +
+                (o.city || "") + " " +
+                (o.type || "") + " " +
+                o.customerStreet + " " +
+                o.customerZip + " " +
+                o.customerCity
+            ).toLowerCase();
+            return txt.includes(term);
+        });
+    }
+
+    relevant.sort((a,b) => {
+        const da = parseGermanDate(a.nextDate);
+        const db = parseGermanDate(b.nextDate);
+        if (!da || !db) return 0;
+        return da - db;
+    });
+
+    document.getElementById("found-count").textContent = relevant.length;
+
+    relevant.forEach(o => {
+        const tr = document.createElement("tr");
+        const cls = getStatusClassForNext(o.nextDate);
+        if (cls) tr.classList.add(cls);
+
+        const tdC = document.createElement("td"); tdC.textContent = o.customerName;
+        const tdO = document.createElement("td"); tdO.textContent = o.name;
+        const tdT = document.createElement("td"); tdT.textContent = o.type || "";
+        const tdCi = document.createElement("td"); tdCi.textContent = o.city || "";
+        const tdN = document.createElement("td"); tdN.textContent = o.nextDate || "";
+
+        tr.appendChild(tdC);
+        tr.appendChild(tdO);
+        tr.appendChild(tdT);
+        tr.appendChild(tdCi);
+        tr.appendChild(tdN);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Rendering: Kundenliste
+function renderCustomerTable() {
+    const tbody = document.querySelector("#customer-table tbody");
+    tbody.innerHTML = "";
+
+    const sorted = customers.slice().sort((a,b) => a.name.localeCompare(b.name));
+    if (!selectedCustomerId && sorted.length) {
+        selectedCustomerId = sorted[0].id;
+    }
+
+    sorted.forEach(c => {
+        const tr = document.createElement("tr");
+        if (c.id === selectedCustomerId) {
+            tr.classList.add("selected-row");
+        }
+        const tdName = document.createElement("td");
+        const tdCount = document.createElement("td");
+        tdName.textContent = c.name;
+        tdCount.textContent = (c.objects || []).length;
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdCount);
+
+        tr.addEventListener("click", () => {
+            selectedCustomerId = c.id;
+            renderCustomerTable();
+            renderCustomerDetail();
+        });
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Rendering: Kunden-Detail & Objektliste
+function renderCustomerDetail() {
+    const title = document.getElementById("detail-customer-title");
+    const addrP = document.getElementById("detail-customer-address");
+    const notesP = document.getElementById("detail-customer-notes");
+    const tbody = document.querySelector("#customer-objects-table tbody");
+    tbody.innerHTML = "";
+
+    const cust = selectedCustomerId ? getCustomerById(selectedCustomerId) : null;
+    const editBtn = document.getElementById("edit-customer-btn");
+    const deleteBtn = document.getElementById("delete-customer-btn");
+    const newObjBtn = document.getElementById("new-object-btn");
+
+    if (!cust) {
+        title.textContent = "Kein Kunde ausgewählt";
+        addrP.textContent = "";
+        notesP.textContent = "";
+        editBtn.disabled = true;
+        deleteBtn.disabled = true;
+        newObjBtn.disabled = true;
+        return;
+    }
+
+    title.textContent = cust.name;
+    const addrParts = [];
+    if (cust.street) addrParts.push(cust.street);
+    let plzOrt = "";
+    if (cust.zip) plzOrt += cust.zip + " ";
+    if (cust.city) plzOrt += cust.city;
+    if (plzOrt.trim()) addrParts.push(plzOrt.trim());
+    addrP.textContent = addrParts.join(", ");
+    notesP.textContent = cust.notes || "";
+    editBtn.disabled = false;
+    deleteBtn.disabled = false;
+    newObjBtn.disabled = false;
+
+    (cust.objects || []).forEach(o => {
+        ensureObjectScope(o);
+        const tr = document.createElement("tr");
+        const cls = getStatusClassForNext(o.nextDate);
+        if (cls) tr.classList.add(cls);
+
+        const tdName = document.createElement("td");
+        const tdType = document.createElement("td");
+        const tdCity = document.createElement("td");
+        const tdLast = document.createElement("td");
+        const tdNext = document.createElement("td");
+        const tdActions = document.createElement("td");
+        tdActions.className = "actions";
+
+        tdName.textContent = o.name;
+        tdType.textContent = o.type || "";
+        tdCity.textContent = o.city || "";
+        tdLast.textContent = o.lastDate || "";
+        tdNext.textContent = o.nextDate || "";
+
+        const btnEdit = document.createElement("button");
+        btnEdit.textContent = "Bearbeiten";
+        btnEdit.className = "btn btn-small";
+        btnEdit.addEventListener("click", () => {
+            openObjectModal(cust.id, o.id);
+        });
+
+        const btnPlan = document.createElement("button");
+        btnPlan.textContent = "Termin";
+        btnPlan.className = "btn-secondary btn-small";
+        btnPlan.addEventListener("click", () => {
+            openPlanModal(cust.id, o.id);
+        });
+
+        const btnHist = document.createElement("button");
+        btnHist.textContent = "Historie";
+        btnHist.className = "btn-secondary btn-small";
+        btnHist.addEventListener("click", () => {
+            openHistoryModal(cust.id, o.id);
+        });
+
+        const btnDel = document.createElement("button");
+        btnDel.textContent = "Löschen";
+        btnDel.className = "btn-danger btn-small";
+        btnDel.addEventListener("click", () => {
+            if (confirm("Dieses Objekt inklusive zugehöriger Termine wirklich löschen?")) {
+                deleteObject(cust.id, o.id);
+            }
+        });
+
+        tdActions.appendChild(btnEdit);
+        tdActions.appendChild(btnPlan);
+        tdActions.appendChild(btnHist);
+        tdActions.appendChild(btnDel);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdType);
+        tr.appendChild(tdCity);
+        tr.appendChild(tdLast);
+        tr.appendChild(tdNext);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Rendering: Alle Anlagen & Termine (mit Details-Row)
+function renderAllObjectsView() {
+    const tbody = document.querySelector("#allobjects-table tbody");
+    tbody.innerHTML = "";
+
+    const objs = getAllObjects();
+
+    objs.sort((a, b) => {
+        const da = a.nextDate ? parseGermanDate(a.nextDate) : null;
+        const db = b.nextDate ? parseGermanDate(b.nextDate) : null;
+        if (!da && !db) {
+            const sa = (a.customerName + " " + a.name).toLowerCase();
+            const sb = (b.customerName + " " + b.name).toLowerCase();
+            return sa.localeCompare(sb);
+        }
+        if (!da) return 1;
+        if (!db) return -1;
+        return da - db; // bald fällige zuerst
+    });
+
+    objs.forEach(o => {
+        const tr = document.createElement("tr");
+        const cls = getStatusClassForNext(o.nextDate);
+        if (cls) tr.classList.add(cls);
+
+        const tdStatus = document.createElement("td");
+        const tdC = document.createElement("td");
+        const tdO = document.createElement("td");
+        const tdT = document.createElement("td");
+        const tdCity = document.createElement("td");
+        const tdLast = document.createElement("td");
+        const tdNext = document.createElement("td");
+        const tdRoutine = document.createElement("td");
+        const tdActions = document.createElement("td");
+        tdActions.className = "actions";
+
+        // Status letzte Untersuchung
+        if (o.history && o.history.length) {
+            const lastEntry = o.history[o.history.length - 1];
+            const span = document.createElement("span");
+            if (lastEntry.result === "Sauber") {
+                span.textContent = "✓";
+                span.className = "status-icon-ok";
+            } else if (lastEntry.result === "Überschreitung") {
+                span.textContent = "✗";
+                span.className = "status-icon-bad";
+            } else {
+                span.textContent = "";
+            }
+            tdStatus.appendChild(span);
+        } else {
+            tdStatus.textContent = "";
+        }
+
+        tdC.textContent = o.customerName;
+
+        // Objektname klickbar für Historie
+        const btnObj = document.createElement("button");
+        btnObj.className = "link-button";
+        btnObj.textContent = o.name;
+        btnObj.addEventListener("click", () => {
+            openHistoryModal(o.customerId, o.objectId);
+        });
+        tdO.appendChild(btnObj);
+
+        tdT.textContent = o.type || "";
+        tdCity.textContent = o.city || "";
+        tdLast.textContent = o.lastDate || "";
+        tdNext.textContent = o.nextDate || "";
+        tdRoutine.textContent = o.intervalMonths ? ("alle " + o.intervalMonths + " Monate") : "";
+
+        const btnPlan = document.createElement("button");
+        btnPlan.textContent = "Termin";
+        btnPlan.className = "btn-secondary btn-small";
+        btnPlan.addEventListener("click", () => {
+            openPlanModal(o.customerId, o.objectId);
+        });
+
+        const btnHist = document.createElement("button");
+        btnHist.textContent = "Historie";
+        btnHist.className = "btn-secondary btn-small";
+        btnHist.addEventListener("click", () => {
+            openHistoryModal(o.customerId, o.objectId);
+        });
+
+        // NEU: Details-Button
+        const btnDetails = document.createElement("button");
+        btnDetails.textContent = "Details";
+        btnDetails.className = "btn-secondary btn-small";
+        btnDetails.addEventListener("click", () => {
+            const detailsRow = tr.nextSibling;
+            if (!detailsRow) return;
+            if (detailsRow.style.display === "table-row") {
+                detailsRow.style.display = "none";
+                btnDetails.textContent = "Details";
+            } else {
+                detailsRow.style.display = "table-row";
+                btnDetails.textContent = "Weniger";
+            }
+        });
+
+        tdActions.appendChild(btnPlan);
+        tdActions.appendChild(btnHist);
+        tdActions.appendChild(btnDetails);
+
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdC);
+        tr.appendChild(tdO);
+        tr.appendChild(tdT);
+        tr.appendChild(tdCity);
+        tr.appendChild(tdLast);
+        tr.appendChild(tdNext);
+        tr.appendChild(tdRoutine);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+
+        // NEU: Details-Zeile direkt darunter
+        const detailsTr = document.createElement("tr");
+        detailsTr.className = "details-row";
+
+        const detailsTd = document.createElement("td");
+        detailsTd.className = "details-cell";
+        detailsTd.colSpan = 9; // Anzahl Spalten in der Tabelle
+
+        let detailsHTML = "";
+
+        // Umfang / Menge / Probenarten
+        const scope = o.scope || {};
+        const detailsText = scope.details && scope.details.trim() ? scope.details.trim() : "-";
+        detailsHTML += `<b>Umfang / Menge:</b> ${detailsText}<br>`;
+
+        const scopes = [];
+        if (scope.legionellen) scopes.push("Legionellen");
+        if (scope.mibi) scopes.push("Mibi");
+        if (scope.chemie) scopes.push("Chemie");
+        if (scope.vorort) scopes.push("Vorortparameter");
+        if (scope.sonstiges) scopes.push("Sonstiges");
+        detailsHTML += `<b>Probenarten:</b> ${scopes.length ? scopes.join(", ") : "-"}<br>`;
+
+        // Routine / Zeiträume
+        detailsHTML += `<b>Routine / Intervall:</b> ${o.intervalMonths ? "alle " + o.intervalMonths + " Monate" : "-"}<br>`;
+
+        // Notizen
+        detailsHTML += `<b>Notizen:</b> ${o.notes ? o.notes : "-"}<br>`;
+
+        // Historie-Kurzinfo
+        if (o.history && o.history.length) {
+            const last = o.history[o.history.length - 1];
+            detailsHTML += `<b>Letzter Eintrag:</b> ${last.date} – ${last.type} (${last.result})`;
+        } else {
+            detailsHTML += `<b>Historie:</b> keine Einträge`;
+        }
+
+        detailsTd.innerHTML = detailsHTML;
+        detailsTr.appendChild(detailsTd);
+        tbody.appendChild(detailsTr);
+    });
+}
+
+// Gesamtrender
+function renderAll() {
+    renderUpcoming();
+    renderCustomerTable();
+    renderCustomerDetail();
+    renderAllObjectsView();
+}
+
+// --- Löschfunktionen ---
+function deleteCustomer(customerId) {
+    appointments = appointments.filter(a => a.customerId !== customerId);
+    customers = customers.filter(c => c.id !== customerId);
+    if (customers.length) {
+        selectedCustomerId = customers[0].id;
+    } else {
+        selectedCustomerId = null;
+    }
+    saveData();
+    renderAll();
+}
+
+function deleteObject(customerId, objectId) {
+    const cust = getCustomerById(customerId);
+    if (!cust) return;
+    cust.objects = (cust.objects || []).filter(o => o.id !== objectId);
+    appointments = appointments.filter(a => !(a.customerId === customerId && a.objectId === objectId));
+    saveData();
+    renderAll();
+}
+
+// --- Modals: Kunde ---
+function openCustomerModal(customerId) {
+    editingCustomerId = customerId || null;
+    const modal = document.getElementById("customer-modal");
+    const title = document.getElementById("customer-modal-title");
+    const nameInput = document.getElementById("customer-name");
+    const streetInput = document.getElementById("customer-street");
+    const zipInput = document.getElementById("customer-zip");
+    const cityInput = document.getElementById("customer-city");
+    const notesInput = document.getElementById("customer-notes");
+
+    if (customerId) {
+        const cust = getCustomerById(customerId);
+        if (!cust) return;
+        title.textContent = "Kunde bearbeiten";
+        nameInput.value = cust.name;
+        streetInput.value = cust.street || "";
+        zipInput.value = cust.zip || "";
+        cityInput.value = cust.city || "";
+        notesInput.value = cust.notes || "";
+    } else {
+        title.textContent = "Neuer Kunde";
+        nameInput.value = "";
+        streetInput.value = "";
+        zipInput.value = "";
+        cityInput.value = "";
+        notesInput.value = "";
+    }
+    modal.style.display = "flex";
+}
+function closeCustomerModal() {
+    document.getElementById("customer-modal").style.display = "none";
+}
+
+// --- Modals: Objekt ---
+function openObjectModal(customerId, objectId) {
+    editingObjectCustomerId = customerId;
+    editingObjectId = objectId || null;
+
+    const cust = getCustomerById(customerId);
+    if (!cust) return;
+
+    const modal = document.getElementById("object-modal");
+    const title = document.getElementById("object-modal-title");
+    const customerLabel = document.getElementById("object-modal-customer-label");
+    const nameInput = document.getElementById("obj-name");
+    const typeSelect = document.getElementById("obj-type");
+    const cityInput = document.getElementById("obj-city");
+    const lastInput = document.getElementById("obj-last");
+    const intervalSelect = document.getElementById("obj-interval");
+    const notesInput = document.getElementById("obj-notes");
+
+    const chkLegionellen = document.getElementById("scope-legionellen");
+    const chkMibi = document.getElementById("scope-mibi");
+    const chkChemie = document.getElementById("scope-chemie");
+    const chkVorort = document.getElementById("scope-vorort");
+    const chkSonstiges = document.getElementById("scope-sonstiges");
+    const scopeDetailsInput = document.getElementById("scope-details");
+
+    customerLabel.textContent = "Kunde: " + cust.name;
+
+    if (objectId) {
+        const obj = getObjectById(customerId, objectId);
+        if (!obj) return;
+        ensureObjectScope(obj);
+        title.textContent = "Objekt bearbeiten";
+        nameInput.value = obj.name;
+        typeSelect.value = obj.type || "";
+        cityInput.value = obj.city || "";
+        notesInput.value = obj.notes || "";
+        intervalSelect.value = (obj.intervalMonths || 0).toString();
+        if (obj.lastDate) {
+            const dt = parseGermanDate(obj.lastDate);
+            if (dt && !isNaN(dt.getTime())) {
+                lastInput.value = dt.toISOString().slice(0,10);
+            } else {
+                lastInput.value = "";
+            }
+        } else {
+            lastInput.value = "";
+        }
+        chkLegionellen.checked = !!obj.scope.legionellen;
+        chkMibi.checked = !!obj.scope.mibi;
+        chkChemie.checked = !!obj.scope.chemie;
+        chkVorort.checked = !!obj.scope.vorort;
+        chkSonstiges.checked = !!obj.scope.sonstiges;
+        scopeDetailsInput.value = obj.scope.details || "";
+    } else {
+        title.textContent = "Neues Objekt";
+        nameInput.value = "";
+        typeSelect.value = "";
+        cityInput.value = "";
+        lastInput.value = "";
+        intervalSelect.value = "0";
+        notesInput.value = "";
+        chkLegionellen.checked = false;
+        chkMibi.checked = false;
+        chkChemie.checked = false;
+        chkVorort.checked = false;
+        chkSonstiges.checked = false;
+        scopeDetailsInput.value = "";
+    }
+
+    modal.style.display = "flex";
+}
+function closeObjectModal() {
+    document.getElementById("object-modal").style.display = "none";
+}
+
+// --- Modals: Termin ---
+function openPlanModal(customerId, objectId) {
+    planCustomerId = customerId;
+    planObjectId = objectId;
+
+    const cust = getCustomerById(customerId);
+    const obj = getObjectById(customerId, objectId);
+    if (!cust || !obj) return;
+
+    const label = document.getElementById("plan-object-label");
+    label.textContent = cust.name + " – " + obj.name;
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById("plan-date").value = tomorrow.toISOString().slice(0,10);
+
+    const yearInput = document.getElementById("plan-kw-year");
+    const kwInput = document.getElementById("plan-kw");
+    yearInput.value = new Date().getFullYear();
+    kwInput.value = "";
+
+    document.getElementById("plan-notes").value = "";
+    document.getElementById("plan-modal").style.display = "flex";
+}
+function closePlanModal() {
+    document.getElementById("plan-modal").style.display = "none";
+}
+
+// KW → Datum Button
+document.getElementById("kw-to-date-btn").addEventListener("click", () => {
+    const yearStr = document.getElementById("plan-kw-year").value;
+    const kwStr = document.getElementById("plan-kw").value;
+    const year = parseInt(yearStr, 10);
+    const kw = parseInt(kwStr, 10);
+
+    if (!year || !kw || kw < 1 || kw > 53) {
+        alert("Bitte gültiges Jahr und KW angeben (1–53).");
+        return;
+    }
+
+    const date = isoWeekToDate(year, kw, 3); // Mittwoch
+    if (isNaN(date.getTime())) {
+        alert("KW konnte nicht berechnet werden.");
+        return;
+    }
+    const iso = date.toISOString().slice(0,10);
+    document.getElementById("plan-date").value = iso;
+});
+
+// --- Modals: Historie ---
+function openHistoryModal(customerId, objectId) {
+    historyCustomerId = customerId;
+    historyObjectId = objectId;
+
+    const cust = getCustomerById(customerId);
+    const obj = getObjectById(customerId, objectId);
+    if (!cust || !obj) return;
+
+    ensureObjectScope(obj);
+
+    document.getElementById("history-object-label").textContent =
+        cust.name + " – " + obj.name;
+
+    const listDiv = document.getElementById("history-list");
+    listDiv.innerHTML = "";
+
+    if (obj.scope && obj.scope.details) {
+        const scopeDiv = document.createElement("div");
+        scopeDiv.style.marginBottom = "6px";
+        scopeDiv.style.fontWeight = "bold";
+        scopeDiv.textContent = "Umfang: " + obj.scope.details;
+        listDiv.appendChild(scopeDiv);
+    }
+
+    if (obj.history && obj.history.length) {
+        obj.history.forEach(entry => {
+            const row = document.createElement("div");
+            row.style.marginBottom = "3px";
+            row.textContent = entry.date + " – " + entry.type + " (" + entry.result + ")";
+            listDiv.appendChild(row);
+        });
+    } else {
+        const empty = document.createElement("div");
+        empty.textContent = "Noch keine Einträge vorhanden.";
+        listDiv.appendChild(empty);
+    }
+
+    document.getElementById("history-date").value = "";
+    document.getElementById("history-type").value = "";
+    document.getElementById("history-result").value = "Sauber";
+
+    document.getElementById("history-modal").style.display = "flex";
+}
+function closeHistoryModal() {
+    document.getElementById("history-modal").style.display = "none";
+}
+
+// --- Event-Handler ---
+// Suche (für bald fällige)
+document.getElementById("search-input").addEventListener("input", (e) => {
+    searchTerm = e.target.value || "";
+    renderUpcoming();
+});
+
+// Print
+document.getElementById("print-btn").addEventListener("click", () => {
+    window.print();
+});
+
+// Tabs
+document.getElementById("tab-customers").addEventListener("click", () => {
+    document.getElementById("view-customers").style.display = "";
+    document.getElementById("view-allobjects").style.display = "none";
+    document.getElementById("tab-customers").classList.add("active");
+    document.getElementById("tab-allobjects").classList.remove("active");
+});
+document.getElementById("tab-allobjects").addEventListener("click", () => {
+    document.getElementById("view-customers").style.display = "none";
+    document.getElementById("view-allobjects").style.display = "";
+    document.getElementById("tab-customers").classList.remove("active");
+    document.getElementById("tab-allobjects").classList.add("active");
+});
+
+// Kunde
+document.getElementById("new-customer-btn").addEventListener("click", () => {
+    openCustomerModal(null);
+});
+document.getElementById("edit-customer-btn").addEventListener("click", () => {
+    if (selectedCustomerId) openCustomerModal(selectedCustomerId);
+});
+document.getElementById("delete-customer-btn").addEventListener("click", () => {
+    if (!selectedCustomerId) return;
+    const cust = getCustomerById(selectedCustomerId);
+    if (!cust) return;
+    if (confirm('Kunde "' + cust.name + '" inklusive aller Objekte und Termine wirklich löschen?')) {
+        deleteCustomer(selectedCustomerId);
+    }
+});
+document.getElementById("customer-cancel").addEventListener("click", closeCustomerModal);
+
+document.getElementById("customer-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("customer-name").value.trim();
+    const street = document.getElementById("customer-street").value.trim();
+    const zip = document.getElementById("customer-zip").value.trim();
+    const city = document.getElementById("customer-city").value.trim();
+    const notes = document.getElementById("customer-notes").value.trim();
+    if (!name) {
+        alert("Bitte Kundennamen angeben.");
+        return;
+    }
+
+    if (editingCustomerId) {
+        const c = getCustomerById(editingCustomerId);
+        if (c) {
+            c.name = name;
+            c.street = street;
+            c.zip = zip;
+            c.city = city;
+            c.notes = notes;
+        }
+    } else {
+        const newId = nextCustomerId++;
+        customers.push({
+            id: newId,
+            name,
+            street,
+            zip,
+            city,
+            notes,
+            objects: []
+        });
+        selectedCustomerId = newId;
+    }
+
+    closeCustomerModal();
+    saveData();
+    renderAll();
+});
+
+// Objekt
+document.getElementById("new-object-btn").addEventListener("click", () => {
+    if (!selectedCustomerId) {
+        alert("Bitte zuerst einen Kunden auswählen.");
+        return;
+    }
+    openObjectModal(selectedCustomerId, null);
+});
+document.getElementById("object-cancel").addEventListener("click", closeObjectModal);
+
+document.getElementById("object-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!editingObjectCustomerId) return;
+
+    const cust = getCustomerById(editingObjectCustomerId);
+    if (!cust) return;
+
+    const name = document.getElementById("obj-name").value.trim();
+    const type = document.getElementById("obj-type").value;
+    const city = document.getElementById("obj-city").value.trim();
+    const lastISO = document.getElementById("obj-last").value;
+    const intervalSelect = document.getElementById("obj-interval");
+    const intervalMonths = parseInt(intervalSelect.value, 10) || 0;
+    const notes = document.getElementById("obj-notes").value.trim();
+    const lastGerman = lastISO ? toGermanDate(lastISO) : "";
+
+    const chkLegionellen = document.getElementById("scope-legionellen");
+    const chkMibi = document.getElementById("scope-mibi");
+    const chkChemie = document.getElementById("scope-chemie");
+    const chkVorort = document.getElementById("scope-vorort");
+    const chkSonstiges = document.getElementById("scope-sonstiges");
+    const scopeDetailsInput = document.getElementById("scope-details");
+
+    if (!name) {
+        alert("Bitte Objektname angeben.");
+        return;
+    }
+
+    const scope = {
+        legionellen: chkLegionellen.checked,
+        mibi: chkMibi.checked,
+        chemie: chkChemie.checked,
+        vorort: chkVorort.checked,
+        sonstiges: chkSonstiges.checked,
+        details: scopeDetailsInput.value.trim()
+    };
+
+    let nextGerman = "";
+
+    if (lastISO && intervalMonths > 0) {
+        const nextISO = addMonthsToIso(lastISO, intervalMonths);
+        if (nextISO) {
+            nextGerman = toGermanDate(nextISO);
+        }
+    }
+
+    if (editingObjectId) {
+        const obj = getObjectById(editingObjectCustomerId, editingObjectId);
+        if (obj) {
+            obj.name = name;
+            obj.type = type;
+            obj.city = city;
+            obj.lastDate = lastGerman;
+            obj.intervalMonths = intervalMonths;
+            obj.notes = notes;
+            obj.scope = scope;
+            if (nextGerman) {
+                obj.nextDate = nextGerman;
+            }
+        }
+    } else {
+        const newId = nextObjectId++;
+        cust.objects.push({
+            id: newId,
+            name,
+            type,
+            city,
+            lastDate: lastGerman,
+            nextDate: nextGerman,
+            intervalMonths,
+            notes,
+            scope,
+            history: []
+        });
+    }
+
+    closeObjectModal();
+    saveData();
+    renderAll();
+});
+
+// Plan
+document.getElementById("plan-cancel").addEventListener("click", closePlanModal);
+document.getElementById("plan-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!planCustomerId || !planObjectId) return;
+
+    const cust = getCustomerById(planCustomerId);
+    const obj = getObjectById(planCustomerId, planObjectId);
+    if (!cust || !obj) return;
+
+    const dateISO = document.getElementById("plan-date").value;
+    const notes = document.getElementById("plan-notes").value.trim();
+    if (!dateISO) {
+        alert("Bitte ein Datum auswählen.");
+        return;
+    }
+
+    const german = toGermanDate(dateISO);
+    obj.nextDate = german;
+
+    const newId = nextAppointmentId++;
+    appointments.push({
+        id: newId,
+        customerId: cust.id,
+        objectId: obj.id,
+        dateISO,
+        notes
+    });
+
+    closePlanModal();
+    saveData();
+    renderAll();
+});
+
+// Historie
+document.getElementById("history-cancel").addEventListener("click", closeHistoryModal);
+document.getElementById("history-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!historyCustomerId || !historyObjectId) return;
+
+    const cust = getCustomerById(historyCustomerId);
+    const obj = getObjectById(historyCustomerId, historyObjectId);
+    if (!cust || !obj) return;
+
+    const dateISO = document.getElementById("history-date").value;
+    const type = document.getElementById("history-type").value.trim();
+    const result = document.getElementById("history-result").value;
+
+    if (!dateISO || !type) {
+        alert("Bitte Datum und Art der Untersuchung angeben.");
+        return;
+    }
+
+    const dateGerman = toGermanDate(dateISO);
+    if (!Array.isArray(obj.history)) obj.history = [];
+    obj.history.push({ date: dateGerman, type, result });
+
+    obj.lastDate = dateGerman;
+
+    // Automatische nächste Untersuchung basierend auf Routine
+    if (obj.intervalMonths && obj.intervalMonths > 0) {
+        const nextISO = addMonthsToIso(dateISO, obj.intervalMonths);
+        if (nextISO) {
+            obj.nextDate = toGermanDate(nextISO);
+        }
+    }
+
+    openHistoryModal(historyCustomerId, historyObjectId); // Liste im Modal aktualisieren
+    saveData();
+    renderAll();
+});
+
+
+// ---------------- File System Access (Autosave in fester Datei + optional Backup-Ordner) ----------------
+const FSDB_NAME = "nova_fs_handles_v1";
+const FSDB_STORE = "handles";
+const AUTOSAVE_ENABLED_KEY = "nova_autosave_enabled_v1";
+
+const SYNC_META_KEY = "nova_sync_meta_v1"; // lokale Sync-Metadaten
+let suppressUserEditStamp = false;
+let pendingRemotePayload = null; // wird gefüllt, wenn neuere Cloud-Daten gefunden wurden
+
+function loadSyncMeta() {
+    try {
+        const raw = localStorage.getItem(SYNC_META_KEY);
+        return raw ? (JSON.parse(raw) || {}) : {};
+    } catch (e) {
+        return {};
+    }
+}
+function saveSyncMeta(meta) {
+    try {
+        localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta || {}));
+    } catch (e) {}
+}
+function stampLocalUserEdit() {
+    if (suppressUserEditStamp) return;
+    const meta = loadSyncMeta();
+    meta.lastLocalUserEditAt = new Date().toISOString();
+    saveSyncMeta(meta);
+}
+function setAppliedCloudStamp(generatedAt) {
+    const meta = loadSyncMeta();
+    meta.lastAppliedCloudGeneratedAt = generatedAt || null;
+    meta.lastAppliedCloudAt = new Date().toISOString();
+    // Nach einem Cloud-Import gilt das als "Basis" – lokale Änderungen starten ab jetzt neu
+    meta.lastLocalUserEditAt = meta.lastLocalUserEditAt || meta.lastAppliedCloudAt;
+    saveSyncMeta(meta);
+}
+
+function setCloudWriteStamp(generatedAt) {
+    const meta = loadSyncMeta();
+    meta.lastAppliedCloudGeneratedAt = generatedAt || meta.lastAppliedCloudGeneratedAt || null; // Cloud entspricht jetzt lokal
+    meta.lastCloudWriteAt = new Date().toISOString();
+    saveSyncMeta(meta);
+}
+function isoToMs(iso) {
+    if (!iso) return 0;
+    const t = Date.parse(iso);
+    return isNaN(t) ? 0 : t;
+}
+function formatIso(iso) {
+    if (!iso) return "-";
+    try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleString("de-DE");
+    } catch {
+        return iso;
+    }
+}
+
+let autosaveFileHandle = null;
+let backupDirHandle = null;
+let autosaveDebounceTimer = null;
+
+function setAutosaveStatus(text, mode) {
+    const el = document.getElementById("autosave-status");
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove("on", "warn", "off");
+    el.classList.add(mode || "off");
+}
+
+function supportsFileSystemAccess() {
+    return ("showSaveFilePicker" in window) && ("indexedDB" in window);
+}
+
+function isAutosaveEnabled() {
+    return localStorage.getItem(AUTOSAVE_ENABLED_KEY) === "1";
+}
+function setAutosaveEnabled(v) {
+    localStorage.setItem(AUTOSAVE_ENABLED_KEY, v ? "1" : "0");
+    const chk = document.getElementById("autosave-toggle");
+    if (chk) chk.checked = !!v;
+    updateAutosaveUi();
+}
+
+function updateAutosaveUi() {
+    const hasFile = !!autosaveFileHandle;
+    const enabled = isAutosaveEnabled();
+    if (!hasFile) {
+        setAutosaveStatus("Autosave: aus", "off");
+        return;
+    }
+    if (!enabled) {
+        setAutosaveStatus("Autosave: pausiert", "warn");
+        return;
+    }
+    setAutosaveStatus("Autosave: aktiv ✓", "on");
+}
+
+// IndexedDB mini-helper
+function idbOpen() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(FSDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(FSDB_STORE)) db.createObjectStore(FSDB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function idbSet(key, value) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(FSDB_STORE, "readwrite");
+        tx.objectStore(FSDB_STORE).put(value, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+    });
+}
+async function idbGet(key) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(FSDB_STORE, "readonly");
+        const req = tx.objectStore(FSDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+// Permission helper
+async function ensureRWPermission(handle) {
+    if (!handle) return false;
+    try {
+        const opts = { mode: "readwrite" };
+        let perm = await handle.queryPermission(opts);
+        if (perm === "granted") return true;
+        perm = await handle.requestPermission(opts);
+        return perm === "granted";
+    } catch (e) {
+        console.warn("Permission-Check fehlgeschlagen:", e);
+        return false;
+    }
+}
+
+async function ensureReadPermission(handle) {
+    if (!handle) return false;
+    try {
+        const opts = { mode: "read" };
+        let perm = await handle.queryPermission(opts);
+        if (perm === "granted") return true;
+        perm = await handle.requestPermission(opts);
+        return perm === "granted";
+    } catch (e) {
+        console.warn("Read-Permission-Check fehlgeschlagen:", e);
+        return false;
+    }
+}
+
+async function readAutosaveRemotePayload() {
+    if (!autosaveFileHandle) return null;
+    const okPerm = await ensureReadPermission(autosaveFileHandle);
+    if (!okPerm) return null;
+
+    try {
+        const f = await autosaveFileHandle.getFile();
+        const txt = await f.text();
+        const data = JSON.parse(txt);
+        // Basic sanity
+        if (!data || !Array.isArray(data.customers)) return null;
+        return data;
+    } catch (e) {
+        console.warn("Remote-Datei konnte nicht gelesen werden:", e);
+        return null;
+    }
+}
+
+function showSyncModal(messageHtml) {
+    const modal = document.getElementById("sync-modal");
+    const textEl = document.getElementById("sync-modal-text");
+    if (textEl) textEl.innerHTML = messageHtml;
+    if (modal) modal.style.display = "flex";
+}
+function hideSyncModal() {
+    const modal = document.getElementById("sync-modal");
+    if (modal) modal.style.display = "none";
+    pendingRemotePayload = null;
+}
+
+async function createLocalBackupBeforeImport() {
+    try {
+        const payload = buildExportPayload();
+        const filename = buildTimestampFilename("sonderobjekte_local_backup");
+        // wenn Backup-Ordner gesetzt: dort ablegen, sonst Download
+        if (backupDirHandle) {
+            const okPerm = await ensureRWPermission(backupDirHandle);
+            if (okPerm) {
+                const fh = await backupDirHandle.getFileHandle(filename, { create: true });
+                await writeHandle(fh, JSON.stringify(payload, null, 2));
+                return true;
+            }
+        }
+        downloadJson(payload, filename);
+        return true;
+    } catch (e) {
+        console.warn("Local backup before import failed:", e);
+        return false;
+    }
+}
+
+function applyImportedData(data) {
+    suppressUserEditStamp = true;
+    try {
+        if (Array.isArray(data.customers)) customers = data.customers;
+        appointments = Array.isArray(data.appointments) ? data.appointments : [];
+        applyHeaderState(data);
+
+        nextCustomerId = customers.length ? Math.max(...customers.map(c => c.id || 0)) + 1 : 1;
+        let maxO = 0;
+        customers.forEach(c => {
+            if (!Array.isArray(c.objects)) c.objects = [];
+            if (!c.street) c.street = "";
+            if (!c.zip) c.zip = "";
+            if (!c.city) c.city = "";
+            c.objects.forEach(o => {
+                if (o.id && o.id > maxO) maxO = o.id;
+                if (!Array.isArray(o.history)) o.history = [];
+                ensureObjectScope(o);
+            });
+        });
+        nextObjectId = maxO + 1;
+        nextAppointmentId = appointments.length ? Math.max(...appointments.map(a => a.id || 0)) + 1 : 1;
+
+        selectedCustomerId = customers.length ? customers[0].id : null;
+
+        saveData();
+        renderAll();
+    } finally {
+        suppressUserEditStamp = false;
+    }
+}
+
+async function checkForRemoteUpdates(trigger) {
+    if (!autosaveFileHandle) return;
+    if (!supportsFileSystemAccess()) return;
+
+    const remote = await readAutosaveRemotePayload();
+    if (!remote) return;
+
+    const remoteGen = remote.generatedAt || null;
+    const meta = loadSyncMeta();
+const snoozeUntil = meta.snoozeUntil || null;
+    if (isoToMs(snoozeUntil) > Date.now()) return;
+    const ignoredGen = meta.lastIgnoredCloudGeneratedAt || null;
+    if (remoteGen && isoToMs(remoteGen) <= isoToMs(ignoredGen)) return;
+
+        const appliedCloudGen = meta.lastAppliedCloudGeneratedAt || null;
+    const lastLocalEdit = meta.lastLocalUserEditAt || null;
+
+    // Wenn wir noch nie Cloud angewendet haben, behandeln wir das als "könnte neu sein"
+    const remoteIsNewerThanApplied = isoToMs(remoteGen) > isoToMs(appliedCloudGen);
+    if (!remoteIsNewerThanApplied) return;
+
+    // Konflikt: lokale Änderungen nach dem letzten angewendeten Cloud-Stand
+    const conflict = (!!lastLocalEdit) && (isoToMs(lastLocalEdit) > isoToMs(appliedCloudGen));
+
+    pendingRemotePayload = remote;
+
+    const msg = conflict
+        ? `<b>Konflikt erkannt.</b><br>
+           In OneDrive liegen neuere Daten vor <b>(${formatIso(remoteGen)})</b>,<br>
+           aber auch lokal wurden Änderungen gemacht <b>(${formatIso(lastLocalEdit)})</b>.<br><br>
+           <b>Was möchtest du tun?</b><br>
+           • <b>Cloud übernehmen</b>: lädt die OneDrive-Version (mit Backup der lokalen Daten).<br>
+           • <b>Lokal behalten</b>: ignoriert die OneDrive-Version (du kannst später manuell exportieren).`
+        : `In OneDrive liegen neuere Daten vor: <b>${formatIso(remoteGen)}</b>.<br>
+           Möchtest du diese Version jetzt importieren?`;
+
+    showSyncModal(msg);
+}
+
+
+function buildExportPayload() {
+    const now = new Date();
+    return {
+        generatedAt: now.toISOString(),
+        version: "terminverwaltung-v2.0.1",
+        customers,
+        appointments,
+        ...getHeaderState()
+    };
+}
+
+function buildTimestampFilename(prefix) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const ts = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+    return `${prefix}_${ts}.json`;
+}
+
+async function writeHandle(handle, dataStr) {
+    const writable = await handle.createWritable();
+    await writable.write(dataStr);
+    await writable.close();
+}
+
+// schreibt NUR die feste Autosave-Datei (ohne Backup)
+async function autosaveWriteMain(reason) {
+    if (!autosaveFileHandle) return false;
+
+    const okPerm = await ensureRWPermission(autosaveFileHandle);
+    if (!okPerm) {
+        setAutosaveStatus("Autosave: keine Berechtigung", "warn");
+        return false;
+    }
+
+    try {
+        const payload = buildExportPayload();
+        const dataStr = JSON.stringify(payload, null, 2);
+        await writeHandle(autosaveFileHandle, dataStr);
+        try { setCloudWriteStamp(payload.generatedAt); } catch(e) {}
+        updateAutosaveUi();
+        try { startRemoteCheckLoop(); } catch(e) {}
+        try { checkForRemoteUpdates("startup"); } catch(e) {}
+        return true;
+    } catch (e) {
+        console.warn("Autosave fehlgeschlagen:", e);
+        setAutosaveStatus("Autosave: Fehler", "warn");
+        return false;
+    }
+}
+
+// Backup NUR beim Schließen (Zeitstempel-Datei)
+async function writeBackupOnClose() {
+    if (!backupDirHandle) return false;
+
+    try {
+        const payload = buildExportPayload();
+        const dataStr = JSON.stringify(payload, null, 2);
+        const backupName = buildTimestampFilename("sonderobjekte_backup");
+        const fh = await backupDirHandle.getFileHandle(backupName, { create: true });
+        const okPerm = await ensureRWPermission(backupDirHandle);
+        if (!okPerm) return false;
+        await writeHandle(fh, dataStr);
+        return true;
+    } catch (e) {
+        console.warn("Backup beim Schließen fehlgeschlagen:", e);
+        return false;
+    }
+}
+
+// Debounced autosave on changes
+function scheduleAutoSave(reason) {
+    if (!autosaveFileHandle) return;
+    if (!isAutosaveEnabled()) return;
+    if (autosaveDebounceTimer) clearTimeout(autosaveDebounceTimer);
+    autosaveDebounceTimer = setTimeout(() => {
+        autosaveWriteMain(reason || "change");
+    }, 900);
+}
+
+// Fallback Download (dein bisheriger Export)
+function downloadJson(payload, filename) {
+    const dataStr = JSON.stringify(payload, null, 2);
+    const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    const link = document.createElement("a");
+    link.setAttribute("href", dataUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Beim Start: Handles + Toggle wiederherstellen
+async function restoreFileSystemHandles() {
+    try {
+        if (!supportsFileSystemAccess()) {
+            // Toggle trotzdem setzen, Status aber aus
+            const chk = document.getElementById("autosave-toggle");
+            if (chk) chk.checked = isAutosaveEnabled();
+            setAutosaveStatus("Autosave: aus", "off");
+            return;
+        }
+
+        autosaveFileHandle = await idbGet("autosaveFile");
+        backupDirHandle = await idbGet("backupDir");
+
+        // Toggle-UI
+        const chk = document.getElementById("autosave-toggle");
+        if (chk) chk.checked = isAutosaveEnabled();
+
+        updateAutosaveUi();
+    } catch (e) {
+        console.warn("Handles konnten nicht wiederhergestellt werden:", e);
+        setAutosaveStatus("Autosave: aus", "off");
+    }
+}
+
+// Buttons & Toggle
+document.getElementById("choose-autosave-btn").addEventListener("click", async () => {
+    if (!supportsFileSystemAccess() || !("showSaveFilePicker" in window)) {
+        alert("Dein Browser unterstützt das direkte Speichern (File System Access API) hier leider nicht. Bitte Chrome oder Edge nutzen.");
+        return;
+    }
+    try {
+        autosaveFileHandle = await window.showSaveFilePicker({
+            suggestedName: "sonderobjekte_autosave.json",
+            types: [{
+                description: "JSON",
+                accept: { "application/json": [".json"] }
+            }]
+        });
+        await idbSet("autosaveFile", autosaveFileHandle);
+
+        // wenn noch nie gesetzt: Autosave standardmäßig AN
+        if (localStorage.getItem(AUTOSAVE_ENABLED_KEY) === null) setAutosaveEnabled(true);
+
+        updateAutosaveUi();
+        await autosaveWriteMain("setup");
+        alert("Autosave-Datei wurde gesetzt.\nAutosave speichert jetzt automatisch in diese Datei (wenn Toggle aktiviert ist) + zusätzlich beim Schließen.");
+    } catch (e) {
+        console.warn("Autosave-Datei wählen abgebrochen/fehlgeschlagen:", e);
+    }
+});
+
+document.getElementById("choose-backup-folder-btn").addEventListener("click", async () => {
+    if (!("showDirectoryPicker" in window)) {
+        alert("Dein Browser unterstützt Ordnerauswahl hier leider nicht. (Chrome/Edge aktuell)");
+        return;
+    }
+    try {
+        backupDirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        await idbSet("backupDir", backupDirHandle);
+        updateAutosaveUi();
+        alert("Backup-Ordner gesetzt.\nBackups werden NUR beim Schließen als Zeitstempel-Datei dort abgelegt.");
+    } catch (e) {
+        console.warn("Backup-Ordner wählen abgebrochen/fehlgeschlagen:", e);
+    }
+});
+
+
+// Sync-Modal Buttons
+document.getElementById("sync-later-btn").addEventListener("click", () => {
+    // 10 Minuten snooze
+    const meta = loadSyncMeta();
+    meta.snoozeUntil = new Date(Date.now() + 10*60*1000).toISOString();
+    saveSyncMeta(meta);
+    hideSyncModal();
+});
+document.getElementById("sync-keep-local-btn").addEventListener("click", () => {
+    if (pendingRemotePayload && pendingRemotePayload.generatedAt) {
+        const meta = loadSyncMeta();
+        meta.lastIgnoredCloudGeneratedAt = pendingRemotePayload.generatedAt;
+        meta.snoozeUntil = new Date(Date.now() + 10*60*1000).toISOString();
+        saveSyncMeta(meta);
+    }
+    hideSyncModal();
+});
+document.getElementById("sync-import-cloud-btn").addEventListener("click", async () => {
+    if (!pendingRemotePayload) { hideSyncModal(); return; }
+    await createLocalBackupBeforeImport();
+    applyImportedData(pendingRemotePayload);
+    setAppliedCloudStamp(pendingRemotePayload.generatedAt || null);
+    hideSyncModal();
+    alert("Cloud-Daten wurden importiert.");
+});
+
+// Automatische Erkennung: beim Start + regelmäßig + wenn Tab wieder aktiv wird
+let remoteCheckTimer = null;
+function startRemoteCheckLoop() {
+    if (remoteCheckTimer) clearInterval(remoteCheckTimer);
+    if (!autosaveFileHandle) return;
+    remoteCheckTimer = setInterval(() => {
+        checkForRemoteUpdates("timer");
+    }, 120000); // alle 2 Minuten
+}
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        checkForRemoteUpdates("focus");
+    }
+});
+document.getElementById("autosave-toggle").addEventListener("change", (e) => {
+    setAutosaveEnabled(!!e.target.checked);
+});
+
+// Best-effort beim Schließen:
+// - wenn Autosave aktiv: feste Datei nochmal schreiben
+// - Backup nur beim Schließen (falls Ordner gesetzt)
+window.addEventListener("pagehide", () => {
+    try {
+        if (autosaveFileHandle && isAutosaveEnabled()) {
+            autosaveWriteMain("close");
+        }
+        if (backupDirHandle) {
+            writeBackupOnClose();
+        }
+    } catch (e) {}
+});
+
+
+// Export
+document.getElementById("export-btn").addEventListener("click", async () => {
+    const payload = buildExportPayload();
+
+    // Wenn eine Autosave-Datei gewählt wurde: dorthin schreiben (unabhängig vom Toggle)
+    if (autosaveFileHandle) {
+        const ok = await autosaveWriteMain("manual");
+        if (ok) {
+            alert("Export gespeichert (Autosave-Datei aktualisiert).");
+            return;
+        }
+        // falls das Schreiben schiefgeht: fallback Download
+    }
+
+    const filename = buildTimestampFilename("sonderobjekte");
+    downloadJson(payload, filename);
+});
+
+// Import
+
+document.getElementById("import-btn").addEventListener("click", () => {
+    document.getElementById("import-file").value = "";
+    document.getElementById("import-file").click();
+});
+document.getElementById("import-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        try {
+            const data = JSON.parse(evt.target.result);
+            if (Array.isArray(data.customers)) {
+                customers = data.customers;
+            } else if (Array.isArray(data.objects)) {
+                customers = buildCustomersFromObjectList(data.objects);
+            } else {
+                customers = [];
+            }
+            appointments = Array.isArray(data.appointments) ? data.appointments : [];
+            applyHeaderState(data);
+
+            nextCustomerId = customers.length ? Math.max(...customers.map(c => c.id || 0)) + 1 : 1;
+            let maxO = 0;
+            customers.forEach(c => {
+                if (!Array.isArray(c.objects)) c.objects = [];
+                if (!c.street) c.street = "";
+                if (!c.zip) c.zip = "";
+                if (!c.city) c.city = "";
+                c.objects.forEach(o => {
+                    if (o.id && o.id > maxO) maxO = o.id;
+                    if (!Array.isArray(o.history)) o.history = [];
+                    ensureObjectScope(o);
+                });
+            });
+            nextObjectId = maxO + 1;
+            nextAppointmentId = appointments.length ? Math.max(...appointments.map(a => a.id || 0)) + 1 : 1;
+
+            selectedCustomerId = customers.length ? customers[0].id : null;
+            saveData();
+            renderAll();
+            alert("Import erfolgreich.");
+        } catch (err) {
+            alert("Fehler beim Import: " + err.message);
+        }
+    };
+    reader.readAsText(file, "UTF-8");
+});
+
+// Hilfsfunktion für Import aus altem Objekt-Format
+function buildCustomersFromObjectList(list) {
+    const map = new Map();
+    list.forEach(o => {
+        const cname = o.customer || o.verwaltung || "Unbekannter Kunde";
+        if (!map.has(cname)) map.set(cname, []);
+        map.get(cname).push(o);
+    });
+    const result = [];
+    let cid = 1;
+    let oid = 1;
+    map.forEach((objs, name) => {
+        const c = { id: cid++, name, street: "", zip: "", city: "", notes: "", objects: [] };
+        objs.forEach(o => {
+            const obj = {
+                id: oid++,
+                name: o.name || o.objekt || o["Wohnanlage/Objekt"] || "",
+                type: o.type || "",
+                city: o.city || o.ort || o.Ort || "",
+                lastDate: o.lastDate || o.lastInspection || o["Letzte Unters."] || "",
+                nextDate: o.nextDate || o.nextInspection || o["Nächste Unters."] || "",
+                intervalMonths: 0,
+                notes: o.notes || o.hinweise || "",
+                history: Array.isArray(o.history) ? o.history : [],
+                scope: {}
+            };
+            ensureObjectScope(obj);
+            c.objects.push(obj);
+        });
+        result.push(c);
+    });
+    return result;
+}
+
+// Demo-Daten (nur beim ersten Mal, danach aus localStorage)
+function initDemoData() {
+    customers = [
+        {
+            id: 1,
+            name: "Abita Hausverwaltung Augsburg",
+            street: "Musterstr. 1",
+            zip: "86150",
+            city: "Augsburg",
+            notes: "Mehrere Objekte im Stadtgebiet",
+            objects: [
+                {
+                    id: 1,
+                    name: "Kolpingstr. 8",
+                    type: "Schwimmbeckenuntersuchung",
+                    city: "Augsburg",
+                    lastDate: "01.09.2025",
+                    nextDate: "01.12.2025",
+                    intervalMonths: 3,
+                    notes: "Sonderobjekt: Warmwasserstation",
+                    scope: {
+                        legionellen: true,
+                        mibi: true,
+                        chemie: false,
+                        vorort: true,
+                        sonstiges: false,
+                        details: "3x Mibi, 1x Legionellen, 1x Vorort"
+                    },
+                    history: [
+                        { date: "01.09.2025", type: "Kühlwasserprüfung", result: "Sauber" }
+                    ]
+                }
+            ]
+        },
+        {
+            id: 2,
+            name: "Muster Immobilien GmbH",
+            street: "Hauptstr. 99",
+            zip: "80331",
+            city: "München",
+            notes: "",
+            objects: [
+                {
+                    id: 2,
+                    name: "Hauptstr. 12",
+                    type: "Eigenversorgungsanlage",
+                    city: "München",
+                    lastDate: "15.10.2025",
+                    nextDate: "15.10.2026",
+                    intervalMonths: 12,
+                    notes: "",
+                    scope: {
+                        legionellen: true,
+                        mibi: false,
+                        chemie: true,
+                        vorort: true,
+                        sonstiges: false,
+                        details: "1x Legionellen, 1x Chemie, 1x Vorort"
+                    },
+                    history: []
+                }
+            ]
+        }
+    ];
+    appointments = [
+        { id: 1, customerId: 1, objectId: 1, dateISO: "2025-12-01", notes: "Regelmäßige nächste Untersuchung" },
+        { id: 2, customerId: 2, objectId: 2, dateISO: "2025-10-15", notes: "Jährliche Kontrolle" }
+    ];
+    nextCustomerId = 3;
+    nextObjectId = 3;
+    nextAppointmentId = 3;
+    selectedCustomerId = 1;
+}
+
+// Header direkt speicherbar machen
+document.getElementById("editable-header-title").addEventListener("input", saveData);
+document.getElementById("editable-header-subtitle").addEventListener("input", saveData);
+
+// Initialisierung
+restoreFileSystemHandles();
+loadData();
+renderAll();
+</script>
+
+<footer class="footer">Made with Love © – Terminverwaltung Tool V 2.0.1</footer>
+</body>
+</html>
