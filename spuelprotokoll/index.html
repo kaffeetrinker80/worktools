@@ -1055,7 +1055,7 @@ th .sub{
   </div>
 
   <script>
-    const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_1_9';
+    const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_2_2';
     const DEFAULT_ROWS = 14;
     const FLOOR_OPTIONS = ['', 'UG', 'EG', '1. OG', '2. OG', '3. OG', '4. OG', '5. OG', '6. OG', '7. OG'];
 
@@ -1284,7 +1284,7 @@ function escapeHtml(value){
 
     function buildExportFile(){
       const payload = {
-        version: 'einfach-2.2.0-mobile269',
+        version: 'einfach-2.2.0',
         exportedAt: new Date().toISOString(),
         ...state
       };
