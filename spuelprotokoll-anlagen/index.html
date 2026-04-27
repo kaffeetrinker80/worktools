@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#1f2937">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1f2327">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="icon" type="image/png" sizes="32x32" href="spuelprotokoll-anlagen-icon-32.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="spuelprotokoll-anlagen-icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="spuelprotokoll-anlagen-icon-512.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="manifest" href="site.webmanifest">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Spülprotokoll – Kontrolle der Wassertemperaturen</title>
   <style>
     body {
@@ -112,7 +110,7 @@
       font-weight: bold;
     }
 
-    .page-list {
+     .page-list {
       margin: 6px 0 4px 0;
       font-size: 0.8rem;
     }
@@ -648,7 +646,7 @@
     }
 
   
-  .header {
+  .header { border-radius: 0 0 16px 16px;
     background: #1f2327; /* darker anthracite */
     color: #fff;
     padding: 18px 16px;
@@ -1018,6 +1016,43 @@
   margin:0;
 }
 
+
+
+    /* --- v2.43 mobile workview stable --- */
+    @media (max-width: 800px){
+      .mobile-worker-box{display:grid;gap:6px;margin:8px 0 10px 0;padding:10px;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+      .mobile-worker-box label{font-size:.8rem;font-weight:700;color:var(--muted)}
+      .mobile-worker-box input{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px}
+      .mobile-worker-hint{font-size:.76rem;color:var(--muted);line-height:1.35}
+      tbody.mobile-worklist{display:grid !important;gap:10px}
+      tbody.mobile-worklist tr,tbody.mobile-worklist td{display:block !important;border:none !important;padding:0 !important;background:transparent !important}
+      tbody.mobile-worklist td::before{display:none !important;content:none !important}
+      .mobile-row-card{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:2px}
+      .mobile-row-head{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:10px;background:linear-gradient(180deg,#1f2937,#111827);color:#fff}
+      .mobile-row-no{font-size:.9rem;font-weight:800;white-space:nowrap}
+      .mobile-row-when{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:0}
+      .mobile-row-when input{width:100%;min-height:36px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.10);color:#fff;border-radius:10px;padding:7px 9px}
+      .mobile-row-when input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.95}
+      .mobile-del-btn{width:34px;height:34px;border:none;border-radius:10px;background:rgba(220,38,38,.88);color:#fff;font-size:1.15rem}
+      .mobile-row-body{display:grid;gap:12px;padding:12px}
+      .mobile-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .mobile-stack{display:grid;gap:4px;min-width:0}
+      .mobile-stack > span{font-size:.77rem;font-weight:700;color:var(--muted)}
+      .mobile-stack input,.mobile-stack select,.mobile-stack textarea{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px 10px;font-size:.92rem}
+      .mobile-stack textarea{min-height:72px;resize:vertical}
+      .mobile-temps{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:10px;display:grid;gap:10px}
+      .mobile-temps-title{font-size:.77rem;font-weight:800;color:var(--muted)}
+      .mobile-checkrow{display:grid;grid-template-columns:1fr 56px;gap:2px;align-items:center}
+      .mobile-check{display:flex;align-items:center;gap:3px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:2px 6px;justify-content:flex-start;overflow:visible;white-space:nowrap;font-size:0.85rem;color:var(--text);font-weight:600}
+      .mobile-check input{width:18px;height:18px}
+    }
+
+    
+    .fab-up{ position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%; background:#1f2937; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:9999; cursor:pointer; font-size:24px; transition:opacity 0.2s, transform 0.2s; opacity:0; pointer-events:none; }
+    .fab-up.visible{ opacity:1; pointer-events:auto; }
+
+    .fab-up.visible{ opacity:1; pointer-events:auto; }
+
 </style>
 </head>
 <body>
@@ -1068,6 +1103,12 @@
     <div class="card">
       <div class="card-title">Sicherung (Export/Import)</div>
       <div class="card-body">
+        <div style="background:#eef3ff; border:2px solid #2563eb; border-radius:10px; padding:10px 12px; margin-bottom:10px;">
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px; color:#1e3a8a;">👤 Bearbeiter</div>
+          <input type="text" id="workerNameInput" placeholder="Name oder Kürzel eingeben…"
+            style="width:100%; box-sizing:border-box; padding:9px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.95rem; outline:none;">
+          <div style="font-size:0.78rem; color:#6b7280; margin-top:5px;">Wird im Dateinamen und im JSON-Export als <em>performedBy</em> gespeichert.</div>
+        </div>
         <div class="subhead">Manuell (JSON)</div>
         <div class="btn-row">
           <button id="exportPagesBtn" class="btn">Seiten Export</button>
@@ -1111,7 +1152,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.39</div>
+    Daten werden lokal im Browser gespeichert · Version 2.69</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1151,6 +1192,7 @@
     </div>
   </div>
 
+  <div id="fabUp" class="fab-up" title="Nach oben">↑</div>
   <script>
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
@@ -1190,11 +1232,13 @@
 
     const STORAGE_KEY = "spuelprotokoll_pages_v3";
     const ANLAGEN_KEY = "spuelprotokoll_anlagen_v2";
+    const WORKER_NAME_KEY = "spuelprotokoll_worker_name_v1";
 
     let anlagenData = {};
 
     let pages = [];
     let activePageId = null;
+    let workerName = "";
 
     let searchHighlightPageId = null;
     let searchHighlightRowIndex = null;
@@ -1403,6 +1447,31 @@
       return JSON.parse(JSON.stringify(obj));
     }
 
+    function normalizeWorkerName(value) {
+      return String(value ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function loadWorkerName() {
+      try { workerName = normalizeWorkerName(localStorage.getItem(WORKER_NAME_KEY) || ""); }
+      catch (e) { workerName = ""; }
+    }
+
+    function saveWorkerName() {
+      try { localStorage.setItem(WORKER_NAME_KEY, normalizeWorkerName(workerName)); }
+      catch (e) {}
+    }
+
+    function getPageWorker(page) {
+      if (!page || typeof page !== "object") return normalizeWorkerName(workerName);
+      if (typeof page.performedBy === "undefined") page.performedBy = normalizeWorkerName(workerName);
+      return normalizeWorkerName(page.performedBy || workerName);
+    }
+
+    function setPageWorker(page, value) {
+      if (!page || typeof page !== "object") return;
+      page.performedBy = normalizeWorkerName(value);
+    }
+
     function loadAnlagen() {
       const raw = localStorage.getItem(ANLAGEN_KEY);
       if (raw) {
@@ -1474,6 +1543,7 @@
         anlage,
         bereich,
         created: timestampString(),
+        performedBy: normalizeWorkerName(workerName),
         rows
       };
       pages.push(page);
@@ -1503,6 +1573,7 @@
     }
 
     function saveState() {
+      pages = pages.map(p => ({ ...p, performedBy: normalizeWorkerName((p && p.performedBy) || workerName) }));
       const data = { pages, activePageId };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
@@ -1513,7 +1584,7 @@
       try {
         const data = JSON.parse(raw);
         if (Array.isArray(data.pages)) {
-          pages = data.pages;
+          pages = data.pages.map(p => ({ ...p, performedBy: normalizeWorkerName((p && p.performedBy) || workerName) }));
           activePageId = data.activePageId || (pages[0] && pages[0].id);
           return true;
         }
@@ -1737,7 +1808,7 @@
         return;
       }
       const index = pages.findIndex(p => p.id === page.id) + 1;
-      info.textContent = `Nr. ${index} – ${page.anlage} / ${page.bereich} (erstellt: ${page.created})`;
+      info.textContent = `Nr. ${index} – ${page.anlage} / ${page.bereich}${getPageWorker(page) ? " · " + getPageWorker(page) : ""} (erstellt: ${page.created})`;
     }
 
     
@@ -1777,7 +1848,7 @@
         el.textContent = "Anlage & Bereich";
         return;
       }
-      el.textContent = `${page.anlage} · ${page.bereich}`;
+      el.textContent = `${page.anlage} · ${page.bereich}${getPageWorker(page) ? " · " + getPageWorker(page) : ""}`;
     }
 
     function isRowFilled(row){
@@ -1888,7 +1959,27 @@
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
+      if (window.innerWidth <= 800) {
+        const workerBox = document.createElement("div");
+        workerBox.className = "mobile-worker-box";
+        workerBox.innerHTML = `<label>Wer arbeitet hier</label><input type="text" id="workerNameInline" placeholder="Name oder Kürzel"><div class="mobile-worker-hint">Der Name wird pro Seite gespeichert und im JSON als performedBy exportiert.</div>`;
+        container.appendChild(workerBox);
+        const workerNameInline = workerBox.querySelector("#workerNameInline");
+        workerNameInline.value = getPageWorker(page);
+        workerNameInline.addEventListener("input", () => {
+          workerName = normalizeWorkerName(workerNameInline.value);
+          setPageWorker(page, workerName);
+          saveWorkerName();
+          saveState();
+          const top = document.getElementById("workerNameInput");
+          if (top) top.value = workerName;
+          renderPageInfo();
+          updateHeaderContext();
+        });
+      }
+
       const tbody = document.createElement("tbody");
+      if (window.innerWidth <= 800) tbody.className = "mobile-worklist";
 
       page.rows.forEach((row) => {
         const tr = document.createElement("tr");
@@ -1915,6 +2006,107 @@
 
         if (page.id === searchHighlightPageId && row.index === searchHighlightRowIndex) {
           tr.classList.add("search-highlight");
+        }
+
+        if (window.innerWidth <= 800) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          const card = document.createElement("div");
+          card.className = "mobile-row-card";
+          if (page.id === searchHighlightPageId && row.index === searchHighlightRowIndex) card.classList.add("search-highlight");
+
+          const head = document.createElement("div");
+          head.className = "mobile-row-head";
+          const no = document.createElement("div");
+          no.className = "mobile-row-no";
+          no.textContent = `Nr. ${row.index}`;
+          const when = document.createElement("div");
+          when.className = "mobile-row-when";
+          dateInput = document.createElement("input");
+          dateInput.type = "date";
+          dateInput.value = row.date || "";
+          dateInput.addEventListener("change", () => { row.date = dateInput.value; saveState(); });
+          timeInput = document.createElement("input");
+          timeInput.type = "time";
+          timeInput.value = row.time || "";
+          timeInput.addEventListener("change", () => { row.time = timeInput.value; saveState(); });
+          when.appendChild(dateInput); when.appendChild(timeInput);
+          const delBtn = document.createElement("button");
+          delBtn.type = "button"; delBtn.className = "mobile-del-btn"; delBtn.textContent = "×"; delBtn.title = "Zeile leeren";
+          delBtn.addEventListener("click", async (ev) => {
+            ev.preventDefault(); ev.stopPropagation();
+            const label = `${page.anlage} / ${page.bereich} – Nr. ${row.index}`;
+            const ok = await uiConfirm(`Daten dieser Zeile wirklich löschen?\n\n${label}\n\n(Die Zeile bleibt bestehen, nur die Eingaben werden geleert.)`);
+            if (!ok) return;
+            const snapshot = JSON.parse(JSON.stringify(row));
+            clearRowData(row); saveState(); renderTable();
+            toast("Zeile geleert.", "Rückgängig", () => { Object.keys(row).forEach(k => delete row[k]); Object.assign(row, snapshot); saveState(); renderTable(); });
+          });
+          head.appendChild(no); head.appendChild(when); head.appendChild(delBtn);
+
+          const body = document.createElement("div");
+          body.className = "mobile-row-body";
+          const row1 = document.createElement("div"); row1.className = "mobile-grid-2";
+
+          const floorWrap = document.createElement("label"); floorWrap.className = "mobile-stack"; floorWrap.innerHTML = '<span>Stockwerk</span>';
+          const floorSelect = document.createElement("select");
+          ["", "UG", "EG", "1. OG", "2. OG", "3. OG", "4. OG", "5. OG", "6. OG", "7. OG"].forEach(f => { const opt = document.createElement("option"); opt.value = f; opt.textContent = f || "–"; floorSelect.appendChild(opt); });
+          floorSelect.value = row.floor || "";
+          floorSelect.addEventListener("change", () => { ensureDateTime(); row.floor = floorSelect.value; saveState(); });
+          floorWrap.appendChild(floorSelect);
+
+          const roomWrap = document.createElement("label"); roomWrap.className = "mobile-stack"; roomWrap.innerHTML = '<span>Raumtyp</span>';
+          const roomTypeSelect = document.createElement("select");
+          ["", "Whg. / Zimmer", "Heizraum WW-Abgang/Zirk.-RL", "Pflegebad", "Sanitärraum WC/Bad", "Funktionsraum", "Gewerbe / Praxis"].forEach(rt => { const opt = document.createElement("option"); opt.value = rt; opt.textContent = rt || "–"; roomTypeSelect.appendChild(opt); });
+          roomTypeSelect.value = row.roomType || "";
+          roomTypeSelect.addEventListener("change", () => { ensureDateTime(); row.roomType = roomTypeSelect.value; saveState(); });
+          roomWrap.appendChild(roomTypeSelect);
+          row1.appendChild(floorWrap); row1.appendChild(roomWrap);
+
+          const unitWrap = document.createElement("label"); unitWrap.className = "mobile-stack"; unitWrap.innerHTML = '<span>Haus / App.-Nr. / Zimmer</span>';
+          const unitInput = document.createElement("input"); unitInput.type = "text"; unitInput.value = row.unit || ""; unitInput.placeholder = "z. B. Haus 4 · App. 2";
+          unitInput.addEventListener("input", () => { ensureDateTime(); row.unit = unitInput.value; saveState(); }); unitWrap.appendChild(unitInput);
+
+          const temps = document.createElement("div"); temps.className = "mobile-temps";
+          const tempsTitle = document.createElement("div"); tempsTitle.className = "mobile-temps-title"; tempsTitle.textContent = "Temperaturen"; temps.appendChild(tempsTitle);
+          const kwWrap = document.createElement("label"); kwWrap.className = "mobile-stack"; kwWrap.innerHTML = '<span>KW min.</span>';
+          kwInput = document.createElement("input"); kwInput.type = "number"; kwInput.step = "0.1"; kwInput.value = row.kwTemp || ""; kwInput.placeholder = "20,0";
+          kwInput.addEventListener("input", () => { ensureDateTime(); row.kwTemp = kwInput.value; saveState(); }); kwWrap.appendChild(kwInput); temps.appendChild(kwWrap);
+          const wwRow = document.createElement("div"); wwRow.className = "mobile-grid-2";
+          const wwKWrap = document.createElement("label"); wwKWrap.className = "mobile-stack"; wwKWrap.innerHTML = '<span>WW Küche max.</span>';
+          wwKInput = document.createElement("input"); wwKInput.type = "number"; wwKInput.step = "0.1"; wwKInput.value = row.wwKitchen || ""; wwKInput.placeholder = "60,0";
+          wwKInput.addEventListener("input", () => { ensureDateTime(); row.wwKitchen = wwKInput.value; saveState(); }); wwKWrap.appendChild(wwKInput);
+          const wwBWrap = document.createElement("label"); wwBWrap.className = "mobile-stack"; wwBWrap.innerHTML = '<span>WW Bad max.</span>';
+          wwBInput = document.createElement("input"); wwBInput.type = "number"; wwBInput.step = "0.1"; wwBInput.value = row.wwBath || ""; wwBInput.placeholder = "60,0";
+          wwBInput.addEventListener("input", () => { ensureDateTime(); row.wwBath = wwBInput.value; saveState(); }); wwBWrap.appendChild(wwBInput);
+          wwRow.appendChild(wwKWrap); wwRow.appendChild(wwBWrap); temps.appendChild(wwRow);
+
+          const flags = document.createElement("div"); flags.className = "mobile-grid-2";
+          const turbWrap = document.createElement("label"); turbWrap.className = "mobile-stack"; turbWrap.innerHTML = '<span style="font-size:0.75rem; color:var(--muted); font-weight:700">Auffälligk.</span>';
+          const turbCheck = document.createElement("label"); turbCheck.className = "mobile-check";
+          const turbCb = document.createElement("input"); turbCb.type = "checkbox"; turbCb.checked = !!row.turbidityFlag; turbCb.style.accentColor = "#2563eb"; turbCb.addEventListener("change", () => { ensureDateTime(); row.turbidityFlag = turbCb.checked; saveState(); });
+          const turbText = document.createElement("span"); turbText.textContent = "Trüb/Verfärbt"; turbCheck.appendChild(turbCb); turbCheck.appendChild(turbText); turbWrap.appendChild(turbCheck);
+
+          const aerWrap = document.createElement("label"); aerWrap.className = "mobile-stack"; aerWrap.innerHTML = '<span>Strahlregler</span>';
+          const aerRow = document.createElement("div"); aerRow.className = "mobile-checkrow";
+          const aerCheck = document.createElement("label"); aerCheck.className = "mobile-check";
+          const aerCb = document.createElement("input"); aerCb.type = "checkbox"; aerCb.checked = !!row.aeratorChanged; aerCb.style.accentColor = "var(--primary)"; aerCb.addEventListener("change", () => { ensureDateTime(); row.aeratorChanged = aerCb.checked; saveState(); });
+          const aerText = document.createElement("span"); aerText.textContent = "getauscht"; aerCheck.appendChild(aerCb); aerCheck.appendChild(aerText);
+          const aerCount = document.createElement("input"); aerCount.type = "number"; aerCount.min = "0"; aerCount.step = "1"; aerCount.value = row.aeratorChangedCount || ""; aerCount.placeholder = "Anz."; aerCount.style.width = "100%"; aerCount.style.minHeight = "34px"; aerCount.style.textAlign = "center"; aerCount.style.padding = "2px"; aerCount.style.fontSize = "0.9rem"; aerCount.style.border = "1px solid var(--primary)"; aerCount.style.borderRadius = "6px";
+          aerCount.addEventListener("input", () => { ensureDateTime(); row.aeratorChangedCount = aerCount.value; saveState(); });
+          aerRow.appendChild(aerCheck); aerRow.appendChild(aerCount); aerWrap.appendChild(aerRow);
+          flags.appendChild(turbWrap); flags.appendChild(aerWrap);
+
+          const notesWrap = document.createElement("label"); notesWrap.className = "mobile-stack"; notesWrap.innerHTML = '<span>Bemerkung</span>';
+          const notesInput = document.createElement("textarea"); notesInput.rows = 3; notesInput.value = row.notes || ""; notesInput.placeholder = "Nur Auffälligkeiten oder Besonderheiten"; notesInput.style.fontSize = "0.9rem";
+          notesInput.addEventListener("input", () => { ensureDateTime(); row.notes = notesInput.value; saveState(); });
+          notesInput.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey) && row.index === page.rows.length) { ev.preventDefault(); promptNewPageSameObject(); } });
+          notesInput.addEventListener("blur", () => { if (row.index === page.rows.length && isRowFilled(row)) promptNewPageSameObject(); });
+          notesWrap.appendChild(notesInput);
+
+          body.appendChild(row1); body.appendChild(unitWrap); body.appendChild(temps); body.appendChild(flags); body.appendChild(notesWrap);
+          card.appendChild(head); card.appendChild(body); td.appendChild(card); tr.appendChild(td); tbody.appendChild(tr);
+          return;
         }
 
         const tdIdx = document.createElement("td");
@@ -2310,6 +2502,9 @@ function renderAll() {
       renderPageInfo();
       renderTable();
       updateHeaderContext();
+      const workerNameInput = document.getElementById("workerNameInput");
+      const page = getActivePage();
+      if (workerNameInput) workerNameInput.value = page ? getPageWorker(page) : workerName;
     }
 
     
@@ -2356,14 +2551,26 @@ function renderAll() {
     
             
 
+    
+    
     function exportPagesJSON() {
-
-const stamp = filenameTimestamp();
-const pagesObj = { pages, activePageId, exportedAt: timestampString() };
-const blob = new Blob([JSON.stringify(pagesObj, null, 2)], { type: "application/json" });
-const filename = `spuelprotokoll_seiten_${stamp}.json`;
-saveWithPicker(filename, blob);
+      const inp = document.getElementById("workerNameInput");
+      if (inp && inp.value.trim()) workerName = normalizeWorkerName(inp.value);
+      const workerNameStr = normalizeWorkerName(workerName || "ohne_bearbeiter");
+      const workerPart = workerNameStr.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+      const stamp = filenameTimestamp();
+      const pagesObj = {
+        pages: pages.map(p => ({ ...p, performedBy: normalizeWorkerName(p.performedBy || workerNameStr) })),
+        activePageId,
+        exportedAt: timestampString(),
+        defaultPerformedBy: workerNameStr
+      };
+      const blob = new Blob([JSON.stringify(pagesObj, null, 2)], { type: "application/json" });
+      const filename = `spuelprotokoll_seiten_${stamp}_${workerPart}.json`;
+      saveWithPicker(filename, blob);
     }
+
+
 
     function importPagesJSONFile(file) {
       const reader = new FileReader();
@@ -2371,7 +2578,7 @@ saveWithPicker(filename, blob);
         try {
           const data = JSON.parse(e.target.result);
           if (Array.isArray(data.pages)) {
-            pages = data.pages;
+            pages = data.pages.map(p => ({ ...p, performedBy: normalizeWorkerName((p && p.performedBy) || workerName) }));
             activePageId = pages[0] ? pages[0].id : null;
             saveState();
             renderAll();
@@ -2387,13 +2594,18 @@ saveWithPicker(filename, blob);
     }
 
     function exportAnlagenJSON() {
-
-const stamp = filenameTimestamp();
-const anlagenObj = { anlagen: anlagenData, exportedAt: timestampString() };
-const blob = new Blob([JSON.stringify(anlagenObj, null, 2)], { type: "application/json" });
-const filename = `spuelprotokoll_anlagen_${stamp}.json`;
-saveWithPicker(filename, blob);
+      const inp = document.getElementById("workerNameInput");
+      if (inp && inp.value.trim()) workerName = normalizeWorkerName(inp.value);
+      const workerNameStr = normalizeWorkerName(workerName || "ohne_bearbeiter");
+      const workerPart = workerNameStr.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+      const stamp = filenameTimestamp();
+      const anlagenObj = { anlagen: anlagenData, exportedAt: timestampString() };
+      const blob = new Blob([JSON.stringify(anlagenObj, null, 2)], { type: "application/json" });
+      const filename = `spuelprotokoll_anlagen_${stamp}_${workerPart}.json`;
+      saveWithPicker(filename, blob);
     }
+
+
 
     function importAnlagenJSONFile(file) {
       const reader = new FileReader();
@@ -2819,6 +3031,20 @@ case "4":
         uiAlert("Bereich wurde hinzugefügt.");
       });document.getElementById("searchBtn").addEventListener("click", performSearch);
       document.getElementById("clearSearchBtn").addEventListener("click", clearSearch);
+      const workerNameInput = document.getElementById("workerNameInput");
+      if (workerNameInput) {
+        workerNameInput.value = workerName;
+        workerNameInput.addEventListener("input", () => {
+          workerName = normalizeWorkerName(workerNameInput.value);
+          const page = getActivePage();
+          if (page) setPageWorker(page, workerName);
+          saveWorkerName();
+          saveState();
+          renderPageInfo();
+          updateHeaderContext();
+        });
+      }
+
       document.getElementById("searchInput").addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -2829,8 +3055,17 @@ case "4":
       initManageAnlagen();
     }
 
-window.addEventListener("DOMContentLoaded", async () => {
+
+    const fabUp = document.getElementById("fabUp");
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) fabUp.classList.add("visible");
+      else fabUp.classList.remove("visible");
+    });
+    fabUp.addEventListener("click", () => window.scrollTo({top: 0, behavior: "smooth"}));
+
+    window.addEventListener("DOMContentLoaded", async () => {
       loadAnlagen();
+      loadWorkerName();
       const loaded = loadState();
       initAnlageDropdowns();
       initEvents();
@@ -2860,5 +3095,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     </div>
   </div>
 
+<script>
+</script>
 </body>
 </html>
