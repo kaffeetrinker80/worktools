@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Work Tools | kaffeetrinker80</title>
   
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="shortcut icon" href="favicon.ico">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -22,6 +28,7 @@
       --shadow: 0 16px 34px rgba(0,0,0,.3);
       --primary: #8dc2ff;
       --primary-soft: rgba(141, 194, 255, 0.1);
+      --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,13 +45,67 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 4rem 2rem;
+      padding: 2rem 2rem 4rem 2rem;
     }
 
-    header {
+    /* --- Topbar & Back Button aus Theocratic Tools --- */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 4rem;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      background: linear-gradient(90deg, #fff, #aab4c3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      color: var(--primary);
+      font-size: .95rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 999px;
+      backdrop-filter: blur(12px);
+      font-size: .95rem;
+      transition: all var(--transition-smooth);
+    }
+
+    .nav a:hover {
+      transform: translateY(-2px);
+      background: var(--surface-soft);
+      border-color: var(--border-hover);
+    }
+    /* ------------------------------------------------ */
+
+    .hero-header {
       text-align: center;
       margin-bottom: 4rem;
       max-width: 700px;
+      width: 100%;
     }
 
     h1 {
@@ -140,16 +201,26 @@
 
     @media (max-width: 768px) {
       h1 { font-size: 2.5rem; }
-      body { padding: 2rem 1rem; }
+      body { padding: 1.5rem 1rem; }
     }
   </style>
 </head>
 <body>
 
-  <header>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-title">kaffeetrinker80</div>
+      <div class="brand-subtitle">Work Tools</div>
+    </div>
+    <nav class="nav">
+      <a href="https://kaffeetrinker80.github.io/">← Back to Home</a>
+    </nav>
+  </header>
+
+  <div class="hero-header">
     <h1>Work Tools</h1>
     <p class="subtitle">Spezialisierte Werkzeuge für Trinkwasserhygiene und Anlagenverwaltung.</p>
-  </header>
+  </div>
 
   <main class="grid">
     
@@ -188,7 +259,7 @@
         Verwaltung von Kunden mit mehreren Objekten zur Planung wiederkehrender Laboruntersuchungen und Probenahmen.
       </p>
       <div class="card-actions">
-        <a class="btn-card" href="/worktools/terminverwaltung-labor/">Tool öffnen</a>
+        <a class="btn-card" href="/worktools/Terminverwaltung-labor/">Tool öffnen</a>
       </div>
     </article>
 
