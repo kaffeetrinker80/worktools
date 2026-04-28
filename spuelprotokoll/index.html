@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -766,8 +766,6 @@
 }
 
 
-}
-
 
 @media print{
   td.floor-col select{
@@ -1055,7 +1053,7 @@ th .sub{
   </div>
 
   <script>
-    const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_2_2';
+    const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_1_9';
     const DEFAULT_ROWS = 14;
     const FLOOR_OPTIONS = ['', 'UG', 'EG', '1. OG', '2. OG', '3. OG', '4. OG', '5. OG', '6. OG', '7. OG'];
 
@@ -1181,7 +1179,7 @@ th .sub{
                     ${floorSelectHtml(row.floor).replace('data-field="floor"', `data-field="floor" data-index="${idx}"`)}
                   </label>
                   <label class="mobile-stack">
-                    <span>Strahlregler</span>
+                    <span>Strahlregler getauscht</span>
                     <input type="number" step="1" min="0" inputmode="numeric" placeholder="Anz." data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}">
                   </label>
                 </div>
@@ -1284,7 +1282,7 @@ function escapeHtml(value){
 
     function buildExportFile(){
       const payload = {
-        version: 'einfach-2.2.0',
+        version: 'einfach-2.2.0-mobile269',
         exportedAt: new Date().toISOString(),
         ...state
       };
@@ -1390,7 +1388,10 @@ function escapeHtml(value){
       document.getElementById('resetBtn').addEventListener('click', confirmAndResetAll);
       document.getElementById('resetTopBtn').addEventListener('click', confirmAndResetAll);
 
-      document.getElementById('printBtn').addEventListener('click', () => window.print());
+      document.getElementById('printBtn').addEventListener('click', () => {
+        prepareForPrint();
+        setTimeout(() => window.print(), 50);
+      });
       document.getElementById('downloadBtn').addEventListener('click', downloadJSON);
       document.getElementById('importBtn').addEventListener('click', () => {
         document.getElementById('importInput').click();
@@ -1494,55 +1495,59 @@ function buildExportFilename() {
     syncPrintMirrors();
     syncPrintMirrors();
 
+function updateActiveFieldFromDom(){
+  const el = document.activeElement;
+  if (!el || !el.dataset) return;
+  const field = el.dataset.field;
+  const index = Number(el.dataset.index);
+  if (!field || Number.isNaN(index) || !state.rows[index]) return;
+  state.rows[index][field] = el.value;
+  saveState();
+}
+
+function syncDomControlsFromState(){
+  const fields = ['date','time','floor','resident','kwTemp','wwKitchen','wwBathWb','wwTubShower','wwGuestWc','aeratorCount','notes'];
+  state.rows.forEach((row, idx) => {
+    fields.forEach(field => {
+      document.querySelectorAll(`[data-field="${field}"][data-index="${idx}"]`).forEach(el => {
+        const val = row[field] || '';
+        if (el.value !== val) el.value = val;
+      });
+    });
+  });
+}
+
 function syncPrintMirrors(){
-  document.querySelectorAll('td.date-col').forEach(td => {
-    const input = td.querySelector('input[type="date"]');
-    let out = td.querySelector('.print-date-value');
-    if (!out) {
-      out = document.createElement('span');
-      out.className = 'print-date-value';
-      td.appendChild(out);
-    }
-    out.textContent = formatDateForPrint(input ? (input.value || '') : '');
-  });
+  // Wichtig für Mobile: Die sichtbare mobile Karte und die versteckten Desktop-/Druckzellen
+  // sind doppelte Controls. Darum wird vor dem Drucken der DOM aus dem echten state befüllt.
+  syncDomControlsFromState();
 
-  document.querySelectorAll('td.time-col').forEach(td => {
-    const input = td.querySelector('input[type="time"]');
-    let out = td.querySelector('.print-time-value');
-    if (!out) {
-      out = document.createElement('span');
-      out.className = 'print-time-value';
-      td.appendChild(out);
-    }
-    out.textContent = input ? (input.value || '') : '';
-  });
+  document.querySelectorAll('#tableBody tr').forEach((tr, idx) => {
+    const row = state.rows[idx] || {};
 
-  document.querySelectorAll('td.floor-col').forEach(td => {
-    const select = td.querySelector('select');
-    let out = td.querySelector('.print-floor-value');
-    if (!out) {
-      out = document.createElement('span');
-      out.className = 'print-floor-value';
-      td.appendChild(out);
-    }
-    out.textContent = select ? (select.value || '') : '';
-  });
+    const dateOut = tr.querySelector('.print-date-value');
+    if (dateOut) dateOut.textContent = formatDateForPrint(row.date || '');
 
-  document.querySelectorAll('td.resident-col').forEach(td => {
-    const input = td.querySelector('input[type="text"]');
-    let out = td.querySelector('.print-resident-value');
-    if (!out) {
-      out = document.createElement('span');
-      out.className = 'print-resident-value';
-      td.appendChild(out);
-    }
-    out.textContent = input ? (input.value || '') : '';
+    const timeOut = tr.querySelector('.print-time-value');
+    if (timeOut) timeOut.textContent = row.time || '';
+
+    const floorOut = tr.querySelector('.print-floor-value');
+    if (floorOut) floorOut.textContent = row.floor || '';
+
+    const residentOut = tr.querySelector('.print-resident-value');
+    if (residentOut) residentOut.textContent = row.resident || '';
   });
+}
+
+function prepareForPrint(){
+  updateActiveFieldFromDom();
+  syncPrintMirrors();
 }
 
 document.addEventListener('input', syncPrintMirrors);
 document.addEventListener('change', syncPrintMirrors);
-window.addEventListener('beforeprint', syncPrintMirrors);
+window.addEventListener('beforeprint', prepareForPrint);
+window.addEventListener('pagehide', prepareForPrint);
 
 </script>
 </body>
