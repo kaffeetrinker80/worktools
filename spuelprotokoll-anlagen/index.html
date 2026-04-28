@@ -1024,6 +1024,10 @@
       .mobile-worker-box label{font-size:.8rem;font-weight:700;color:var(--muted)}
       .mobile-worker-box input{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px}
       .mobile-worker-hint{font-size:.76rem;color:var(--muted);line-height:1.35}
+
+      /* v2.70: Auf Smartphone nur das mobile Bearbeiter-Feld anzeigen.
+         Das Desktop-Feld bleibt im Hintergrund vorhanden, wird aber optisch ausgeblendet. */
+      .worker-desktop-box{display:none !important;}
       tbody.mobile-worklist{display:grid !important;gap:10px}
       tbody.mobile-worklist tr,tbody.mobile-worklist td{display:block !important;border:none !important;padding:0 !important;background:transparent !important}
       tbody.mobile-worklist td::before{display:none !important;content:none !important}
@@ -1103,7 +1107,7 @@
     <div class="card">
       <div class="card-title">Sicherung (Export/Import)</div>
       <div class="card-body">
-        <div style="background:#eef3ff; border:2px solid #2563eb; border-radius:10px; padding:10px 12px; margin-bottom:10px;">
+        <div class="worker-desktop-box" style="background:#eef3ff; border:2px solid #2563eb; border-radius:10px; padding:10px 12px; margin-bottom:10px;">
           <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px; color:#1e3a8a;">👤 Bearbeiter</div>
           <input type="text" id="workerNameInput" placeholder="Name oder Kürzel eingeben…"
             style="width:100%; box-sizing:border-box; padding:9px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.95rem; outline:none;">
@@ -1152,7 +1156,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.69</div>
+    Daten werden lokal im Browser gespeichert · Version 2.70</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1966,6 +1970,12 @@
         container.appendChild(workerBox);
         const workerNameInline = workerBox.querySelector("#workerNameInline");
         workerNameInline.value = getPageWorker(page);
+        // v2.70: Beim Seitenwechsel vorhandenen Bearbeiter sauber übernehmen
+        // und das ausgeblendete Desktop-Feld synchron halten.
+        workerName = getPageWorker(page);
+        saveWorkerName();
+        const topWorkerInput = document.getElementById("workerNameInput");
+        if (topWorkerInput) topWorkerInput.value = workerName;
         workerNameInline.addEventListener("input", () => {
           workerName = normalizeWorkerName(workerNameInline.value);
           setPageWorker(page, workerName);
@@ -3099,3 +3109,4 @@ case "4":
 </script>
 </body>
 </html>
+
