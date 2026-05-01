@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <title>Terminverwaltung – Labor & Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="site.webmanifest">
-<meta name="theme-color" content="#163b5b">
+
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -2386,25 +2382,26 @@ function buildCustomersFromObjectList(list) {
 }
 
 // Demo-Daten (nur beim ersten Mal, danach aus localStorage)
+// Öffentlich nutzbare Beispiel-Daten: keine echten Kunden, Adressen oder Objekte im Code.
 function initDemoData() {
     customers = [
         {
             id: 1,
-            name: "Abita Hausverwaltung Augsburg",
-            street: "Musterstr. 1",
-            zip: "86150",
-            city: "Augsburg",
-            notes: "Mehrere Objekte im Stadtgebiet",
+            name: "Beispiel-Firma GmbH",
+            street: "Musterstraße 1",
+            zip: "12345",
+            city: "Musterstadt",
+            notes: "Beispieldatensatz – echte Daten bitte per JSON-Backup importieren",
             objects: [
                 {
                     id: 1,
-                    name: "Kolpingstr. 8",
+                    name: "Beispiel-Objekt 1",
                     type: "Schwimmbeckenuntersuchung",
-                    city: "Augsburg",
-                    lastDate: "01.09.2025",
-                    nextDate: "01.12.2025",
+                    city: "Musterstadt",
+                    lastDate: "01.01.2026",
+                    nextDate: "01.04.2026",
                     intervalMonths: 3,
-                    notes: "Sonderobjekt: Warmwasserstation",
+                    notes: "Beispielhinweis zur Probennahme",
                     scope: {
                         legionellen: true,
                         mibi: true,
@@ -2414,48 +2411,18 @@ function initDemoData() {
                         details: "3x Mibi, 1x Legionellen, 1x Vorort"
                     },
                     history: [
-                        { date: "01.09.2025", type: "Kühlwasserprüfung", result: "Sauber" }
+                        { date: "01.01.2026", type: "Beispieluntersuchung", result: "Sauber" }
                     ]
-                }
-            ]
-        },
-        {
-            id: 2,
-            name: "Muster Immobilien GmbH",
-            street: "Hauptstr. 99",
-            zip: "80331",
-            city: "München",
-            notes: "",
-            objects: [
-                {
-                    id: 2,
-                    name: "Hauptstr. 12",
-                    type: "Eigenversorgungsanlage",
-                    city: "München",
-                    lastDate: "15.10.2025",
-                    nextDate: "15.10.2026",
-                    intervalMonths: 12,
-                    notes: "",
-                    scope: {
-                        legionellen: true,
-                        mibi: false,
-                        chemie: true,
-                        vorort: true,
-                        sonstiges: false,
-                        details: "1x Legionellen, 1x Chemie, 1x Vorort"
-                    },
-                    history: []
                 }
             ]
         }
     ];
     appointments = [
-        { id: 1, customerId: 1, objectId: 1, dateISO: "2025-12-01", notes: "Regelmäßige nächste Untersuchung" },
-        { id: 2, customerId: 2, objectId: 2, dateISO: "2025-10-15", notes: "Jährliche Kontrolle" }
+        { id: 1, customerId: 1, objectId: 1, dateISO: "2026-04-01", notes: "Beispieltermin" }
     ];
-    nextCustomerId = 3;
-    nextObjectId = 3;
-    nextAppointmentId = 3;
+    nextCustomerId = 2;
+    nextObjectId = 2;
+    nextAppointmentId = 2;
     selectedCustomerId = 1;
 }
 
