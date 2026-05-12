@@ -1057,6 +1057,10 @@
 
     .fab-up.visible{ opacity:1; pointer-events:auto; }
 
+    .fab-next{ position:fixed; right:20px; bottom:86px; width:56px; height:56px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(37,99,235,0.45); z-index:9999; cursor:pointer; font-size:22px; transition:opacity 0.2s, transform 0.2s; opacity:0; pointer-events:none; border:none; }
+    .fab-next.visible{ opacity:1; pointer-events:auto; }
+    .fab-next:active{ transform: scale(0.95); }
+
 </style>
 </head>
 <body>
@@ -1156,7 +1160,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.70</div>
+    Daten werden lokal im Browser gespeichert · Version 2.71</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1197,6 +1201,7 @@
   </div>
 
   <div id="fabUp" class="fab-up" title="Nach oben">↑</div>
+  <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
   <script>
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
@@ -2024,6 +2029,7 @@
           const card = document.createElement("div");
           card.className = "mobile-row-card";
           if (page.id === searchHighlightPageId && row.index === searchHighlightRowIndex) card.classList.add("search-highlight");
+          if (!row.date && !row.time) card.setAttribute("data-free-row", "true");
 
           const head = document.createElement("div");
           head.className = "mobile-row-head";
@@ -3067,11 +3073,29 @@ case "4":
 
 
     const fabUp = document.getElementById("fabUp");
+    const fabNext = document.getElementById("fabNext");
+
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) fabUp.classList.add("visible");
       else fabUp.classList.remove("visible");
+
+      // fabNext nur zeigen wenn man nach oben gescrollt hat (mind. 200px vom Ende entfernt)
+      const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 200);
+      if (window.scrollY > 200 && !nearBottom) fabNext.classList.add("visible");
+      else fabNext.classList.remove("visible");
     });
+
     fabUp.addEventListener("click", () => window.scrollTo({top: 0, behavior: "smooth"}));
+
+    fabNext.addEventListener("click", () => {
+      const firstFree = document.querySelector("[data-free-row='true']");
+      if (firstFree) {
+        firstFree.scrollIntoView({behavior: "smooth", block: "start"});
+      } else {
+        // Fallback: ans Ende scrollen
+        window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+      }
+    });
 
     window.addEventListener("DOMContentLoaded", async () => {
       loadAnlagen();
@@ -3109,4 +3133,3 @@ case "4":
 </script>
 </body>
 </html>
-
