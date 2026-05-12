@@ -1061,6 +1061,26 @@
     .fab-next.visible{ opacity:1; pointer-events:auto; }
     .fab-next:active{ transform: scale(0.95); }
 
+    /* FAB Seite – grün wie aktive Badges, rechteckig damit Text passt */
+    .fab-page{
+      position:fixed; right:20px; bottom:152px;
+      min-width:56px; max-width:130px; height:40px;
+      border-radius:20px;
+      background:#4caf50; color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 4px 12px rgba(76,175,80,0.55);
+      z-index:9999; cursor:pointer; border:none;
+      font-size:0.72rem; font-weight:800; line-height:1.2;
+      padding:0 12px; text-align:center; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis;
+      transition:opacity 0.2s, transform 0.2s;
+      opacity:0; pointer-events:none;
+      /* nur auf Mobile sichtbar */
+    }
+    .fab-page.visible{ opacity:1; pointer-events:auto; }
+    .fab-page:active{ transform: scale(0.95); }
+    @media (min-width:801px){ .fab-page{ display:none !important; } }
+
 </style>
 </head>
 <body>
@@ -1167,7 +1187,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.72</div>
+    Daten werden lokal im Browser gespeichert · Version 2.73</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1209,6 +1229,7 @@
 
   <div id="fabUp" class="fab-up" title="Nach oben">↑</div>
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
+  <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">…</button>
   <script>
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
@@ -2506,6 +2527,7 @@ function renderAll() {
       renderPageInfo();
       renderTable();
       updateHeaderContext();
+      updateFabPageLabel();
       const workerNameInput = document.getElementById("workerNameInput");
       const page = getActivePage();
       if (workerNameInput) workerNameInput.value = page ? getPageWorker(page) : workerName;
@@ -3065,6 +3087,19 @@ case "4":
 
     const fabUp = document.getElementById("fabUp");
     const fabNext = document.getElementById("fabNext");
+    const fabPage = document.getElementById("fabPage");
+
+    // Kurzbezeichnung für den Seiten-FAB (Bereich, max ~16 Zeichen)
+    function updateFabPageLabel() {
+      if (!fabPage) return;
+      const page = getActivePage();
+      if (!page) { fabPage.textContent = "Seite"; return; }
+      // Bereich kürzen falls nötig
+      let label = page.bereich || page.anlage || "Seite";
+      if (label.length > 16) label = label.slice(0, 15) + "…";
+      fabPage.textContent = label;
+      fabPage.title = `${page.anlage} · ${page.bereich} – zur Seitenauswahl`;
+    }
 
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) fabUp.classList.add("visible");
@@ -3074,9 +3109,29 @@ case "4":
       const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 200);
       if (window.scrollY > 200 && !nearBottom) fabNext.classList.add("visible");
       else fabNext.classList.remove("visible");
+
+      // fabPage: ab 200px scrollen sichtbar, immer (solange nach unten gescrollt)
+      if (window.innerWidth <= 800 && window.scrollY > 200) fabPage.classList.add("visible");
+      else fabPage.classList.remove("visible");
     });
 
     fabUp.addEventListener("click", () => window.scrollTo({top: 0, behavior: "smooth"}));
+
+    fabPage.addEventListener("click", () => {
+      // Zur Seitenauswahl (pageList) scrollen und aktiven Badge kurz aufleuchten lassen
+      const pageList = document.getElementById("pageList");
+      if (!pageList) return;
+      pageList.scrollIntoView({behavior: "smooth", block: "start"});
+      // aktiver Badge kurz highlighten
+      setTimeout(() => {
+        const activeBadge = pageList.querySelector(".page-badge.active, .dd-badge.active");
+        if (activeBadge) {
+          activeBadge.style.transition = "box-shadow 0.15s";
+          activeBadge.style.boxShadow = "0 0 0 4px rgba(76,175,80,0.55)";
+          setTimeout(() => { activeBadge.style.boxShadow = ""; }, 900);
+        }
+      }, 350);
+    });
 
     fabNext.addEventListener("click", () => {
       const firstFree = document.querySelector("[data-free-row='true']");
