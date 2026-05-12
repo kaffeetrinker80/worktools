@@ -1072,6 +1072,13 @@
   </div>
 
   
+  <!-- v2.72: Mobile Bearbeiter-Box fest unter dem Header (nur auf Smartphone sichtbar) -->
+  <div id="mobileWorkerBar" class="mobile-worker-box" style="display:none;">
+    <label for="workerNameInline">👤 Wer arbeitet hier</label>
+    <input type="text" id="workerNameInline" placeholder="Name oder Kürzel eingeben…" autocomplete="name">
+    <div class="mobile-worker-hint">Wird auf allen Seiten übernommen und im JSON als <em>performedBy</em> gespeichert.</div>
+  </div>
+
   <div class="toolbar-grid">
     <div class="card">
       <div class="card-title">Anlage &amp; Bereich</div>
@@ -1160,7 +1167,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.71</div>
+    Daten werden lokal im Browser gespeichert · Version 2.72</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1968,29 +1975,10 @@
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
-      if (window.innerWidth <= 800) {
-        const workerBox = document.createElement("div");
-        workerBox.className = "mobile-worker-box";
-        workerBox.innerHTML = `<label>Wer arbeitet hier</label><input type="text" id="workerNameInline" placeholder="Name oder Kürzel"><div class="mobile-worker-hint">Der Name wird pro Seite gespeichert und im JSON als performedBy exportiert.</div>`;
-        container.appendChild(workerBox);
-        const workerNameInline = workerBox.querySelector("#workerNameInline");
-        workerNameInline.value = getPageWorker(page);
-        // v2.70: Beim Seitenwechsel vorhandenen Bearbeiter sauber übernehmen
-        // und das ausgeblendete Desktop-Feld synchron halten.
-        workerName = getPageWorker(page);
-        saveWorkerName();
-        const topWorkerInput = document.getElementById("workerNameInput");
-        if (topWorkerInput) topWorkerInput.value = workerName;
-        workerNameInline.addEventListener("input", () => {
-          workerName = normalizeWorkerName(workerNameInline.value);
-          setPageWorker(page, workerName);
-          saveWorkerName();
-          saveState();
-          const top = document.getElementById("workerNameInput");
-          if (top) top.value = workerName;
-          renderPageInfo();
-          updateHeaderContext();
-        });
+      // v2.72: Mobile-Worker-Box ist jetzt fest unter dem Header –
+      // hier nur noch sicherstellen, dass die aktive Seite den globalen workerName hat.
+      if (page && !page.performedBy && workerName) {
+        setPageWorker(page, workerName);
       }
 
       const tbody = document.createElement("tbody");
@@ -2521,6 +2509,9 @@ function renderAll() {
       const workerNameInput = document.getElementById("workerNameInput");
       const page = getActivePage();
       if (workerNameInput) workerNameInput.value = page ? getPageWorker(page) : workerName;
+      // v2.72: Mobile-Bar immer mit globalem workerName synchron halten
+      const mobileInline = document.getElementById("workerNameInline");
+      if (mobileInline) mobileInline.value = workerName;
     }
 
     
@@ -3052,8 +3043,8 @@ case "4":
         workerNameInput.value = workerName;
         workerNameInput.addEventListener("input", () => {
           workerName = normalizeWorkerName(workerNameInput.value);
-          const page = getActivePage();
-          if (page) setPageWorker(page, workerName);
+          // Alle Seiten aktualisieren
+          pages.forEach(p => setPageWorker(p, workerName));
           saveWorkerName();
           saveState();
           renderPageInfo();
@@ -3097,9 +3088,54 @@ case "4":
       }
     });
 
+    // v2.72: Mobile Bearbeiter-Bar einmalig initialisieren
+    function initMobileWorkerBar() {
+      const bar = document.getElementById("mobileWorkerBar");
+      const inline = document.getElementById("workerNameInline");
+      if (!bar || !inline) return;
+
+      // Nur auf Smartphones anzeigen
+      if (window.innerWidth <= 800) {
+        bar.style.display = "grid";
+      }
+
+      // Wert aus dem globalen workerName (bereits aus localStorage geladen)
+      inline.value = workerName;
+
+      inline.addEventListener("input", () => {
+        workerName = normalizeWorkerName(inline.value);
+        saveWorkerName();
+
+        // Alle Seiten aktualisieren, damit beim Export der Name stimmt
+        pages.forEach(p => setPageWorker(p, workerName));
+        saveState();
+
+        // Desktop-Feld synchron halten
+        const topInput = document.getElementById("workerNameInput");
+        if (topInput) topInput.value = workerName;
+
+        renderPageInfo();
+        updateHeaderContext();
+      });
+
+      // Desktop-Feld -> Mobile-Bar ebenfalls synchron halten
+      const topInput = document.getElementById("workerNameInput");
+      if (topInput) {
+        topInput.addEventListener("input", () => {
+          inline.value = topInput.value;
+        });
+      }
+
+      // Responsive: bei Größenänderung ein-/ausblenden
+      window.addEventListener("resize", () => {
+        bar.style.display = window.innerWidth <= 800 ? "grid" : "none";
+      });
+    }
+
     window.addEventListener("DOMContentLoaded", async () => {
       loadAnlagen();
       loadWorkerName();
+      initMobileWorkerBar();
       const loaded = loadState();
       initAnlageDropdowns();
       initEvents();
