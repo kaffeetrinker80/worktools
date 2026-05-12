@@ -1061,21 +1061,17 @@
     .fab-next.visible{ opacity:1; pointer-events:auto; }
     .fab-next:active{ transform: scale(0.95); }
 
-    /* FAB Seite – grün wie aktive Badges, rechteckig damit Text passt */
+    /* FAB Seite – grün wie aktive Badges, rund wie die anderen FABs */
     .fab-page{
       position:fixed; right:20px; bottom:152px;
-      min-width:56px; max-width:130px; height:40px;
-      border-radius:20px;
+      width:56px; height:56px; border-radius:50%;
       background:#4caf50; color:#fff;
       display:flex; align-items:center; justify-content:center;
       box-shadow:0 4px 12px rgba(76,175,80,0.55);
       z-index:9999; cursor:pointer; border:none;
-      font-size:0.72rem; font-weight:800; line-height:1.2;
-      padding:0 12px; text-align:center; white-space:nowrap;
-      overflow:hidden; text-overflow:ellipsis;
+      font-size:22px;
       transition:opacity 0.2s, transform 0.2s;
       opacity:0; pointer-events:none;
-      /* nur auf Mobile sichtbar */
     }
     .fab-page.visible{ opacity:1; pointer-events:auto; }
     .fab-page:active{ transform: scale(0.95); }
@@ -1229,7 +1225,7 @@
 
   <div id="fabUp" class="fab-up" title="Nach oben">↑</div>
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
-  <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">…</button>
+  <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">☰</button>
   <script>
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
@@ -2527,7 +2523,6 @@ function renderAll() {
       renderPageInfo();
       renderTable();
       updateHeaderContext();
-      updateFabPageLabel();
       const workerNameInput = document.getElementById("workerNameInput");
       const page = getActivePage();
       if (workerNameInput) workerNameInput.value = page ? getPageWorker(page) : workerName;
@@ -3089,17 +3084,7 @@ case "4":
     const fabNext = document.getElementById("fabNext");
     const fabPage = document.getElementById("fabPage");
 
-    // Kurzbezeichnung für den Seiten-FAB (Bereich, max ~16 Zeichen)
-    function updateFabPageLabel() {
-      if (!fabPage) return;
-      const page = getActivePage();
-      if (!page) { fabPage.textContent = "Seite"; return; }
-      // Bereich kürzen falls nötig
-      let label = page.bereich || page.anlage || "Seite";
-      if (label.length > 16) label = label.slice(0, 15) + "…";
-      fabPage.textContent = label;
-      fabPage.title = `${page.anlage} · ${page.bereich} – zur Seitenauswahl`;
-    }
+    // Kurzbezeichnung für den Seiten-FAB wird nicht mehr benötigt (Symbol statt Text)
 
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) fabUp.classList.add("visible");
