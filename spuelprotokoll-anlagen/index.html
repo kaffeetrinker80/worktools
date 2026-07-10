@@ -765,6 +765,14 @@
   .header-sub {
     font-size: 0.95rem;
     opacity: 0.88;
+    overflow-wrap: anywhere;
+  }
+  .header-worker {
+    margin-top: 5px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.96);
+    overflow-wrap: anywhere;
   }
   .row-idx-wrap{
     display:flex;
@@ -1126,7 +1134,7 @@
     @media (max-width: 800px){
       .mobile-worker-box{display:grid;gap:6px;margin:8px 0 10px 0;padding:10px;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
       .mobile-worker-box label{font-size:.8rem;font-weight:700;color:var(--muted)}
-      .mobile-worker-box input{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px}
+      .mobile-worker-box input,.mobile-worker-box select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:#fff;font-size:.92rem}
       .mobile-worker-hint{font-size:.76rem;color:var(--muted);line-height:1.35}
 
       /* v2.70: Auf Smartphone nur das mobile Bearbeiter-Feld anzeigen.
@@ -1144,6 +1152,7 @@
       .mobile-del-btn{width:34px;height:34px;border:none;border-radius:10px;background:rgba(220,38,38,.88);color:#fff;font-size:1.15rem}
       .mobile-row-body{display:grid;gap:12px;padding:12px}
       .mobile-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .mobile-location-grid{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
       .mobile-stack{display:grid;gap:4px;min-width:0}
       .mobile-stack > span{font-size:.77rem;font-weight:700;color:var(--muted)}
       .mobile-stack input,.mobile-stack select,.mobile-stack textarea{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px 10px;font-size:.92rem}
@@ -1206,14 +1215,15 @@
     <div class="header-title">Spülprotokoll – Kontrolle der Wassertemperaturen</div>
     <div class="header-sub">Objektbezogene Hygienespülungen</div>
     <div class="header-sub" id="headerContext">Anlage &amp; Bereich</div>
+    <div class="header-worker" id="headerWorker"></div>
   </div>
 
   
   <!-- v2.72: Mobile Bearbeiter-Box fest unter dem Header (nur auf Smartphone sichtbar) -->
   <div id="mobileWorkerBar" class="mobile-worker-box" style="display:none;">
     <label for="workerNameInline">👤 Wer arbeitet hier</label>
-    <input type="text" id="workerNameInline" placeholder="Name oder Kürzel eingeben…" autocomplete="name">
-    <div class="mobile-worker-hint">Wird auf allen Seiten übernommen und im JSON als <em>performedBy</em> gespeichert.</div>
+    <select id="workerNameInline" aria-label="Bearbeiter auswählen"></select>
+    <div class="mobile-worker-hint">Neue Namen können über „Bearbeiter hinzufügen…“ einmal bestätigt und dauerhaft ergänzt werden.</div>
   </div>
 
   <div class="toolbar-grid">
@@ -1257,9 +1267,9 @@
       <div class="card-body">
         <div class="worker-desktop-box" style="background:#eef3ff; border:2px solid #2563eb; border-radius:10px; padding:10px 12px; margin-bottom:10px;">
           <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px; color:#1e3a8a;">👤 Bearbeiter</div>
-          <input type="text" id="workerNameInput" placeholder="Name oder Kürzel eingeben…"
-            style="width:100%; box-sizing:border-box; padding:9px 10px; border-radius:8px; border:1px solid #93c5fd; font-size:0.95rem; outline:none;">
-          <div style="font-size:0.78rem; color:#6b7280; margin-top:5px;">Wird im Dateinamen und im JSON-Export als <em>performedBy</em> gespeichert.</div>
+          <select id="workerNameInput" aria-label="Bearbeiter auswählen"
+            style="width:100%; box-sizing:border-box; padding:9px 10px; border-radius:8px; border:1px solid #93c5fd; background:#fff; font-size:0.95rem; outline:none;"></select>
+          <div style="font-size:0.78rem; color:#6b7280; margin-top:5px;">Auswahl gilt für alle Seiten. Neue Namen werden nach einmaliger Bestätigung dauerhaft ergänzt.</div>
         </div>
         <div class="subhead">Manuell (JSON)</div>
         <div class="btn-row">
@@ -1304,7 +1314,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.77 · kompakte Statuszeile & Stellen-Picker</div>
+    Daten werden lokal im Browser gespeichert · Version 2.80 · Bearbeiter-Picker & Stellen-Picker</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1387,12 +1397,16 @@
     const STORAGE_KEY = "spuelprotokoll_pages_v3";
     const ANLAGEN_KEY = "spuelprotokoll_anlagen_v2";
     const WORKER_NAME_KEY = "spuelprotokoll_worker_name_v1";
+    const WORKER_LIST_KEY = "spuelprotokoll_worker_list_v1";
+    const DEFAULT_WORKERS = ["Marco Neudecker", "Marcel Blum", "Mirja Nowak"];
+    const MANUAL_WORKER_VALUE = "__manual_worker__";
 
     let anlagenData = {};
 
     let pages = [];
     let activePageId = null;
     let workerName = "";
+    let workerList = [];
 
     let searchHighlightPageId = null;
     let searchHighlightRowIndex = null;
@@ -1605,25 +1619,195 @@
       return String(value ?? "").replace(/\s+/g, " ").trim();
     }
 
+    function canonicalWorkerName(value) {
+      const name = normalizeWorkerName(value);
+      const key = name.toLocaleLowerCase("de-DE");
+      const aliases = {
+        "m": "Marco Neudecker",
+        "ma": "Marco Neudecker",
+        "mar": "Marco Neudecker",
+        "marco": "Marco Neudecker",
+        "marcel": "Marcel Blum",
+        "mirja": "Mirja Nowak"
+      };
+      return aliases[key] || name;
+    }
+
     function loadWorkerName() {
-      try { workerName = normalizeWorkerName(localStorage.getItem(WORKER_NAME_KEY) || ""); }
-      catch (e) { workerName = ""; }
+      try {
+        const stored = normalizeWorkerName(localStorage.getItem(WORKER_NAME_KEY) || "");
+        workerName = canonicalWorkerName(stored);
+        if (workerName && workerName !== stored) localStorage.setItem(WORKER_NAME_KEY, workerName);
+      } catch (e) { workerName = ""; }
     }
 
     function saveWorkerName() {
-      try { localStorage.setItem(WORKER_NAME_KEY, normalizeWorkerName(workerName)); }
+      try { localStorage.setItem(WORKER_NAME_KEY, canonicalWorkerName(workerName)); }
       catch (e) {}
     }
 
+    function loadWorkerList() {
+      let saved = [];
+      try {
+        const raw = localStorage.getItem(WORKER_LIST_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(parsed)) saved = parsed;
+      } catch (e) {}
+
+      const combined = [...DEFAULT_WORKERS, ...saved.map(canonicalWorkerName)];
+      if (workerName) combined.push(canonicalWorkerName(workerName));
+
+      const seen = new Set();
+      workerList = combined.filter(name => {
+        const clean = normalizeWorkerName(name);
+        if (!clean) return false;
+        const key = clean.toLocaleLowerCase("de-DE");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      saveWorkerList();
+    }
+
+    function saveWorkerList() {
+      try { localStorage.setItem(WORKER_LIST_KEY, JSON.stringify(workerList)); }
+      catch (e) {}
+    }
+
+    function addWorkerToList(value) {
+      const name = canonicalWorkerName(value);
+      if (!name) return "";
+      const existing = workerList.find(item => item.toLocaleLowerCase("de-DE") === name.toLocaleLowerCase("de-DE"));
+      if (existing) return existing;
+      workerList.push(name);
+      const fixed = workerList.filter(item => DEFAULT_WORKERS.includes(item));
+      const custom = workerList.filter(item => !DEFAULT_WORKERS.includes(item)).sort((a,b) => a.localeCompare(b, "de"));
+      workerList = [...DEFAULT_WORKERS.filter(item => fixed.includes(item)), ...custom];
+      saveWorkerList();
+      return name;
+    }
+
+    function populateWorkerSelect(select) {
+      if (!select) return;
+      const current = canonicalWorkerName(workerName);
+      select.innerHTML = "";
+
+      if (!current) {
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Bearbeiter auswählen…";
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+      }
+
+      workerList.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+
+      const manual = document.createElement("option");
+      manual.value = MANUAL_WORKER_VALUE;
+      manual.textContent = "+ Bearbeiter hinzufügen…";
+      select.appendChild(manual);
+
+      if (current && workerList.includes(current)) select.value = current;
+    }
+
+    function renderWorkerPickers() {
+      populateWorkerSelect(document.getElementById("workerNameInput"));
+      populateWorkerSelect(document.getElementById("workerNameInline"));
+    }
+
     function getPageWorker(page) {
-      if (!page || typeof page !== "object") return normalizeWorkerName(workerName);
-      if (typeof page.performedBy === "undefined") page.performedBy = normalizeWorkerName(workerName);
-      return normalizeWorkerName(page.performedBy || workerName);
+      const globalName = canonicalWorkerName(workerName);
+      if (globalName) return globalName;
+      if (!page || typeof page !== "object") return "";
+      return canonicalWorkerName(page.performedBy || "");
     }
 
     function setPageWorker(page, value) {
       if (!page || typeof page !== "object") return;
-      page.performedBy = normalizeWorkerName(value);
+      page.performedBy = canonicalWorkerName(value);
+    }
+
+    function findBestStoredWorkerName(pageList) {
+      const names = (Array.isArray(pageList) ? pageList : [])
+        .map(p => canonicalWorkerName(p && p.performedBy))
+        .filter(Boolean);
+      if (!names.length) return "";
+      return names.sort((a, b) => b.length - a.length || a.localeCompare(b))[0];
+    }
+
+    function syncWorkerAcrossPages() {
+      const globalName = canonicalWorkerName(workerName);
+      if (!globalName) return;
+      pages.forEach(p => setPageWorker(p, globalName));
+    }
+
+    function applyWorkerName(value, { announce = false } = {}) {
+      const selected = addWorkerToList(value);
+      if (!selected) {
+        renderWorkerPickers();
+        return;
+      }
+      workerName = selected;
+      saveWorkerName();
+      syncWorkerAcrossPages();
+      saveState();
+      renderWorkerPickers();
+      renderPageInfo();
+      updateHeaderContext();
+      if (announce) toast(`Bearbeiter „${selected}“ wurde hinzugefügt und ausgewählt.`);
+    }
+
+    async function handleWorkerPickerChange(select) {
+      if (!select) return;
+      const value = select.value;
+      if (value !== MANUAL_WORKER_VALUE) {
+        applyWorkerName(value);
+        return;
+      }
+
+      const entered = await uiPrompt("Vor- und Nachname des neuen Bearbeiters:", "", "Bearbeiter hinzufügen");
+      if (entered === null) {
+        renderWorkerPickers();
+        return;
+      }
+      const candidate = canonicalWorkerName(entered);
+      if (!candidate) {
+        await uiAlert("Bitte einen Namen eingeben.", "Bearbeiter hinzufügen");
+        renderWorkerPickers();
+        return;
+      }
+
+      const existing = workerList.find(item => item.toLocaleLowerCase("de-DE") === candidate.toLocaleLowerCase("de-DE"));
+      if (existing) {
+        applyWorkerName(existing);
+        toast(`„${existing}“ ist bereits vorhanden und wurde ausgewählt.`);
+        return;
+      }
+
+      const confirmed = await uiConfirm(
+        `„${candidate}“ als neuen Bearbeiter hinzufügen?\n\nDer Name wird künftig dauerhaft im Picker angeboten.`,
+        "Neuen Bearbeiter bestätigen"
+      );
+      if (!confirmed) {
+        renderWorkerPickers();
+        return;
+      }
+      applyWorkerName(candidate, { announce: true });
+    }
+
+    function initWorkerPickers() {
+      [document.getElementById("workerNameInput"), document.getElementById("workerNameInline")].forEach(select => {
+        if (!select || select.dataset.workerPickerReady === "1") return;
+        select.dataset.workerPickerReady = "1";
+        select.addEventListener("change", () => handleWorkerPickerChange(select));
+      });
+      renderWorkerPickers();
     }
 
     function loadAnlagen() {
@@ -1669,27 +1853,99 @@
 
     const TEMP_MODES = ["kw", "bath", "kitchenBath", "other"];
     const ISSUE_TYPES = ["turbidity", "fixtureDefect", "aeratorStuck", "longTkmax", "other"];
-    const OTHER_LOCATION_OPTIONS = [
+
+    // Raumtyp beschreibt ausschließlich die Art des Raums/Bereichs.
+    const ROOM_TYPE_OPTIONS = [
       "Behandlungsraum / Untersuchungsraum",
-      "Hausanschlussraum (nach dem Wasserzähler)",
+      "Bewohner- / Patientenzimmer",
+      "Hausanschlussraum",
       "Kantine / Großküche",
       "Lüftungszentrale",
-      "Patientenzimmer (Waschbecken im Zimmer)",
       "Pausenraum / Aufenthaltsraum",
       "Personal-WC / Patienten-WC / Besucher-WC",
       "Pflegebad",
       "Putzraum / Reinigungsraum",
-      "Sanitär & Personalbereiche",
+      "Sanitär- & Personalbereich",
+      "Sonstiger Raum / Bereich",
       "Teeküche / Stationsküche",
       "Umkleide (mit integriertem Waschbereich)",
-      "Unrein-Raum (Spüle, Ausgussbecken)",
+      "Unreinraum",
       "Waschküche",
       "Waschraum / Duschraum",
-      "Zentrale Trinkwassererwärmung (Probenahmeventile)"
+      "Zentrale Trinkwassererwärmung"
     ];
 
-    function populateOtherLocationSelect(select, currentValue = "") {
+    const GENERIC_EXTRACTION_POINTS = [
+      "Ausgussbecken",
+      "Dusche",
+      "Handwaschbecken",
+      "Probenahmehahn",
+      "Spüle",
+      "Steckbeckenspüle",
+      "Waschbecken",
+      "Waschbecken im Bewohner-/Patientenzimmer",
+      "Sonstige Entnahmestelle"
+    ];
+
+    function populateRoomTypeSelect(select, currentValue = "") {
       const current = String(currentValue ?? "").trim();
+      select.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "–";
+      select.appendChild(placeholder);
+
+      // Frühere Raumtypen bleiben sichtbar und werden nicht verworfen.
+      if (current && !ROOM_TYPE_OPTIONS.includes(current)) {
+        const legacyOption = document.createElement("option");
+        legacyOption.value = current;
+        legacyOption.textContent = `${current} (bisheriger Eintrag)`;
+        select.appendChild(legacyOption);
+      }
+
+      ROOM_TYPE_OPTIONS.forEach(label => {
+        const option = document.createElement("option");
+        option.value = label;
+        option.textContent = label;
+        select.appendChild(option);
+      });
+
+      select.value = current;
+    }
+
+    function getExtractionPointOptions(roomType = "") {
+      switch (String(roomType || "").trim()) {
+        case "Zentrale Trinkwassererwärmung":
+          return ["WW-Abgang", "Zirkulations-RL", "KW"];
+        case "Hausanschlussraum":
+          return ["Probenahmehahn nach dem Wasserzähler", "Sonstige Entnahmestelle"];
+        case "Bewohner- / Patientenzimmer":
+          return ["Waschbecken im Bewohner-/Patientenzimmer", "Handwaschbecken", "Sonstige Entnahmestelle"];
+        case "Teeküche / Stationsküche":
+        case "Kantine / Großküche":
+        case "Pausenraum / Aufenthaltsraum":
+          return ["Spüle", "Handwaschbecken", "Sonstige Entnahmestelle"];
+        case "Unreinraum":
+          return ["Ausgussbecken", "Spüle", "Steckbeckenspüle", "Handwaschbecken", "Sonstige Entnahmestelle"];
+        case "Putzraum / Reinigungsraum":
+          return ["Ausgussbecken", "Spüle", "Sonstige Entnahmestelle"];
+        case "Pflegebad":
+        case "Waschraum / Duschraum":
+          return ["Waschbecken", "Dusche", "Handwaschbecken", "Sonstige Entnahmestelle"];
+        case "Personal-WC / Patienten-WC / Besucher-WC":
+        case "Sanitär- & Personalbereich":
+          return ["Handwaschbecken", "Waschbecken", "Dusche", "Sonstige Entnahmestelle"];
+        case "Waschküche":
+          return ["Ausgussbecken", "Spüle", "Waschbecken", "Sonstige Entnahmestelle"];
+        default:
+          return GENERIC_EXTRACTION_POINTS;
+      }
+    }
+
+    function populateExtractionPointSelect(select, roomType = "", currentValue = "") {
+      const current = String(currentValue ?? "").trim();
+      const options = getExtractionPointOptions(roomType);
       select.innerHTML = "";
 
       const placeholder = document.createElement("option");
@@ -1697,14 +1953,15 @@
       placeholder.textContent = "Bitte auswählen …";
       select.appendChild(placeholder);
 
-      if (current && !OTHER_LOCATION_OPTIONS.includes(current)) {
+      // Alte freie Angaben bleiben als bisheriger Eintrag auswählbar.
+      if (current && !options.includes(current)) {
         const legacyOption = document.createElement("option");
         legacyOption.value = current;
         legacyOption.textContent = `${current} (bisheriger Eintrag)`;
         select.appendChild(legacyOption);
       }
 
-      OTHER_LOCATION_OPTIONS.forEach(label => {
+      options.forEach(label => {
         const option = document.createElement("option");
         option.value = label;
         option.textContent = label;
@@ -1835,6 +2092,7 @@
     }
 
     function saveState() {
+      const globalName = normalizeWorkerName(workerName);
       pages = pages.map(p => {
         const rows = Array.isArray(p?.rows) ? p.rows : [];
         rows.forEach((row, i) => {
@@ -1845,7 +2103,7 @@
         });
         return {
           ...p,
-          performedBy: normalizeWorkerName((p && p.performedBy) || workerName),
+          performedBy: globalName || normalizeWorkerName(p && p.performedBy),
           rows
         };
       });
@@ -1861,10 +2119,22 @@
         if (Array.isArray(data.pages)) {
           pages = data.pages.map(p => ({
             ...p,
-            performedBy: normalizeWorkerName((p && p.performedBy) || workerName),
+            performedBy: normalizeWorkerName(p && p.performedBy),
             rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
           }));
+
+          // Falls der globale Name noch leer ist, aus den vorhandenen Seiten
+          // den vollständigsten Namen übernehmen. Anschließend alle Seiten
+          // vereinheitlichen, damit jede Anlage denselben Bearbeiter zeigt.
+          if (!normalizeWorkerName(workerName)) {
+            workerName = findBestStoredWorkerName(pages);
+            if (workerName) saveWorkerName();
+          }
+          syncWorkerAcrossPages();
+
           activePageId = data.activePageId || (pages[0] && pages[0].id);
+          // Reparierte Bearbeiternamen sofort dauerhaft zurückschreiben.
+          saveState();
           return true;
         }
       } catch (e) {
@@ -2121,13 +2391,19 @@
 
     function updateHeaderContext(){
       const el = document.getElementById("headerContext");
+      const workerEl = document.getElementById("headerWorker");
       if (!el) return;
       const page = getActivePage();
       if (!page){
         el.textContent = "Anlage & Bereich";
+        if (workerEl) workerEl.textContent = normalizeWorkerName(workerName) ? `Bearbeiter: ${normalizeWorkerName(workerName)}` : "";
         return;
       }
-      el.textContent = `${page.anlage} · ${page.bereich}${getPageWorker(page) ? " · " + getPageWorker(page) : ""}`;
+      el.textContent = `${page.anlage} · ${page.bereich}`;
+      if (workerEl) {
+        const name = getPageWorker(page);
+        workerEl.textContent = name ? `Bearbeiter: ${name}` : "";
+      }
     }
 
     function isRowFilled(row){
@@ -2322,7 +2598,7 @@
 
           const body = document.createElement("div");
           body.className = "mobile-row-body";
-          const row1 = document.createElement("div"); row1.className = "mobile-grid-2";
+          const row1 = document.createElement("div"); row1.className = "mobile-grid-2 mobile-location-grid";
 
           const floorWrap = document.createElement("label"); floorWrap.className = "mobile-stack"; floorWrap.innerHTML = '<span>Stockwerk</span>';
           const floorSelect = document.createElement("select");
@@ -2335,9 +2611,18 @@
 
           const roomWrap = document.createElement("label"); roomWrap.className = "mobile-stack"; roomWrap.innerHTML = '<span>Raumtyp</span>';
           const roomTypeSelect = document.createElement("select");
-          ["", "Whg. / Zimmer", "Heizraum WW-Abgang/Zirk.-RL", "Pflegebad", "Sanitärraum WC/Bad", "Funktionsraum", "Gewerbe / Praxis"].forEach(rt => { const opt = document.createElement("option"); opt.value = rt; opt.textContent = rt || "–"; roomTypeSelect.appendChild(opt); });
-          roomTypeSelect.value = row.roomType || "";
-          roomTypeSelect.addEventListener("change", () => { ensureDateTime(); row.roomType = roomTypeSelect.value; updateMobileTempMode(); saveState(); });
+          populateRoomTypeSelect(roomTypeSelect, row.roomType || "");
+          roomTypeSelect.addEventListener("change", () => {
+            ensureDateTime();
+            row.roomType = roomTypeSelect.value;
+            if (row.roomType === "Zentrale Trinkwassererwärmung" && row.tempMode === "kitchenBath" && !row.wwKitchen && !row.wwBath) {
+              row.tempMode = "other";
+              row.kwOnly = false;
+            }
+            populateExtractionPointSelect(otherLocationSelect, row.roomType, row.tempLocationOther || "");
+            updateMobileTempMode();
+            saveState();
+          });
           roomWrap.appendChild(roomTypeSelect);
           row1.appendChild(floorWrap); row1.appendChild(roomWrap);
 
@@ -2358,7 +2643,7 @@
             ["kw", "Nur KW"],
             ["bath", "Nur Bad"],
             ["kitchenBath", "Küche + Bad"],
-            ["other", "Sonstige Stelle"]
+            ["other", "Einzelne Entnahmestelle"]
           ].forEach(([value, label]) => {
             const option = document.createElement("label");
             option.className = "mobile-temp-mode-option";
@@ -2391,14 +2676,17 @@
 
           const otherLocationWrap = document.createElement("label");
           otherLocationWrap.className = "mobile-stack mobile-temp-location";
-          otherLocationWrap.innerHTML = '<span>Sonstige Stelle</span>';
+          const otherLocationLabel = document.createElement("span");
+          otherLocationLabel.textContent = "Entnahmestelle";
           const otherLocationSelect = document.createElement("select");
-          populateOtherLocationSelect(otherLocationSelect, row.tempLocationOther || "");
+          populateExtractionPointSelect(otherLocationSelect, row.roomType, row.tempLocationOther || "");
           otherLocationSelect.addEventListener("change", () => {
             ensureDateTime();
             row.tempLocationOther = otherLocationSelect.value;
+            updateMobileTempMode();
             saveState();
           });
+          otherLocationWrap.appendChild(otherLocationLabel);
           otherLocationWrap.appendChild(otherLocationSelect);
           temps.appendChild(otherLocationWrap);
 
@@ -2423,25 +2711,37 @@
             row.kwOnly = mode === "kw";
             modeRadios.forEach(radio => { radio.checked = radio.value === mode; });
 
-            const isHeizraum = (row.roomType || "").startsWith("Heizraum");
-            const kitchenActive = mode === "kitchenBath";
-            const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+            const isCentralHeater = row.roomType === "Zentrale Trinkwassererwärmung";
+            const point = String(row.tempLocationOther || "");
+            const centralKw = isCentralHeater && point === "KW";
+            const centralWw = isCentralHeater && (point === "WW-Abgang" || point === "Zirkulations-RL");
 
+            let kwActive = true;
+            let kitchenActive = mode === "kitchenBath";
+            let bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+
+            // Bei den Probenahmeventilen der zentralen Trinkwassererwärmung wird
+            // je Zeile nur der tatsächlich gewählte Strang angezeigt.
+            if (mode === "other" && isCentralHeater && point) {
+              kwActive = centralKw;
+              kitchenActive = false;
+              bathActive = centralWw;
+            }
+
+            otherLocationLabel.textContent = isCentralHeater ? "Probenahmeventil" : "Entnahmestelle";
             otherLocationWrap.style.display = mode === "other" ? "grid" : "none";
+            kwWrap.style.display = kwActive ? "grid" : "none";
             wwKWrap.style.display = kitchenActive ? "grid" : "none";
             wwBWrap.style.display = bathActive ? "grid" : "none";
             wwRow.style.display = (kitchenActive || bathActive) ? "grid" : "none";
             wwRow.style.gridTemplateColumns = (kitchenActive && bathActive) ? "1fr 1fr" : "1fr";
 
-            if (isHeizraum) {
-              wwKLabel.textContent = "WW-Abgang max.";
-              wwBLabel.textContent = "Zirk.-RL max.";
-            } else {
-              wwKLabel.textContent = "WW Küche max.";
-              if (mode === "bath") wwBLabel.textContent = "WW Bad max.";
-              else if (mode === "other") wwBLabel.textContent = "WW sonst. Stelle max.";
-              else wwBLabel.textContent = "WW Bad max.";
-            }
+            kwWrap.querySelector("span").textContent = centralKw ? "KW Probenahmeventil" : "KW min.";
+            wwKLabel.textContent = "WW Küche max.";
+            if (mode === "bath") wwBLabel.textContent = "WW Bad max.";
+            else if (centralWw) wwBLabel.textContent = point === "WW-Abgang" ? "WW-Abgang max." : "Zirkulations-RL max.";
+            else if (mode === "other") wwBLabel.textContent = "WW Entnahmestelle max.";
+            else wwBLabel.textContent = "WW Bad max.";
           };
           updateMobileTempMode();
 
@@ -2681,25 +2981,15 @@ tr.appendChild(tdIdx);
         tdRoomType.classList.add("roomtype");
         tdRoomType.dataset.label = "Raumtyp";
         const roomTypeSelect = document.createElement("select");
-        const roomTypes = [
-          "",
-          "Whg. / Zimmer",
-          "Heizraum (WW-Abgang/Zirk-RL)",
-          "Pflegebad",
-          "Sanitärraum (WC/Bad)",
-          "Funktionsraum",
-          "Gewerbe / Praxis"
-        ];
-        roomTypes.forEach(rt => {
-          const opt = document.createElement("option");
-          opt.value = rt;
-          opt.textContent = rt || "–";
-          roomTypeSelect.appendChild(opt);
-        });
-        roomTypeSelect.value = row.roomType || "";
+        populateRoomTypeSelect(roomTypeSelect, row.roomType || "");
         roomTypeSelect.addEventListener("change", () => {
           ensureDateTime();
           row.roomType = roomTypeSelect.value;
+          if (row.roomType === "Zentrale Trinkwassererwärmung" && row.tempMode === "kitchenBath" && !row.wwKitchen && !row.wwBath) {
+            row.tempMode = "other";
+            row.kwOnly = false;
+          }
+          populateExtractionPointSelect(otherLocationSelect, row.roomType, row.tempLocationOther || "");
           saveState();
           updateTemperatureModeState();
         });
@@ -2762,23 +3052,38 @@ tr.appendChild(tdIdx);
           row.tempMode = mode;
           row.kwOnly = mode === "kw";
 
-          const kitchenActive = mode === "kitchenBath";
-          const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+          const isCentralHeater = row.roomType === "Zentrale Trinkwassererwärmung";
+          const point = String(row.tempLocationOther || "");
+          const centralKw = isCentralHeater && point === "KW";
+          const centralWw = isCentralHeater && (point === "WW-Abgang" || point === "Zirkulations-RL");
+
+          let kwActive = true;
+          let kitchenActive = mode === "kitchenBath";
+          let bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+          if (mode === "other" && isCentralHeater && point) {
+            kwActive = centralKw;
+            kitchenActive = false;
+            bathActive = centralWw;
+          }
 
           if (otherLocationWrap) otherLocationWrap.style.display = mode === "other" ? "block" : "none";
+          otherLocationSelect.title = isCentralHeater ? "Probenahmeventil auswählen" : "Entnahmestelle auswählen";
+          kwInput.disabled = !kwActive;
           wwKInput.disabled = !kitchenActive;
           wwBInput.disabled = !bathActive;
           tdWWK.classList.toggle("temp-disabled", !kitchenActive);
           tdWWB.classList.toggle("temp-disabled", !bathActive);
 
           // Werte bleiben im Datenmodell erhalten, werden in inaktiven Feldern aber nicht angezeigt.
+          kwInput.value = kwActive ? (row.kwTemp || "") : "";
           wwKInput.value = kitchenActive ? (row.wwKitchen || "") : "";
           wwBInput.value = bathActive ? (row.wwBath || "") : "";
+          kwInput.placeholder = kwActive ? "20,0" : "—";
           wwKInput.placeholder = kitchenActive ? "60,0" : "—";
           wwBInput.placeholder = bathActive ? "60,0" : "—";
 
           modeRadios.forEach(radio => { radio.checked = radio.value === mode; });
-          updateHeizraumLabels();
+          updateExtractionLabels();
         }
 
         const kwWrap = document.createElement("div");
@@ -2792,7 +3097,7 @@ tr.appendChild(tdIdx);
           ["kw", "Nur KW"],
           ["bath", "Nur Bad"],
           ["kitchenBath", "Küche+Bad"],
-          ["other", "Sonstige"]
+          ["other", "Einzelne Stelle"]
         ].forEach(([value, label]) => {
           const option = document.createElement("label");
           option.className = "temp-mode-option";
@@ -2821,11 +3126,12 @@ tr.appendChild(tdIdx);
         const otherLocationWrap = document.createElement("div");
         otherLocationWrap.className = "temp-location-other";
         const otherLocationSelect = document.createElement("select");
-        otherLocationSelect.title = "Sonstige Stelle auswählen";
-        populateOtherLocationSelect(otherLocationSelect, row.tempLocationOther || "");
+        otherLocationSelect.title = "Entnahmestelle auswählen";
+        populateExtractionPointSelect(otherLocationSelect, row.roomType, row.tempLocationOther || "");
         otherLocationSelect.addEventListener("change", () => {
           ensureDateTime();
           row.tempLocationOther = otherLocationSelect.value;
+          updateTemperatureModeState();
           saveState();
         });
         otherLocationWrap.appendChild(otherLocationSelect);
@@ -2875,25 +3181,24 @@ tr.appendChild(tdIdx);
         tdWWB.appendChild(wwBInput);
         tr.appendChild(tdWWB);
 
-        function updateHeizraumLabels() {
+        function updateExtractionLabels() {
           const mode = normalizeTemperatureMode(row);
-          const isHeizraum = (row.roomType || "").startsWith("Heizraum");
+          const isCentralHeater = row.roomType === "Zentrale Trinkwassererwärmung";
+          const point = String(row.tempLocationOther || "");
+          const centralKw = isCentralHeater && point === "KW";
+          const centralWw = isCentralHeater && (point === "WW-Abgang" || point === "Zirkulations-RL");
           const kitchenActive = mode === "kitchenBath";
           const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
 
-          if (isHeizraum) {
-            tdWWK.dataset.label = "WW-Abgang";
-            tdWWB.dataset.label = "Zirk.-RL";
-            if (kitchenActive) wwKInput.placeholder = "z. B. 60,0";
-            if (bathActive) wwBInput.placeholder = "z. B. 55,0";
-          } else {
-            tdWWK.dataset.label = "WW Küche";
-            if (mode === "bath") tdWWB.dataset.label = "WW Bad";
-            else if (mode === "other") tdWWB.dataset.label = "WW sonst. Stelle";
-            else tdWWB.dataset.label = "WW Bad";
-            if (kitchenActive && !row.wwKitchen) wwKInput.placeholder = "60,0";
-            if (bathActive && !row.wwBath) wwBInput.placeholder = "60,0";
-          }
+          tdKW.dataset.label = centralKw ? "KW Probenahmeventil" : "KW [°C]";
+          tdWWK.dataset.label = "WW Küche";
+          if (mode === "bath") tdWWB.dataset.label = "WW Bad";
+          else if (centralWw) tdWWB.dataset.label = point;
+          else if (mode === "other") tdWWB.dataset.label = "WW Entnahmestelle";
+          else tdWWB.dataset.label = "WW Bad";
+
+          if (kitchenActive && !row.wwKitchen) wwKInput.placeholder = "60,0";
+          if (bathActive && !row.wwBath) wwBInput.placeholder = centralWw && point === "Zirkulations-RL" ? "55,0" : "60,0";
         }
 
         updateKwWarning();
@@ -3055,7 +3360,7 @@ notesInput.addEventListener("blur", () => {
 
         // Beim Laden einmal prüfen
         updateKwWarning();
-        updateHeizraumLabels();
+        updateExtractionLabels();
       });
 
       table.appendChild(tbody);
@@ -3083,12 +3388,7 @@ function renderAll() {
       renderPageInfo();
       renderTable();
       updateHeaderContext();
-      const workerNameInput = document.getElementById("workerNameInput");
-      const page = getActivePage();
-      if (workerNameInput) workerNameInput.value = page ? getPageWorker(page) : workerName;
-      // v2.72: Mobile-Bar immer mit globalem workerName synchron halten
-      const mobileInline = document.getElementById("workerNameInline");
-      if (mobileInline) mobileInline.value = workerName;
+      renderWorkerPickers();
     }
 
     
@@ -3139,15 +3439,16 @@ function renderAll() {
     
     function exportPagesJSON() {
       const inp = document.getElementById("workerNameInput");
-      if (inp && inp.value.trim()) workerName = normalizeWorkerName(inp.value);
+      if (inp && inp.value && inp.value !== MANUAL_WORKER_VALUE) workerName = canonicalWorkerName(inp.value);
       const workerNameStr = normalizeWorkerName(workerName || "ohne_bearbeiter");
       const workerPart = workerNameStr.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
       const stamp = filenameTimestamp();
       const pagesObj = {
-        pages: pages.map(p => ({ ...p, performedBy: normalizeWorkerName(p.performedBy || workerNameStr) })),
+        pages: pages.map(p => ({ ...p, performedBy: workerNameStr })),
         activePageId,
         exportedAt: timestampString(),
-        defaultPerformedBy: workerNameStr
+        defaultPerformedBy: workerNameStr,
+        workerList: [...workerList]
       };
       const blob = new Blob([JSON.stringify(pagesObj, null, 2)], { type: "application/json" });
       const filename = `spuelprotokoll_seiten_${stamp}_${workerPart}.json`;
@@ -3164,9 +3465,28 @@ function renderAll() {
           if (Array.isArray(data.pages)) {
             pages = data.pages.map(p => ({
               ...p,
-              performedBy: normalizeWorkerName((p && p.performedBy) || workerName),
+              performedBy: canonicalWorkerName(p && p.performedBy),
               rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
             }));
+
+            // Erweiterte Bearbeiterliste aus Sicherungen übernehmen.
+            if (Array.isArray(data.workerList)) {
+              data.workerList.forEach(name => addWorkerToList(name));
+            }
+            pages.forEach(p => {
+              const importedName = canonicalWorkerName(p && p.performedBy);
+              if (importedName) addWorkerToList(importedName);
+            });
+
+            // Der aktuell im Tool eingestellte Bearbeiter bleibt maßgeblich.
+            // Nur wenn noch keiner gesetzt ist, wird der vollständigste Name
+            // aus dem Import beziehungsweise defaultPerformedBy übernommen.
+            if (!normalizeWorkerName(workerName)) {
+              workerName = canonicalWorkerName(data.defaultPerformedBy) || findBestStoredWorkerName(pages);
+              if (workerName) saveWorkerName();
+            }
+            syncWorkerAcrossPages();
+
             activePageId = pages[0] ? pages[0].id : null;
             saveState();
             renderAll();
@@ -3183,7 +3503,7 @@ function renderAll() {
 
     function exportAnlagenJSON() {
       const inp = document.getElementById("workerNameInput");
-      if (inp && inp.value.trim()) workerName = normalizeWorkerName(inp.value);
+      if (inp && inp.value && inp.value !== MANUAL_WORKER_VALUE) workerName = canonicalWorkerName(inp.value);
       const workerNameStr = normalizeWorkerName(workerName || "ohne_bearbeiter");
       const workerPart = workerNameStr.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
       const stamp = filenameTimestamp();
@@ -3619,20 +3939,6 @@ case "4":
         uiAlert("Bereich wurde hinzugefügt.");
       });document.getElementById("searchBtn").addEventListener("click", performSearch);
       document.getElementById("clearSearchBtn").addEventListener("click", clearSearch);
-      const workerNameInput = document.getElementById("workerNameInput");
-      if (workerNameInput) {
-        workerNameInput.value = workerName;
-        workerNameInput.addEventListener("input", () => {
-          workerName = normalizeWorkerName(workerNameInput.value);
-          // Alle Seiten aktualisieren
-          pages.forEach(p => setPageWorker(p, workerName));
-          saveWorkerName();
-          saveState();
-          renderPageInfo();
-          updateHeaderContext();
-        });
-      }
-
       document.getElementById("searchInput").addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -3692,57 +3998,26 @@ case "4":
       }
     });
 
-    // v2.72: Mobile Bearbeiter-Bar einmalig initialisieren
+    // Mobile Bearbeiter-Bar ein-/ausblenden; Auswahl wird zentral verwaltet.
     function initMobileWorkerBar() {
       const bar = document.getElementById("mobileWorkerBar");
-      const inline = document.getElementById("workerNameInline");
-      if (!bar || !inline) return;
-
-      // Nur auf Smartphones anzeigen
-      if (window.innerWidth <= 800) {
-        bar.style.display = "grid";
-      }
-
-      // Wert aus dem globalen workerName (bereits aus localStorage geladen)
-      inline.value = workerName;
-
-      inline.addEventListener("input", () => {
-        workerName = normalizeWorkerName(inline.value);
-        saveWorkerName();
-
-        // Alle Seiten aktualisieren, damit beim Export der Name stimmt
-        pages.forEach(p => setPageWorker(p, workerName));
-        saveState();
-
-        // Desktop-Feld synchron halten
-        const topInput = document.getElementById("workerNameInput");
-        if (topInput) topInput.value = workerName;
-
-        renderPageInfo();
-        updateHeaderContext();
-      });
-
-      // Desktop-Feld -> Mobile-Bar ebenfalls synchron halten
-      const topInput = document.getElementById("workerNameInput");
-      if (topInput) {
-        topInput.addEventListener("input", () => {
-          inline.value = topInput.value;
-        });
-      }
-
-      // Responsive: bei Größenänderung ein-/ausblenden
-      window.addEventListener("resize", () => {
+      if (!bar) return;
+      const updateVisibility = () => {
         bar.style.display = window.innerWidth <= 800 ? "grid" : "none";
-      });
+      };
+      updateVisibility();
+      window.addEventListener("resize", updateVisibility);
     }
 
     window.addEventListener("DOMContentLoaded", async () => {
       loadAnlagen();
       loadWorkerName();
-      initMobileWorkerBar();
       const loaded = loadState();
+      loadWorkerList();
+      initMobileWorkerBar();
       initAnlageDropdowns();
       initEvents();
+      initWorkerPickers();
       // Initialer Check kommt beim ersten Fokus/Intervall, damit beim Start kein Popup-Spam entsteht.
       if (!loaded) {
         const firstAnlage = Object.keys(anlagenData)[0];
