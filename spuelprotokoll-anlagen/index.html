@@ -297,11 +297,13 @@
       margin-top: 4px;
     }
 
-    .temp-location-other input {
+    .temp-location-other input,
+    .temp-location-other select {
       width: 100%;
       padding: 4px 5px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
+      background: #fff;
       font-size: 0.7rem;
       box-sizing: border-box;
     }
@@ -1154,14 +1156,20 @@
       .mobile-temp-mode-option input{width:17px!important;height:17px;margin:0;accent-color:var(--primary)}
       .mobile-temp-note{font-size:.72rem;color:var(--muted);line-height:1.3}
       .mobile-temp-location{display:none}
-      .mobile-issues{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:10px;display:grid;gap:8px}
-      .mobile-issue-toggle{display:flex;align-items:center;gap:7px;min-height:38px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:7px 9px;font-size:.82rem;line-height:1.2;font-weight:700;cursor:pointer}
-      .mobile-issue-toggle input{width:18px!important;height:18px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
-      .mobile-issue-select{display:none;width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px 10px;font-size:.86rem}
+      .mobile-status-block{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:8px;display:grid;gap:7px}
+      .mobile-status-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:stretch}
+      .mobile-issues{display:grid;gap:6px;min-width:0}
+      .mobile-issue-toggle{display:flex;align-items:center;gap:6px;min-height:42px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:5px 7px;font-size:.77rem;line-height:1.08;font-weight:700;cursor:pointer;white-space:normal}
+      .mobile-issue-toggle input{width:17px!important;height:17px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
+      .mobile-issue-select{display:none;width:100%;min-height:38px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:7px 8px;font-size:.82rem}
       .mobile-issue-other{display:none}
+      .mobile-aerator-compact{min-width:0;border:1px solid var(--border);border-radius:10px;background:#fff;padding:5px 6px;display:grid;gap:3px}
+      .mobile-aerator-title{font-size:.71rem;line-height:1.05;font-weight:700;color:var(--text)}
+      .mobile-aerator-controls{display:grid;grid-template-columns:minmax(0,1fr) 46px;gap:4px;align-items:center}
+      .mobile-aerator-count{width:100%!important;min-height:30px!important;text-align:center;padding:2px!important;font-size:.82rem!important;border:1px solid var(--primary)!important;border-radius:6px!important}
       .mobile-checkrow{display:grid;grid-template-columns:1fr 56px;gap:2px;align-items:center}
-      .mobile-check{display:flex;align-items:center;gap:3px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:2px 6px;justify-content:flex-start;overflow:visible;white-space:nowrap;font-size:0.85rem;color:var(--text);font-weight:600}
-      .mobile-check input{width:18px;height:18px}
+      .mobile-check{display:flex;align-items:center;gap:3px;min-height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:1px 4px;justify-content:flex-start;overflow:visible;white-space:nowrap;font-size:.78rem;color:var(--text);font-weight:600}
+      .mobile-check input{width:17px;height:17px}
     }
 
     
@@ -1296,7 +1304,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.76 · Temperaturstellen & kompakte Auffälligkeiten</div>
+    Daten werden lokal im Browser gespeichert · Version 2.77 · kompakte Statuszeile & Stellen-Picker</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1661,6 +1669,50 @@
 
     const TEMP_MODES = ["kw", "bath", "kitchenBath", "other"];
     const ISSUE_TYPES = ["turbidity", "fixtureDefect", "aeratorStuck", "longTkmax", "other"];
+    const OTHER_LOCATION_OPTIONS = [
+      "Behandlungsraum / Untersuchungsraum",
+      "Hausanschlussraum (nach dem Wasserzähler)",
+      "Kantine / Großküche",
+      "Lüftungszentrale",
+      "Patientenzimmer (Waschbecken im Zimmer)",
+      "Pausenraum / Aufenthaltsraum",
+      "Personal-WC / Patienten-WC / Besucher-WC",
+      "Pflegebad",
+      "Putzraum / Reinigungsraum",
+      "Sanitär & Personalbereiche",
+      "Teeküche / Stationsküche",
+      "Umkleide (mit integriertem Waschbereich)",
+      "Unrein-Raum (Spüle, Ausgussbecken)",
+      "Waschküche",
+      "Waschraum / Duschraum",
+      "Zentrale Trinkwassererwärmung (Probenahmeventile)"
+    ];
+
+    function populateOtherLocationSelect(select, currentValue = "") {
+      const current = String(currentValue ?? "").trim();
+      select.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Bitte auswählen …";
+      select.appendChild(placeholder);
+
+      if (current && !OTHER_LOCATION_OPTIONS.includes(current)) {
+        const legacyOption = document.createElement("option");
+        legacyOption.value = current;
+        legacyOption.textContent = `${current} (bisheriger Eintrag)`;
+        select.appendChild(legacyOption);
+      }
+
+      OTHER_LOCATION_OPTIONS.forEach(label => {
+        const option = document.createElement("option");
+        option.value = label;
+        option.textContent = label;
+        select.appendChild(option);
+      });
+
+      select.value = current;
+    }
 
     function normalizeTemperatureMode(row) {
       if (!row || typeof row !== "object") return "kitchenBath";
@@ -2339,13 +2391,15 @@
 
           const otherLocationWrap = document.createElement("label");
           otherLocationWrap.className = "mobile-stack mobile-temp-location";
-          otherLocationWrap.innerHTML = '<span>Bezeichnung der sonstigen Stelle</span>';
-          const otherLocationInput = document.createElement("input");
-          otherLocationInput.type = "text";
-          otherLocationInput.value = row.tempLocationOther || "";
-          otherLocationInput.placeholder = "z. B. Unreinraum oder Waschküche UG";
-          otherLocationInput.addEventListener("input", () => { ensureDateTime(); row.tempLocationOther = otherLocationInput.value; saveState(); });
-          otherLocationWrap.appendChild(otherLocationInput);
+          otherLocationWrap.innerHTML = '<span>Sonstige Stelle</span>';
+          const otherLocationSelect = document.createElement("select");
+          populateOtherLocationSelect(otherLocationSelect, row.tempLocationOther || "");
+          otherLocationSelect.addEventListener("change", () => {
+            ensureDateTime();
+            row.tempLocationOther = otherLocationSelect.value;
+            saveState();
+          });
+          otherLocationWrap.appendChild(otherLocationSelect);
           temps.appendChild(otherLocationWrap);
 
           const kwWrap = document.createElement("label"); kwWrap.className = "mobile-stack"; kwWrap.innerHTML = '<span>KW min.</span>';
@@ -2394,6 +2448,11 @@
           row.issueType = normalizeIssueType(row);
           if (typeof row.issuePresent !== "boolean") row.issuePresent = !!row.issueType;
 
+          const statusBlock = document.createElement("div");
+          statusBlock.className = "mobile-status-block";
+          const statusRow = document.createElement("div");
+          statusRow.className = "mobile-status-row";
+
           const issues = document.createElement("div");
           issues.className = "mobile-issues";
 
@@ -2407,6 +2466,49 @@
           mobileIssueToggle.appendChild(mobileIssueCb);
           mobileIssueToggle.appendChild(mobileIssueToggleText);
           issues.appendChild(mobileIssueToggle);
+
+          const aerCompact = document.createElement("div");
+          aerCompact.className = "mobile-aerator-compact";
+          const aerTitle = document.createElement("div");
+          aerTitle.className = "mobile-aerator-title";
+          aerTitle.textContent = "Strahlregler getauscht";
+          const aerControls = document.createElement("div");
+          aerControls.className = "mobile-aerator-controls";
+          const aerCheck = document.createElement("label");
+          aerCheck.className = "mobile-check";
+          const aerCb = document.createElement("input");
+          aerCb.type = "checkbox";
+          aerCb.checked = !!row.aeratorChanged;
+          aerCb.style.accentColor = "var(--primary)";
+          aerCb.addEventListener("change", () => {
+            ensureDateTime();
+            row.aeratorChanged = aerCb.checked;
+            saveState();
+          });
+          const aerText = document.createElement("span");
+          aerText.textContent = "ja";
+          aerCheck.appendChild(aerCb);
+          aerCheck.appendChild(aerText);
+          const aerCount = document.createElement("input");
+          aerCount.type = "number";
+          aerCount.min = "0";
+          aerCount.step = "1";
+          aerCount.value = row.aeratorChangedCount || "";
+          aerCount.placeholder = "Anz.";
+          aerCount.className = "mobile-aerator-count";
+          aerCount.addEventListener("input", () => {
+            ensureDateTime();
+            row.aeratorChangedCount = aerCount.value;
+            saveState();
+          });
+          aerControls.appendChild(aerCheck);
+          aerControls.appendChild(aerCount);
+          aerCompact.appendChild(aerTitle);
+          aerCompact.appendChild(aerControls);
+
+          statusRow.appendChild(issues);
+          statusRow.appendChild(aerCompact);
+          statusBlock.appendChild(statusRow);
 
           const mobileIssueSelect = document.createElement("select");
           mobileIssueSelect.className = "mobile-issue-select";
@@ -2424,7 +2526,7 @@
             mobileIssueSelect.appendChild(option);
           });
           mobileIssueSelect.value = row.issueType || "";
-          issues.appendChild(mobileIssueSelect);
+          statusBlock.appendChild(mobileIssueSelect);
 
           const mobileOtherIssueWrap = document.createElement("label");
           mobileOtherIssueWrap.className = "mobile-stack mobile-issue-other";
@@ -2433,9 +2535,13 @@
           mobileOtherIssueInput.type = "text";
           mobileOtherIssueInput.value = row.otherIssueText || "";
           mobileOtherIssueInput.placeholder = "kurz beschreiben";
-          mobileOtherIssueInput.addEventListener("input", () => { ensureDateTime(); row.otherIssueText = mobileOtherIssueInput.value; saveState(); });
+          mobileOtherIssueInput.addEventListener("input", () => {
+            ensureDateTime();
+            row.otherIssueText = mobileOtherIssueInput.value;
+            saveState();
+          });
           mobileOtherIssueWrap.appendChild(mobileOtherIssueInput);
-          issues.appendChild(mobileOtherIssueWrap);
+          statusBlock.appendChild(mobileOtherIssueWrap);
 
           function updateMobileIssueState() {
             const active = !!row.issuePresent;
@@ -2469,15 +2575,6 @@
 
           updateMobileIssueState();
 
-          const aerWrap = document.createElement("label"); aerWrap.className = "mobile-stack"; aerWrap.innerHTML = '<span>Strahlregler getauscht</span>';
-          const aerRow = document.createElement("div"); aerRow.className = "mobile-checkrow";
-          const aerCheck = document.createElement("label"); aerCheck.className = "mobile-check";
-          const aerCb = document.createElement("input"); aerCb.type = "checkbox"; aerCb.checked = !!row.aeratorChanged; aerCb.style.accentColor = "var(--primary)"; aerCb.addEventListener("change", () => { ensureDateTime(); row.aeratorChanged = aerCb.checked; saveState(); });
-          const aerText = document.createElement("span"); aerText.textContent = "ja"; aerCheck.appendChild(aerCb); aerCheck.appendChild(aerText);
-          const aerCount = document.createElement("input"); aerCount.type = "number"; aerCount.min = "0"; aerCount.step = "1"; aerCount.value = row.aeratorChangedCount || ""; aerCount.placeholder = "Anz."; aerCount.style.width = "100%"; aerCount.style.minHeight = "34px"; aerCount.style.textAlign = "center"; aerCount.style.padding = "2px"; aerCount.style.fontSize = "0.9rem"; aerCount.style.border = "1px solid var(--primary)"; aerCount.style.borderRadius = "6px";
-          aerCount.addEventListener("input", () => { ensureDateTime(); row.aeratorChangedCount = aerCount.value; saveState(); });
-          aerRow.appendChild(aerCheck); aerRow.appendChild(aerCount); aerWrap.appendChild(aerRow);
-
           const notesWrap = document.createElement("label"); notesWrap.className = "mobile-stack"; notesWrap.innerHTML = '<span>Bemerkung</span>';
           const notesInput = document.createElement("textarea"); notesInput.rows = 3; notesInput.value = row.notes || ""; notesInput.placeholder = "Nur Auffälligkeiten oder Besonderheiten"; notesInput.style.fontSize = "0.9rem";
           notesInput.addEventListener("input", () => { ensureDateTime(); row.notes = notesInput.value; saveState(); });
@@ -2485,7 +2582,7 @@
           notesInput.addEventListener("blur", () => { if (row.index === page.rows.length && isRowFilled(row)) promptNewPageSameObject(); });
           notesWrap.appendChild(notesInput);
 
-          body.appendChild(row1); body.appendChild(unitWrap); body.appendChild(temps); body.appendChild(issues); body.appendChild(aerWrap); body.appendChild(notesWrap);
+          body.appendChild(row1); body.appendChild(unitWrap); body.appendChild(temps); body.appendChild(statusBlock); body.appendChild(notesWrap);
           card.appendChild(head); card.appendChild(body); td.appendChild(card); tr.appendChild(td); tbody.appendChild(tr);
           return;
         }
@@ -2723,13 +2820,15 @@ tr.appendChild(tdIdx);
 
         const otherLocationWrap = document.createElement("div");
         otherLocationWrap.className = "temp-location-other";
-        const otherLocationInput = document.createElement("input");
-        otherLocationInput.type = "text";
-        otherLocationInput.value = row.tempLocationOther || "";
-        otherLocationInput.placeholder = "z. B. Unreinraum";
-        otherLocationInput.title = "Bezeichnung der sonstigen Stelle";
-        otherLocationInput.addEventListener("input", () => { ensureDateTime(); row.tempLocationOther = otherLocationInput.value; saveState(); });
-        otherLocationWrap.appendChild(otherLocationInput);
+        const otherLocationSelect = document.createElement("select");
+        otherLocationSelect.title = "Sonstige Stelle auswählen";
+        populateOtherLocationSelect(otherLocationSelect, row.tempLocationOther || "");
+        otherLocationSelect.addEventListener("change", () => {
+          ensureDateTime();
+          row.tempLocationOther = otherLocationSelect.value;
+          saveState();
+        });
+        otherLocationWrap.appendChild(otherLocationSelect);
         kwWrap.appendChild(otherLocationWrap);
 
         const modeHelp = document.createElement("div");
