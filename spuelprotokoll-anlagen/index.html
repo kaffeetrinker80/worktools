@@ -1399,7 +1399,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.85 · Standort-Schutz & freie Seitennummern</div>
+    Daten werden lokal im Browser gespeichert · Version 2.86 · Bereinigter Datenimport & Standort-Schutz</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1443,9 +1443,9 @@
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
   <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">☰</button>
   <script>
-    // v2.85 basiert vollständig auf dem Daten-/Tabellenstand von v2.80.
-    // Enthalten sind die v2.82-Oberfläche, Standort-Navigation, robuste
-    // Datenübernahme, eindeutige Standortzuordnung und stabile Seitennummern.
+    // v2.86: bereinigte stabile Basis.
+    // Der Browser-Speicher beginnt bewusst neu; bestehende Protokolle werden
+    // einmalig über den Seiten-Import übernommen. Keine automatische Löschung.
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
         "Bungalows"
@@ -1482,12 +1482,11 @@
       ]
     };
 
-    const STORAGE_KEY = "spuelprotokoll_pages_v3";
-    const LEGACY_STORAGE_KEYS = [
-      STORAGE_KEY,
-      "spuelprotokoll_pages_v2",
-      "spuelprotokoll_pages_v1"
-    ];
+    const STORAGE_KEY = "spuelprotokoll_pages_v4_clean";
+    // Bewusst kein automatischer Zugriff auf ältere Browser-Speicherstände.
+    // Dadurch kann eine fehlerhafte Altversion die saubere Datenbasis nicht
+    // erneut überschreiben. Übernahme erfolgt kontrolliert per JSON-Import.
+    const LEGACY_STORAGE_KEYS = [STORAGE_KEY];
     const ANLAGEN_KEY = "spuelprotokoll_anlagen_v2";
     const WORKER_NAME_KEY = "spuelprotokoll_worker_name_v1";
     const WORKER_LIST_KEY = "spuelprotokoll_worker_list_v1";
@@ -1510,7 +1509,6 @@
     const SCHENK_ANLAGE = "Dr.-Schenk-Stift";
     const SCHENK_OLD_BEREICH = "Dr.-Schenk-Stift";
     const SCHENK_NEW_BEREICH = "Betreutes Wohnen";
-    const SCHENK_MIGRATION_KEY = "spuelprotokoll_migration_schenk_betreutes_wohnen_v1";
 
     function cleanLocationLabel(value) {
       return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -2240,6 +2238,66 @@
       };
     }
 
+    function rowHasMeaningfulData(row) {
+      if (!row || typeof row !== "object") return false;
+      const textFields = [
+        "date", "time", "floor", "roomType", "unit", "kwTemp",
+        "tempLocationOther", "wwKitchen", "wwBath", "issueType",
+        "otherIssueText", "aeratorChangedCount", "notes"
+      ];
+      const hasText = textFields.some(key => String(row[key] ?? "").trim() !== "");
+      const hasFlag = [
+        "issuePresent", "turbidityFlag", "fixtureDefectFlag",
+        "aeratorStuckFlag", "longTkmaxFlag", "otherIssueFlag",
+        "aeratorChanged"
+      ].some(key => row[key] === true);
+      const changedMode = normalizeTemperatureMode(row) !== "kitchenBath";
+      return hasText || hasFlag || changedMode;
+    }
+
+    function pageHasMeaningfulData(page) {
+      return Array.isArray(page?.rows) && page.rows.some(rowHasMeaningfulData);
+    }
+
+    function ensurePageRows(rows) {
+      const normalized = Array.isArray(rows)
+        ? rows.map((row, index) => normalizeRowData(row, index + 1))
+        : [];
+      while (normalized.length < 25) normalized.push(createEmptyRow(normalized.length + 1));
+      return normalized;
+    }
+
+    function makeUniquePageId(rawId, usedIds) {
+      let candidate = cleanLocationLabel(rawId);
+      if (!candidate || usedIds.has(candidate)) {
+        do {
+          candidate = "P" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+        } while (usedIds.has(candidate));
+      }
+      usedIds.add(candidate);
+      return candidate;
+    }
+
+    function syncLocationsFromPages() {
+      pages.forEach(page => {
+        const anlage = cleanLocationLabel(page?.anlage);
+        const bereich = cleanLocationLabel(page?.bereich);
+        if (!anlage || !bereich) return;
+        const existingAnlage = Object.keys(anlagenData).find(name => sameLocationName(name, anlage));
+        const canonicalAnlage = existingAnlage || anlage;
+        if (!anlagenData[canonicalAnlage]) anlagenData[canonicalAnlage] = [];
+        if (!anlagenData[canonicalAnlage].some(name => sameLocationName(name, bereich))) {
+          anlagenData[canonicalAnlage].push(bereich);
+        }
+        page.anlage = canonicalAnlage;
+        const canonicalBereich = anlagenData[canonicalAnlage].find(name => sameLocationName(name, bereich)) || bereich;
+        page.bereich = canonicalBereich;
+      });
+      anlagenData = normalizeAnlagenStructure(anlagenData);
+      migrateSchenkAreaInAnlagen();
+      saveAnlagen();
+    }
+
     function createEmptyRow(index) {
       return {
         index,
@@ -2336,31 +2394,6 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-    // v2.85: Einmalige Migration des gleichnamigen Bereichs sowie Bereinigung
-    // versehentlich erzeugter leerer Seiten am Dr.-Schenk-Stift. Seiten mit
-    // Messdaten werden niemals automatisch gelöscht.
-    function cleanupEmptySchenkDuplicatePages() {
-      if (localStorage.getItem(SCHENK_MIGRATION_KEY) === "done") return false;
-
-      const matches = findPagesForLocation(SCHENK_ANLAGE, SCHENK_NEW_BEREICH);
-      const meaningful = matches.filter(pageHasMeaningfulData);
-      const empty = matches.filter(page => !pageHasMeaningfulData(page));
-      let changed = false;
-
-      if (meaningful.length && empty.length) {
-        const removedIds = new Set(empty.map(page => page.id));
-        pages = pages.filter(page => !removedIds.has(page.id));
-        if (removedIds.has(activePageId)) {
-          activePageId = meaningful.slice().sort((a, b) => getPageNumber(a) - getPageNumber(b))[0].id;
-        }
-        changed = true;
-        console.info(`${empty.length} leere doppelte Dr.-Schenk-Stift-Seite(n) wurden entfernt.`);
-      }
-
-      localStorage.setItem(SCHENK_MIGRATION_KEY, "done");
-      return changed;
-    }
-
     function loadState() {
       let selectedData = null;
       let selectedKey = null;
@@ -2391,7 +2424,7 @@
           anlage: cleanLocationLabel(p && p.anlage),
           bereich: cleanLocationLabel(p && p.bereich),
           performedBy: normalizeWorkerName(p && p.performedBy),
-          rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
+          rows: ensurePageRows(p?.rows)
         }));
         ensureUniquePageNumbers();
         migrateSchenkAreaInPages();
@@ -2410,11 +2443,9 @@
           ? requestedActiveId
           : (pages[0] && pages[0].id);
 
-        cleanupEmptySchenkDuplicatePages();
         ensureUniquePageNumbers();
 
-        // Altbestand sofort unter dem aktuellen v3-Schlüssel sichern. So bleibt
-        // die 2.80-Datenstruktur vollständig kompatibel mit der neuen Oberfläche.
+        // Normalisierten Zustand unter dem sauberen v4-Schlüssel sichern.
         saveState();
         if (selectedKey && selectedKey !== STORAGE_KEY) {
           console.info(`Spülprotokoll-Daten wurden von ${selectedKey} nach ${STORAGE_KEY} übernommen.`);
@@ -3909,52 +3940,85 @@ function renderAll() {
 
     function importPagesJSONFile(file) {
       const reader = new FileReader();
-      reader.onload = e => {
+      reader.onload = async e => {
         try {
           const data = JSON.parse(e.target.result);
-          if (Array.isArray(data.pages)) {
-            pages = data.pages.map(p => ({
-              ...p,
-              pageNumber: Number.isInteger(Number(p && p.pageNumber)) && Number(p.pageNumber) > 0 ? Number(p.pageNumber) : null,
-              anlage: cleanLocationLabel(p && p.anlage),
-              bereich: cleanLocationLabel(p && p.bereich),
-              performedBy: canonicalWorkerName(p && p.performedBy),
-              rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
-            }));
-            ensureUniquePageNumbers();
-            migrateSchenkAreaInPages();
+          const importedPages = Array.isArray(data)
+            ? data
+            : (Array.isArray(data?.pages) ? data.pages : null);
 
-            // Erweiterte Bearbeiterliste aus Sicherungen übernehmen.
-            if (Array.isArray(data.workerList)) {
-              data.workerList.forEach(name => addWorkerToList(name));
-            }
-            pages.forEach(p => {
-              const importedName = canonicalWorkerName(p && p.performedBy);
-              if (importedName) addWorkerToList(importedName);
-            });
-
-            // Der aktuell im Tool eingestellte Bearbeiter bleibt maßgeblich.
-            // Nur wenn noch keiner gesetzt ist, wird der vollständigste Name
-            // aus dem Import beziehungsweise defaultPerformedBy übernommen.
-            if (!normalizeWorkerName(workerName)) {
-              workerName = canonicalWorkerName(data.defaultPerformedBy) || findBestStoredWorkerName(pages);
-              if (workerName) saveWorkerName();
-            }
-            syncWorkerAcrossPages();
-
-            activePageId = pages[0] ? pages[0].id : null;
-            cleanupEmptySchenkDuplicatePages();
-            ensureUniquePageNumbers();
-            saveState();
-            renderAll();
-            uiAlert("Seiten-Import erfolgreich.");
-          } else {
-            uiAlert("Datei enthält keine gültigen Seitendaten.");
+          if (!importedPages || !importedPages.length) {
+            await uiAlert("Datei enthält keine gültigen Seitendaten.");
+            return;
           }
+
+          if (pages.length) {
+            const confirmed = await uiConfirm(
+              `Der Import ersetzt die aktuell gespeicherten ${pages.length} Seite(n) vollständig. Fortfahren?`,
+              "Seiten importieren"
+            );
+            if (!confirmed) return;
+          }
+
+          const usedIds = new Set();
+          pages = importedPages
+            .filter(page => page && typeof page === "object")
+            .map((page, index) => ({
+              ...page,
+              id: makeUniquePageId(page.id, usedIds),
+              pageNumber: Number.isInteger(Number(page.pageNumber)) && Number(page.pageNumber) > 0
+                ? Number(page.pageNumber)
+                : index + 1,
+              anlage: cleanLocationLabel(page.anlage),
+              bereich: cleanLocationLabel(page.bereich),
+              performedBy: canonicalWorkerName(page.performedBy),
+              rows: ensurePageRows(page.rows)
+            }));
+
+          if (!pages.length) {
+            await uiAlert("In der Datei wurden keine verwendbaren Protokollseiten gefunden.");
+            return;
+          }
+
+          ensureUniquePageNumbers();
+          migrateSchenkAreaInPages();
+          syncLocationsFromPages();
+
+          if (Array.isArray(data?.workerList)) {
+            data.workerList.forEach(name => addWorkerToList(name));
+          }
+          pages.forEach(page => {
+            const importedName = canonicalWorkerName(page.performedBy);
+            if (importedName) addWorkerToList(importedName);
+          });
+
+          if (!normalizeWorkerName(workerName)) {
+            workerName = canonicalWorkerName(data?.defaultPerformedBy) || findBestStoredWorkerName(pages);
+            if (workerName) saveWorkerName();
+          }
+          syncWorkerAcrossPages();
+
+          const requestedActiveId = data?.activePageId;
+          activePageId = pages.some(page => page.id === requestedActiveId)
+            ? requestedActiveId
+            : pages.slice().sort((a, b) => getPageNumber(a) - getPageNumber(b))[0].id;
+
+          saveState();
+          initAnlageDropdowns();
+          renderWorkerPickers();
+          renderAll();
+          await uiAlert(
+            `${pages.length} Protokollseite(n) wurden erfolgreich importiert.
+
+Dr.-Schenk-Stift wird dabei dem Bereich „Betreutes Wohnen“ zugeordnet.`,
+            "Import erfolgreich"
+          );
         } catch (err) {
-          uiAlert("Fehler beim Seiten-Import: " + err.message);
+          console.error("Fehler beim Seiten-Import:", err);
+          await uiAlert("Fehler beim Seiten-Import: " + err.message);
         }
       };
+      reader.onerror = () => uiAlert("Die Importdatei konnte nicht gelesen werden.");
       reader.readAsText(file);
     }
 
@@ -4390,11 +4454,18 @@ case "4":
             bereiche = ["Allgemein"];
           }
 
-          anlagenData[String(name).trim()] = bereiche;
+          const cleanName = cleanLocationLabel(name);
+          const existingAnlage = Object.keys(anlagenData).find(item => sameLocationName(item, cleanName));
+          if (existingAnlage) {
+            await uiAlert(`Die Anlage „${existingAnlage}“ existiert bereits und kann nicht doppelt angelegt werden.`);
+            return;
+          }
+          bereiche = dedupeNames(bereiche);
+          anlagenData[cleanName] = bereiche;
           saveAnlagen();
           initAnlageDropdowns();
 
-          document.getElementById("anlageSelect").value = String(name).trim();
+          document.getElementById("anlageSelect").value = cleanName;
           document.getElementById("anlageSelect").dispatchEvent(new Event("change"));
           document.getElementById("bereichSelect").value = bereiche[0];
           return;
@@ -4425,9 +4496,10 @@ case "4":
         const newBereich = await uiPrompt("Name des neuen Bereichs:", "", "Neuer Bereich");
         if (newBereich === null || !String(newBereich).trim()) return;
 
-        const bName = String(newBereich).trim();
-        if (anlagenData[anlageName].includes(bName)) {
-          uiAlert(`Der Bereich „${bName}“ existiert bereits.`);
+        const bName = cleanLocationLabel(newBereich);
+        const existingBereich = anlagenData[anlageName].find(item => sameLocationName(item, bName));
+        if (existingBereich) {
+          await uiAlert(`Der Bereich „${existingBereich}“ existiert bereits und kann nicht doppelt angelegt werden.`);
           return;
         }
 
@@ -4527,10 +4599,9 @@ case "4":
       initWorkerPickers();
       // Initialer Check kommt beim ersten Fokus/Intervall, damit beim Start kein Popup-Spam entsteht.
       if (!loaded || !pages.length) {
+        // Sauberer Erststart: Import-Schaltfläche anzeigen und nichts automatisch
+        // anlegen. So kann der Altbestand kontrolliert einmalig importiert werden.
         renderAll();
-        // Kein nutzbarer gespeicherter Zustand vorhanden: erst fragen, wo gerade
-        // gearbeitet wird, statt blind die erste Anlage zu nehmen.
-        openStandortWechsel();
       } else {
         // 2.80-Bestand bleibt erhalten; die neue Oberfläche setzt nur die
         // Standort-Navigation und die gefilterte Seitenliste darüber.
