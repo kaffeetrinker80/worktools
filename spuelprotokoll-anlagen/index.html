@@ -213,7 +213,7 @@
 
     .temp-mode-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       gap: 3px;
       margin-top: 4px;
       min-width: 118px;
@@ -253,6 +253,33 @@
       color: var(--muted);
       font-size: 0.64rem;
       line-height: 1.15;
+    }
+
+    .kw-only-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      padding: 5px 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .kw-only-toggle:has(input:checked) {
+      border-color: var(--primary);
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .kw-only-toggle input {
+      width: 14px !important;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--primary);
     }
 
 
@@ -939,6 +966,10 @@
       .mobile-temp-mode-option{display:flex;align-items:center;gap:6px;min-height:38px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:6px 8px;font-size:.8rem;font-weight:700;cursor:pointer}
       .mobile-temp-mode-option:has(input:checked){border-color:var(--primary);background:#eff6ff;color:#1d4ed8}
       .mobile-temp-mode-option input{width:17px!important;height:17px;margin:0;accent-color:var(--primary)}
+      .mobile-temp-mode-option:last-child{grid-column:1 / -1}
+      .mobile-kw-only-toggle{display:flex;align-items:center;gap:8px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:7px 10px;font-size:.82rem;font-weight:800;cursor:pointer}
+      .mobile-kw-only-toggle:has(input:checked){border-color:var(--primary);background:#eff6ff;color:#1d4ed8}
+      .mobile-kw-only-toggle input{width:18px!important;height:18px;margin:0;accent-color:var(--primary)}
       .mobile-temp-note{font-size:.72rem;color:var(--muted);line-height:1.3}
       .mobile-temp-location{display:none}
       .mobile-status-block{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:8px;display:grid;gap:7px}
@@ -1093,7 +1124,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.86</div>
+    Daten werden lokal im Browser gespeichert · Version 2.87</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1753,7 +1784,7 @@
       return `${date} ${time}`;
     }
 
-    const TEMP_MODES = ["kw", "bath", "kitchenBath", "other"];
+    const TEMP_MODES = ["kitchenBath", "bath", "other"];
     const ISSUE_TYPES = ["turbidity", "fixtureDefect", "aeratorStuck", "longTkmax", "other"];
 
     // Raumtyp beschreibt ausschließlich die Art des Raums/Bereichs.
@@ -1872,16 +1903,26 @@
 
     function normalizeTemperatureMode(row) {
       if (!row || typeof row !== "object") return "kitchenBath";
-      // Frühere Entwürfe verwendeten intern „washbasin“. Diese Daten werden als „Nur Bad“ übernommen.
+      // Frühere Daten mit „Nur KW“ hatten noch keinen getrennten Standortmodus.
+      // Wenn möglich wird die einzelne Entnahmestelle übernommen, sonst „Bad“.
+      if (row.tempMode === "kw") {
+        if (TEMP_MODES.includes(row.tempBaseMode)) return row.tempBaseMode;
+        if (String(row.tempLocationOther ?? "").trim() !== "") return "other";
+        return "bath";
+      }
       if (row.tempMode === "washbasin" || row.tempMode === "bath") return "bath";
       if (TEMP_MODES.includes(row.tempMode)) return row.tempMode;
-      if (row.kwOnly === true) return "kw";
       if (String(row.tempLocationOther ?? "").trim() !== "") return "other";
 
       const hasKitchen = String(row.wwKitchen ?? "").trim() !== "";
       const hasBath = String(row.wwBath ?? "").trim() !== "";
       if (hasBath && !hasKitchen) return "bath";
       return "kitchenBath";
+    }
+
+    function normalizeKwOnly(row) {
+      if (!row || typeof row !== "object") return false;
+      return row.kwOnly === true || row.tempMode === "kw";
     }
 
     function normalizeIssueType(row) {
@@ -1906,6 +1947,7 @@
     function normalizeRowData(row, fallbackIndex) {
       const source = (row && typeof row === "object") ? row : {};
       const mode = normalizeTemperatureMode(source);
+      const kwOnly = normalizeKwOnly(source);
       const issueType = normalizeIssueType(source);
       const issuePresent = typeof source.issuePresent === "boolean"
         ? source.issuePresent
@@ -1917,8 +1959,8 @@
         tempMode: mode,
         issueType,
         issuePresent,
-        // Kompatibilitätsfeld für vorhandene Importdateien.
-        kwOnly: mode === "kw"
+        // Wasserart ist unabhängig von der gewählten Entnahmestelle.
+        kwOnly
       };
     }
 
@@ -1936,7 +1978,8 @@
         "aeratorChanged"
       ].some(key => row[key] === true);
       const changedMode = normalizeTemperatureMode(row) !== "kitchenBath";
-      return hasText || hasFlag || changedMode;
+      const kwOnly = normalizeKwOnly(row);
+      return hasText || hasFlag || changedMode || kwOnly;
     }
 
     function pageHasMeaningfulData(page) {
@@ -2062,8 +2105,9 @@
         rows.forEach((row, i) => {
           if (!row || typeof row !== "object") return;
           row.index = row.index || (i + 1);
+          const legacyKwOnly = normalizeKwOnly(row);
           row.tempMode = normalizeTemperatureMode(row);
-          row.kwOnly = row.tempMode === "kw";
+          row.kwOnly = legacyKwOnly;
         });
         return {
           ...p,
@@ -2773,8 +2817,9 @@
           const unitInput = document.createElement("input"); unitInput.type = "text"; unitInput.value = row.unit || ""; unitInput.placeholder = "z. B. Haus 4 · App. 2";
           unitInput.addEventListener("input", () => { ensureDateTime(); row.unit = unitInput.value; saveState(); }); unitWrap.appendChild(unitInput);
 
+          const legacyKwOnly = normalizeKwOnly(row);
           row.tempMode = normalizeTemperatureMode(row);
-          row.kwOnly = row.tempMode === "kw";
+          row.kwOnly = legacyKwOnly;
 
           const temps = document.createElement("div"); temps.className = "mobile-temps";
           const tempsTitle = document.createElement("div"); tempsTitle.className = "mobile-temps-title"; tempsTitle.textContent = "Temperaturen"; temps.appendChild(tempsTitle);
@@ -2783,9 +2828,8 @@
           modeGrid.className = "mobile-temp-mode-grid";
           const modeRadios = [];
           [
-            ["kw", "Nur KW"],
-            ["bath", "Nur Bad"],
             ["kitchenBath", "Küche + Bad"],
+            ["bath", "Bad"],
             ["other", "Einzelne Entnahmestelle"]
           ].forEach(([value, label]) => {
             const option = document.createElement("label");
@@ -2801,7 +2845,6 @@
               if (!radio.checked) return;
               ensureDateTime();
               row.tempMode = value;
-              row.kwOnly = value === "kw";
               updateMobileTempMode();
               saveState();
             });
@@ -2812,9 +2855,26 @@
           });
           temps.appendChild(modeGrid);
 
+          const mobileKwOnlyToggle = document.createElement("label");
+          mobileKwOnlyToggle.className = "mobile-kw-only-toggle";
+          const mobileKwOnlyCheckbox = document.createElement("input");
+          mobileKwOnlyCheckbox.type = "checkbox";
+          mobileKwOnlyCheckbox.checked = row.kwOnly === true;
+          const mobileKwOnlyText = document.createElement("span");
+          mobileKwOnlyText.textContent = "Nur KW";
+          mobileKwOnlyCheckbox.addEventListener("change", () => {
+            ensureDateTime();
+            row.kwOnly = mobileKwOnlyCheckbox.checked;
+            updateMobileTempMode();
+            saveState();
+          });
+          mobileKwOnlyToggle.appendChild(mobileKwOnlyCheckbox);
+          mobileKwOnlyToggle.appendChild(mobileKwOnlyText);
+          temps.appendChild(mobileKwOnlyToggle);
+
           const modeNote = document.createElement("div");
           modeNote.className = "mobile-temp-note";
-          modeNote.textContent = "Nicht benötigte Felder werden ausgeblendet; vorhandene Werte bleiben gespeichert.";
+          modeNote.textContent = "Stelle auswählen; „Nur KW“ blendet die Warmwasserfelder aus. Vorhandene Werte bleiben gespeichert.";
           temps.appendChild(modeNote);
 
           const otherLocationWrap = document.createElement("label");
@@ -2826,6 +2886,11 @@
           otherLocationSelect.addEventListener("change", () => {
             ensureDateTime();
             row.tempLocationOther = otherLocationSelect.value;
+            if (row.roomType === "Zentrale Trinkwassererwärmung") {
+              if (row.tempLocationOther === "KW") row.kwOnly = true;
+              if (row.tempLocationOther === "WW-Abgang" || row.tempLocationOther === "Zirkulations-RL") row.kwOnly = false;
+              mobileKwOnlyCheckbox.checked = row.kwOnly === true;
+            }
             updateMobileTempMode();
             saveState();
           });
@@ -2851,24 +2916,27 @@
           updateMobileTempMode = () => {
             const mode = normalizeTemperatureMode(row);
             row.tempMode = mode;
-            row.kwOnly = mode === "kw";
+            row.kwOnly = normalizeKwOnly(row);
             modeRadios.forEach(radio => { radio.checked = radio.value === mode; });
+            mobileKwOnlyCheckbox.checked = row.kwOnly;
 
             const isCentralHeater = row.roomType === "Zentrale Trinkwassererwärmung";
             const point = String(row.tempLocationOther || "");
             const centralKw = isCentralHeater && point === "KW";
             const centralWw = isCentralHeater && (point === "WW-Abgang" || point === "Zirkulations-RL");
+            if (mode === "other" && centralKw) row.kwOnly = true;
+            if (mode === "other" && centralWw) row.kwOnly = false;
+            mobileKwOnlyCheckbox.checked = row.kwOnly;
+            mobileKwOnlyCheckbox.disabled = mode === "other" && isCentralHeater && !!point;
 
             let kwActive = true;
-            let kitchenActive = mode === "kitchenBath";
-            let bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+            let kitchenActive = !row.kwOnly && mode === "kitchenBath";
+            let bathActive = !row.kwOnly && (mode === "bath" || mode === "other" || mode === "kitchenBath");
 
-            // Bei den Probenahmeventilen der zentralen Trinkwassererwärmung wird
-            // je Zeile nur der tatsächlich gewählte Strang angezeigt.
             if (mode === "other" && isCentralHeater && point) {
-              kwActive = centralKw;
+              kwActive = row.kwOnly || centralKw;
               kitchenActive = false;
-              bathActive = centralWw;
+              bathActive = !row.kwOnly && centralWw;
             }
 
             otherLocationLabel.textContent = isCentralHeater ? "Probenahmeventil" : "Entnahmestelle";
@@ -2879,7 +2947,10 @@
             wwRow.style.display = (kitchenActive || bathActive) ? "grid" : "none";
             wwRow.style.gridTemplateColumns = (kitchenActive && bathActive) ? "1fr 1fr" : "1fr";
 
-            kwWrap.querySelector("span").textContent = centralKw ? "KW Probenahmeventil" : "KW min.";
+            if (centralKw) kwWrap.querySelector("span").textContent = "KW Probenahmeventil";
+            else if (row.kwOnly && mode === "bath") kwWrap.querySelector("span").textContent = "KW Bad min.";
+            else if (row.kwOnly && mode === "other") kwWrap.querySelector("span").textContent = "KW Entnahmestelle min.";
+            else kwWrap.querySelector("span").textContent = "KW min.";
             wwKLabel.textContent = "WW Küche max.";
             if (mode === "bath") wwBLabel.textContent = "WW Bad max.";
             else if (centralWw) wwBLabel.textContent = point === "WW-Abgang" ? "WW-Abgang max." : "Zirkulations-RL max.";
@@ -3187,26 +3258,31 @@ tr.appendChild(tdIdx);
           updateKwWarning();
         });
 
+        const legacyKwOnly = normalizeKwOnly(row);
         row.tempMode = normalizeTemperatureMode(row);
-        row.kwOnly = row.tempMode === "kw";
+        row.kwOnly = legacyKwOnly;
 
         function updateTemperatureModeState() {
           const mode = normalizeTemperatureMode(row);
           row.tempMode = mode;
-          row.kwOnly = mode === "kw";
+          row.kwOnly = normalizeKwOnly(row);
 
           const isCentralHeater = row.roomType === "Zentrale Trinkwassererwärmung";
           const point = String(row.tempLocationOther || "");
           const centralKw = isCentralHeater && point === "KW";
           const centralWw = isCentralHeater && (point === "WW-Abgang" || point === "Zirkulations-RL");
+          if (mode === "other" && centralKw) row.kwOnly = true;
+          if (mode === "other" && centralWw) row.kwOnly = false;
+          kwOnlyCheckbox.checked = row.kwOnly;
+          kwOnlyCheckbox.disabled = mode === "other" && isCentralHeater && !!point;
 
           let kwActive = true;
-          let kitchenActive = mode === "kitchenBath";
-          let bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+          let kitchenActive = !row.kwOnly && mode === "kitchenBath";
+          let bathActive = !row.kwOnly && (mode === "bath" || mode === "other" || mode === "kitchenBath");
           if (mode === "other" && isCentralHeater && point) {
-            kwActive = centralKw;
+            kwActive = row.kwOnly || centralKw;
             kitchenActive = false;
-            bathActive = centralWw;
+            bathActive = !row.kwOnly && centralWw;
           }
 
           if (otherLocationWrap) otherLocationWrap.style.display = mode === "other" ? "block" : "none";
@@ -3226,6 +3302,7 @@ tr.appendChild(tdIdx);
           wwBInput.placeholder = bathActive ? "60,0" : "—";
 
           modeRadios.forEach(radio => { radio.checked = radio.value === mode; });
+          kwOnlyCheckbox.checked = row.kwOnly;
           updateExtractionLabels();
         }
 
@@ -3237,10 +3314,9 @@ tr.appendChild(tdIdx);
         modeGrid.className = "temp-mode-grid";
         const modeRadios = [];
         [
-          ["kw", "Nur KW"],
-          ["bath", "Nur Bad"],
-          ["kitchenBath", "Küche+Bad"],
-          ["other", "Einzelne Stelle"]
+          ["kitchenBath", "Küche + Bad"],
+          ["bath", "Bad"],
+          ["other", "Einzelne Entnahmestelle"]
         ].forEach(([value, label]) => {
           const option = document.createElement("label");
           option.className = "temp-mode-option";
@@ -3255,7 +3331,6 @@ tr.appendChild(tdIdx);
             if (!radio.checked) return;
             ensureDateTime();
             row.tempMode = value;
-            row.kwOnly = value === "kw";
             updateTemperatureModeState();
             saveState();
           });
@@ -3266,6 +3341,23 @@ tr.appendChild(tdIdx);
         });
         kwWrap.appendChild(modeGrid);
 
+        const kwOnlyToggle = document.createElement("label");
+        kwOnlyToggle.className = "kw-only-toggle";
+        const kwOnlyCheckbox = document.createElement("input");
+        kwOnlyCheckbox.type = "checkbox";
+        kwOnlyCheckbox.checked = row.kwOnly === true;
+        const kwOnlyText = document.createElement("span");
+        kwOnlyText.textContent = "Nur KW";
+        kwOnlyCheckbox.addEventListener("change", () => {
+          ensureDateTime();
+          row.kwOnly = kwOnlyCheckbox.checked;
+          updateTemperatureModeState();
+          saveState();
+        });
+        kwOnlyToggle.appendChild(kwOnlyCheckbox);
+        kwOnlyToggle.appendChild(kwOnlyText);
+        kwWrap.appendChild(kwOnlyToggle);
+
         const otherLocationWrap = document.createElement("div");
         otherLocationWrap.className = "temp-location-other";
         const otherLocationSelect = document.createElement("select");
@@ -3274,6 +3366,11 @@ tr.appendChild(tdIdx);
         otherLocationSelect.addEventListener("change", () => {
           ensureDateTime();
           row.tempLocationOther = otherLocationSelect.value;
+          if (row.roomType === "Zentrale Trinkwassererwärmung") {
+            if (row.tempLocationOther === "KW") row.kwOnly = true;
+            if (row.tempLocationOther === "WW-Abgang" || row.tempLocationOther === "Zirkulations-RL") row.kwOnly = false;
+            kwOnlyCheckbox.checked = row.kwOnly === true;
+          }
           updateTemperatureModeState();
           saveState();
         });
@@ -3333,7 +3430,10 @@ tr.appendChild(tdIdx);
           const kitchenActive = mode === "kitchenBath";
           const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
 
-          tdKW.dataset.label = centralKw ? "KW Probenahmeventil" : "KW [°C]";
+          if (centralKw) tdKW.dataset.label = "KW Probenahmeventil";
+          else if (row.kwOnly && mode === "bath") tdKW.dataset.label = "KW Bad";
+          else if (row.kwOnly && mode === "other") tdKW.dataset.label = "KW Entnahmestelle";
+          else tdKW.dataset.label = "KW [°C]";
           tdWWK.dataset.label = "WW Küche";
           if (mode === "bath") tdWWB.dataset.label = "WW Bad";
           else if (centralWw) tdWWB.dataset.label = point;
