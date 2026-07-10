@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -579,8 +579,8 @@
     .toolbar { display:none; } /* legacy */
 
     .toolbar-grid{
-      display:grid;
-      grid-template-columns: repeat(12, 1fr);
+      display:flex;
+      flex-direction: column;
       gap: 10px;
       margin: 12px 0 8px 0;
     }
@@ -599,11 +599,37 @@
     }
     .card-body{ font-size: 0.9rem; }
 
-    /* placement */
-    .toolbar-grid .card:nth-child(1){ grid-column: span 6; }
-    .toolbar-grid .card:nth-child(2){ grid-column: span 3; }
-    .toolbar-grid .card:nth-child(3){ grid-column: span 6; }
-    .toolbar-grid .card:nth-child(4){ grid-column: span 3; }
+    /* v2.81: Seiten-Export ist der wichtigste Handgriff für die Kollegen beim
+       Spülen (die Auswertungsdaten landen darüber bei Marco) - deshalb eigene,
+       optisch hervorgehobene Karte statt in "Sicherung" untergemischt. */
+    .highlight-card{
+      border: 2px solid var(--primary);
+      background: #eff6ff;
+    }
+    .highlight-card .card-title{ color: #1d4ed8; }
+
+    /* v2.81: Anlage/Bereich verwalten + restliche Sicherung werden selten
+       gebraucht -> in ein einklappbares "Einstellungen"-Element verschoben. */
+    .settings-details.card{ padding: 0; }
+    .settings-details > .settings-summary{
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .settings-details > .settings-summary::-webkit-details-marker{ display: none; }
+    .settings-details > .settings-summary::after{
+      content: "▸";
+      margin-left: auto;
+      color: var(--muted);
+      transition: transform .15s;
+    }
+    .settings-details[open] > .settings-summary::after{ transform: rotate(90deg); }
+    .settings-details > .card-body{ padding: 0 12px 12px 12px; }
 
     .field-row{
       display:flex;
@@ -692,13 +718,6 @@
     /* keep old results item styles compatible */
     .search-results-item{ margin-bottom: 4px; }
 
-    @media (max-width: 1000px){
-      .toolbar-grid .card:nth-child(1){ grid-column: span 12; }
-      .toolbar-grid .card:nth-child(2){ grid-column: span 12; }
-      .toolbar-grid .card:nth-child(3){ grid-column: span 12; }
-      .toolbar-grid .card:nth-child(4){ grid-column: span 12; }
-    }
-
     @media print{
       .toolbar-grid{ display:none !important; }
       #searchResults{ display:none !important; }
@@ -774,6 +793,29 @@
     color: rgba(255,255,255,0.96);
     overflow-wrap: anywhere;
   }
+  .header-location-row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  .header-location-row .header-sub{ margin: 0; flex: 1; min-width: 0; }
+  .header-edit-btn{
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .header-edit-btn:active{ transform: scale(0.96); }
+  .header-edit-btn:hover{ background: rgba(255,255,255,0.2); }
   .row-idx-wrap{
     display:flex;
     align-items:center;
@@ -1214,7 +1256,10 @@
   <div class="header">
     <div class="header-title">Spülprotokoll – Kontrolle der Wassertemperaturen</div>
     <div class="header-sub">Objektbezogene Hygienespülungen</div>
-    <div class="header-sub" id="headerContext">Anlage &amp; Bereich</div>
+    <div class="header-location-row">
+      <div class="header-sub" id="headerContext">Anlage &amp; Bereich</div>
+      <button type="button" id="changeLocationBtn" class="header-edit-btn" aria-label="Standort wechseln" title="Standort wechseln">✎</button>
+    </div>
     <div class="header-worker" id="headerWorker"></div>
   </div>
 
@@ -1227,9 +1272,36 @@
   </div>
 
   <div class="toolbar-grid">
-    <div class="card">
-      <div class="card-title">Anlage &amp; Bereich</div>
+    <div class="card highlight-card">
+      <div class="card-title">Spülprotokoll abgeben</div>
       <div class="card-body">
+        <div class="hint" style="margin-top:0;">Exportiert die Spüldaten dieser Seite(n) zur Auswertung.</div>
+        <div class="btn-row">
+          <button id="exportPagesBtn" class="btn primary">Exportieren</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Suche</div>
+      <div class="card-body">
+        <label class="field">
+          <span>Haus / App.-Nr. / Zimmer</span>
+          <input type="text" id="searchInput" placeholder="z. B. 12 oder 4B">
+        </label>
+        <div class="btn-row">
+          <button id="searchBtn" class="btn primary">Suchen</button>
+          <button id="clearSearchBtn" class="btn">Zurücksetzen</button>
+        </div>
+      <div id="searchResults" class="search-results"></div>
+      </div>
+    </div>
+
+    <details class="card settings-details">
+      <summary class="settings-summary">Einstellungen</summary>
+      <div class="card-body">
+
+        <div class="subhead">Standort verwalten</div>
         <div class="field-row">
           <label class="field">
             <span>Anlage</span>
@@ -1243,66 +1315,41 @@
         </div>
 
         <div class="btn-row">
-          <button id="addAnlageBtn" class="btn primary">+ Anlage/Bereich hinzufügen</button>
+          <button id="addAnlageBtn" class="btn">+ Anlage/Bereich hinzufügen</button>
           <button id="manageAnlagenBtn" class="btn">Verwalten</button>
         </div>
-        <div class="hint">Tipp: Anlage/Bereich sind unabhängig von den Seiten – du kannst sie jederzeit ändern, ohne Daten zu verlieren.</div>
-      </div>
-    </div>
+        <div class="hint">Tipp: Zum Wechseln des aktuellen Standorts lieber das ✎-Symbol oben im Kopfbereich nutzen – hier geht es nur um das Anlegen/Umbenennen/Löschen von Anlagen und Bereichen selbst.</div>
 
-    <div class="card">
-      <div class="card-title">Spülprotokoll-Seiten</div>
-      <div class="card-body">
+        <div class="divider"></div>
+
+        <div class="subhead">Spülprotokoll-Seiten</div>
         <div class="btn-row">
-          <button id="newPageBtn" class="btn primary">+ Neue Seite</button>
+          <button id="newPageBtn" class="btn">+ Neue Seite</button>
           <button id="deletePageBtn" class="btn danger">Seite löschen</button>
         </div>
         <div class="hint">Seiten sind nach Anlage/Bereich gruppiert. Tippe unten auf eine Seite, um sie zu öffnen.</div>
-      </div>
-    </div>
 
-    
-    <div class="card">
-      <div class="card-title">Sicherung (Export/Import)</div>
-      <div class="card-body">
+        <div class="divider"></div>
+
+        <div class="subhead">Sicherung (weitere Optionen)</div>
         <div class="worker-desktop-box" style="background:#eef3ff; border:2px solid #2563eb; border-radius:10px; padding:10px 12px; margin-bottom:10px;">
           <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px; color:#1e3a8a;">👤 Bearbeiter</div>
           <select id="workerNameInput" aria-label="Bearbeiter auswählen"
             style="width:100%; box-sizing:border-box; padding:9px 10px; border-radius:8px; border:1px solid #93c5fd; background:#fff; font-size:0.95rem; outline:none;"></select>
           <div style="font-size:0.78rem; color:#6b7280; margin-top:5px;">Auswahl gilt für alle Seiten. Neue Namen werden nach einmaliger Bestätigung dauerhaft ergänzt.</div>
         </div>
-        <div class="subhead">Manuell (JSON)</div>
+        <div class="hint" style="margin-top:0;">Import brauchst du normalerweise nur, wenn Marco dich konkret darauf hinweist.</div>
         <div class="btn-row">
-          <button id="exportPagesBtn" class="btn">Seiten Export</button>
           <button id="importPagesBtn" class="btn">Seiten Import</button>
           <button id="exportAnlagenBtn" class="btn">Anlagen Export</button>
           <button id="importAnlagenBtn" class="btn">Anlagen Import</button>
         </div>
 
-        <div class="divider"></div>
-
-        
-
         <input type="file" id="pagesImportInput" accept="application/json" style="display:none;">
         <input type="file" id="anlagenImportInput" accept="application/json" style="display:none;">
       </div>
-    </div>
-
-
-    <div class="card">
-      <div class="card-title">Suche</div>
-      <div class="card-body">
-        <label class="field">
-          <span>Haus / App.-Nr. / Zimmer</span>
-          <input type="text" id="searchInput" placeholder="z. B. 12 oder 4B">
-        </label>
-        <div class="btn-row">
-          <button id="searchBtn" class="btn primary">Suchen</button>
-          <button id="clearSearchBtn" class="btn">Zurücksetzen</button>
-        </div>
-      <div id="searchResults" class="search-results"></div></div>
-      </div>
-    </div>
+    </details>
+  </div>
 
   <div class="page-meta">
 
@@ -1314,7 +1361,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.80 · Bearbeiter-Picker & Stellen-Picker</div>
+    Daten werden lokal im Browser gespeichert · Version 2.81 · Kompakter Kopfbereich & Standort-Flow</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -2349,6 +2396,89 @@
       return pages.find(p => p.id === activePageId) || null;
     }
 
+    // v2.81: "Wo arbeitest du gerade?" - Anlage + Bereich wählen, dann automatisch
+    // die richtige Seite öffnen bzw. anlegen. Wird über das ✎ im Header und beim
+    // allerersten Start (noch keine gespeicherten Daten) aufgerufen.
+    async function openStandortWechsel() {
+      const anlagen = Object.keys(anlagenData || {});
+      if (!anlagen.length) {
+        uiAlert("Es sind noch keine Anlagen hinterlegt. Bitte zuerst unter „Einstellungen → Verwalten“ eine Anlage anlegen.");
+        return;
+      }
+
+      const current = getActivePage();
+      const defaultAnlage = (current && anlagenData[current.anlage]) ? current.anlage : anlagen[0];
+
+      const anlage = await uiSelect("Welche Anlage?", anlagen, defaultAnlage, "Wo arbeitest du gerade?");
+      if (anlage === null) return;
+
+      const bereiche = anlagenData[anlage] || [];
+      if (!bereiche.length) {
+        uiAlert(`Für „${anlage}“ sind noch keine Bereiche hinterlegt. Bitte zuerst unter „Einstellungen → Verwalten“ einen Bereich anlegen.`);
+        return;
+      }
+      const defaultBereich = (current && current.anlage === anlage && bereiche.includes(current.bereich))
+        ? current.bereich
+        : bereiche[0];
+
+      const bereich = await uiSelect("Welcher Bereich?", bereiche, defaultBereich, "Wo arbeitest du gerade?");
+      if (bereich === null) return;
+
+      // Anlage/Bereich-Dropdowns in den Einstellungen synchron halten
+      try {
+        const as = document.getElementById("anlageSelect");
+        const bs = document.getElementById("bereichSelect");
+        if (as) { as.value = anlage; as.dispatchEvent(new Event("change")); }
+        if (bs) { bs.value = bereich; }
+      } catch (e) {}
+
+      await routeToLocation(anlage, bereich);
+    }
+
+    // Verzweigung: keine Seite -> anlegen, genau eine -> direkt öffnen,
+    // mehrere -> Auswahl (neueste zuerst) + Option für eine weitere neue Seite.
+    async function routeToLocation(anlage, bereich) {
+      const matches = pages.filter(p => p.anlage === anlage && p.bereich === bereich);
+
+      if (matches.length === 0) {
+        createNewPage(anlage, bereich);
+        toast(`Neue Seite für ${anlage} · ${bereich} angelegt.`);
+        return;
+      }
+
+      if (matches.length === 1) {
+        activePageId = matches[0].id;
+        saveState();
+        renderAll();
+        return;
+      }
+
+      const sorted = [...matches].sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+      const optionNew = "+ Neue Seite anlegen";
+      const labels = sorted.map(p => {
+        const globalIdx = pages.findIndex(pp => pp.id === p.id) + 1;
+        return `Seite ${globalIdx} (erstellt ${p.created})`;
+      });
+      labels.push(optionNew);
+
+      const choice = await uiSelect(
+        `${matches.length} Seiten für ${anlage} · ${bereich} gefunden. Welche fortsetzen?`,
+        labels,
+        labels[0],
+        "Seite wählen"
+      );
+      if (choice === null) return;
+
+      if (choice === optionNew) {
+        createNewPage(anlage, bereich);
+        return;
+      }
+      const idx = labels.indexOf(choice);
+      activePageId = sorted[idx].id;
+      saveState();
+      renderAll();
+    }
+
     function renderPageInfo() {
       const info = document.getElementById("pageInfo");
       const page = getActivePage();
@@ -2399,7 +2529,8 @@
         if (workerEl) workerEl.textContent = normalizeWorkerName(workerName) ? `Bearbeiter: ${normalizeWorkerName(workerName)}` : "";
         return;
       }
-      el.textContent = `${page.anlage} · ${page.bereich}`;
+      const pageIndex = pages.findIndex(p => p.id === page.id) + 1;
+      el.textContent = `${page.anlage} · ${page.bereich} · Seite ${pageIndex}`;
       if (workerEl) {
         const name = getPageWorker(page);
         workerEl.textContent = name ? `Bearbeiter: ${name}` : "";
@@ -3808,6 +3939,10 @@ case "4":
 
     function initEvents() {
 
+      document.getElementById("changeLocationBtn").addEventListener("click", () => {
+        openStandortWechsel();
+      });
+
       document.getElementById("newPageBtn").addEventListener("click", () => {
         const anlage = document.getElementById("anlageSelect").value;
         const bereich = document.getElementById("bereichSelect").value;
@@ -4020,9 +4155,10 @@ case "4":
       initWorkerPickers();
       // Initialer Check kommt beim ersten Fokus/Intervall, damit beim Start kein Popup-Spam entsteht.
       if (!loaded) {
-        const firstAnlage = Object.keys(anlagenData)[0];
-        const firstBereich = anlagenData[firstAnlage][0];
-        createNewPage(firstAnlage, firstBereich);
+        renderAll();
+        // Kein gespeicherter Zustand vorhanden: erst fragen, wo gerade
+        // gearbeitet wird, statt blind die erste Anlage zu nehmen.
+        openStandortWechsel();
       } else {
         renderAll();
       }
