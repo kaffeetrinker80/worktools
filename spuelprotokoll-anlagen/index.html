@@ -195,9 +195,10 @@
     }
 
     th.turbcol, td.turbcol {
-      width: 82px;
-      text-align: center;
-      white-space: nowrap;
+      width: 230px;
+      min-width: 230px;
+      text-align: left;
+      white-space: normal;
     }
 
     th.notescol, td.notescol {
@@ -244,6 +245,107 @@
       font-size: 0.76rem;
       line-height: 1.1;
       white-space: nowrap;
+    }
+
+    .temp-mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 3px;
+      margin-top: 4px;
+      min-width: 118px;
+    }
+
+    .temp-mode-option {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px 4px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 0.66rem;
+      line-height: 1.05;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .temp-mode-option:has(input:checked) {
+      border-color: var(--primary);
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    .temp-mode-option input {
+      width: 13px !important;
+      height: 13px;
+      margin: 0;
+      accent-color: var(--primary);
+      flex: 0 0 auto;
+    }
+
+    .temp-mode-help {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.64rem;
+      line-height: 1.15;
+    }
+
+
+    .temp-location-other {
+      display: none;
+      margin-top: 4px;
+    }
+
+    .temp-location-other input {
+      width: 100%;
+      padding: 4px 5px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      box-sizing: border-box;
+    }
+
+    .issue-picker {
+      display: grid;
+      gap: 5px;
+      min-width: 210px;
+    }
+
+    .issue-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .issue-toggle input[type="checkbox"] {
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    .issue-select {
+      display: none;
+      width: 100%;
+      padding: 5px 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 0.7rem;
+      box-sizing: border-box;
+    }
+
+    .issue-other-input {
+      display: none;
+      width: 100% !important;
+      padding: 5px 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      box-sizing: border-box;
     }
 
     .temp-disabled input {
@@ -1046,6 +1148,17 @@
       .mobile-stack textarea{min-height:72px;resize:vertical}
       .mobile-temps{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:10px;display:grid;gap:10px}
       .mobile-temps-title{font-size:.77rem;font-weight:800;color:var(--muted)}
+      .mobile-temp-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .mobile-temp-mode-option{display:flex;align-items:center;gap:6px;min-height:38px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:6px 8px;font-size:.8rem;font-weight:700;cursor:pointer}
+      .mobile-temp-mode-option:has(input:checked){border-color:var(--primary);background:#eff6ff;color:#1d4ed8}
+      .mobile-temp-mode-option input{width:17px!important;height:17px;margin:0;accent-color:var(--primary)}
+      .mobile-temp-note{font-size:.72rem;color:var(--muted);line-height:1.3}
+      .mobile-temp-location{display:none}
+      .mobile-issues{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:10px;display:grid;gap:8px}
+      .mobile-issue-toggle{display:flex;align-items:center;gap:7px;min-height:38px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:7px 9px;font-size:.82rem;line-height:1.2;font-weight:700;cursor:pointer}
+      .mobile-issue-toggle input{width:18px!important;height:18px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
+      .mobile-issue-select{display:none;width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px 10px;font-size:.86rem}
+      .mobile-issue-other{display:none}
       .mobile-checkrow{display:grid;grid-template-columns:1fr 56px;gap:2px;align-items:center}
       .mobile-check{display:flex;align-items:center;gap:3px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:2px 6px;justify-content:flex-start;overflow:visible;white-space:nowrap;font-size:0.85rem;color:var(--text);font-weight:600}
       .mobile-check input{width:18px;height:18px}
@@ -1183,7 +1296,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.73</div>
+    Daten werden lokal im Browser gespeichert · Version 2.76 · Temperaturstellen & kompakte Auffälligkeiten</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1546,6 +1659,61 @@
       return `${date} ${time}`;
     }
 
+    const TEMP_MODES = ["kw", "bath", "kitchenBath", "other"];
+    const ISSUE_TYPES = ["turbidity", "fixtureDefect", "aeratorStuck", "longTkmax", "other"];
+
+    function normalizeTemperatureMode(row) {
+      if (!row || typeof row !== "object") return "kitchenBath";
+      // Frühere Entwürfe verwendeten intern „washbasin“. Diese Daten werden als „Nur Bad“ übernommen.
+      if (row.tempMode === "washbasin" || row.tempMode === "bath") return "bath";
+      if (TEMP_MODES.includes(row.tempMode)) return row.tempMode;
+      if (row.kwOnly === true) return "kw";
+      if (String(row.tempLocationOther ?? "").trim() !== "") return "other";
+
+      const hasKitchen = String(row.wwKitchen ?? "").trim() !== "";
+      const hasBath = String(row.wwBath ?? "").trim() !== "";
+      if (hasBath && !hasKitchen) return "bath";
+      return "kitchenBath";
+    }
+
+    function normalizeIssueType(row) {
+      if (!row || typeof row !== "object") return "";
+      if (ISSUE_TYPES.includes(row.issueType)) return row.issueType;
+      if (row.turbidityFlag) return "turbidity";
+      if (row.fixtureDefectFlag) return "fixtureDefect";
+      if (row.aeratorStuckFlag) return "aeratorStuck";
+      if (row.longTkmaxFlag) return "longTkmax";
+      if (row.otherIssueFlag || String(row.otherIssueText ?? "").trim() !== "") return "other";
+      return "";
+    }
+
+    function syncLegacyIssueFlags(row, issueType) {
+      row.turbidityFlag = issueType === "turbidity";
+      row.fixtureDefectFlag = issueType === "fixtureDefect";
+      row.aeratorStuckFlag = issueType === "aeratorStuck";
+      row.longTkmaxFlag = issueType === "longTkmax";
+      row.otherIssueFlag = issueType === "other";
+    }
+
+    function normalizeRowData(row, fallbackIndex) {
+      const source = (row && typeof row === "object") ? row : {};
+      const mode = normalizeTemperatureMode(source);
+      const issueType = normalizeIssueType(source);
+      const issuePresent = typeof source.issuePresent === "boolean"
+        ? source.issuePresent
+        : !!issueType;
+      return {
+        ...createEmptyRow(source.index || fallbackIndex),
+        ...source,
+        index: source.index || fallbackIndex,
+        tempMode: mode,
+        issueType,
+        issuePresent,
+        // Legacy-Feld bleibt für ältere JSON-Versionen erhalten.
+        kwOnly: mode === "kw"
+      };
+    }
+
     function createEmptyRow(index) {
       return {
         index,
@@ -1555,10 +1723,19 @@
         roomType: "",
         unit: "",
         kwTemp: "",
+        tempMode: "kitchenBath",
+        tempLocationOther: "",
         kwOnly: false,
         wwKitchen: "",
         wwBath: "",
+        issuePresent: false,
+        issueType: "",
         turbidityFlag: false,
+        fixtureDefectFlag: false,
+        aeratorStuckFlag: false,
+        longTkmaxFlag: false,
+        otherIssueFlag: false,
+        otherIssueText: "",
         aeratorChanged: false,
         aeratorChangedCount: "",
         notes: ""
@@ -1606,7 +1783,20 @@
     }
 
     function saveState() {
-      pages = pages.map(p => ({ ...p, performedBy: normalizeWorkerName((p && p.performedBy) || workerName) }));
+      pages = pages.map(p => {
+        const rows = Array.isArray(p?.rows) ? p.rows : [];
+        rows.forEach((row, i) => {
+          if (!row || typeof row !== "object") return;
+          row.index = row.index || (i + 1);
+          row.tempMode = normalizeTemperatureMode(row);
+          row.kwOnly = row.tempMode === "kw";
+        });
+        return {
+          ...p,
+          performedBy: normalizeWorkerName((p && p.performedBy) || workerName),
+          rows
+        };
+      });
       const data = { pages, activePageId };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
@@ -1617,7 +1807,11 @@
       try {
         const data = JSON.parse(raw);
         if (Array.isArray(data.pages)) {
-          pages = data.pages.map(p => ({ ...p, performedBy: normalizeWorkerName((p && p.performedBy) || workerName) }));
+          pages = data.pages.map(p => ({
+            ...p,
+            performedBy: normalizeWorkerName((p && p.performedBy) || workerName),
+            rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
+          }));
           activePageId = data.activePageId || (pages[0] && pages[0].id);
           return true;
         }
@@ -1936,10 +2130,19 @@
         roomType: "",
         unit: "",
         kwTemp: "",
+        tempMode: "kitchenBath",
+        tempLocationOther: "",
         kwOnly: false,
         wwKitchen: "",
         wwBath: "",
+        issuePresent: false,
+        issueType: "",
         turbidityFlag: false,
+        fixtureDefectFlag: false,
+        aeratorStuckFlag: false,
+        longTkmaxFlag: false,
+        otherIssueFlag: false,
+        otherIssueText: "",
         aeratorChanged: false,
         aeratorChangedCount: "",
         notes: ""
@@ -1978,8 +2181,8 @@
         { text: "Haus / App.-Nr. / Zimmer", cls: "unitcol" },
         { text: "KW Temp. [°C]", cls: "temp" },
         { text: "WW Küche [°C]", cls: "temp" },
-        { text: "WW Bad [°C]", cls: "temp" },
-        { text: "Trüb./Färb.", cls: "turbcol" },
+        { text: "WW Bad / sonst. [°C]", cls: "temp" },
+        { text: "Auffälligkeit / Defekt", cls: "turbcol" },
         { text: "Strahlregler getauscht / Anzahl" },
         { text: "Bemerkung", cls: "notescol" }
       ];
@@ -2076,11 +2279,13 @@
           floorSelect.addEventListener("change", () => { ensureDateTime(); row.floor = floorSelect.value; saveState(); });
           floorWrap.appendChild(floorSelect);
 
+          let updateMobileTempMode = () => {};
+
           const roomWrap = document.createElement("label"); roomWrap.className = "mobile-stack"; roomWrap.innerHTML = '<span>Raumtyp</span>';
           const roomTypeSelect = document.createElement("select");
           ["", "Whg. / Zimmer", "Heizraum WW-Abgang/Zirk.-RL", "Pflegebad", "Sanitärraum WC/Bad", "Funktionsraum", "Gewerbe / Praxis"].forEach(rt => { const opt = document.createElement("option"); opt.value = rt; opt.textContent = rt || "–"; roomTypeSelect.appendChild(opt); });
           roomTypeSelect.value = row.roomType || "";
-          roomTypeSelect.addEventListener("change", () => { ensureDateTime(); row.roomType = roomTypeSelect.value; saveState(); });
+          roomTypeSelect.addEventListener("change", () => { ensureDateTime(); row.roomType = roomTypeSelect.value; updateMobileTempMode(); saveState(); });
           roomWrap.appendChild(roomTypeSelect);
           row1.appendChild(floorWrap); row1.appendChild(roomWrap);
 
@@ -2088,35 +2293,190 @@
           const unitInput = document.createElement("input"); unitInput.type = "text"; unitInput.value = row.unit || ""; unitInput.placeholder = "z. B. Haus 4 · App. 2";
           unitInput.addEventListener("input", () => { ensureDateTime(); row.unit = unitInput.value; saveState(); }); unitWrap.appendChild(unitInput);
 
+          row.tempMode = normalizeTemperatureMode(row);
+          row.kwOnly = row.tempMode === "kw";
+
           const temps = document.createElement("div"); temps.className = "mobile-temps";
           const tempsTitle = document.createElement("div"); tempsTitle.className = "mobile-temps-title"; tempsTitle.textContent = "Temperaturen"; temps.appendChild(tempsTitle);
+
+          const modeGrid = document.createElement("div");
+          modeGrid.className = "mobile-temp-mode-grid";
+          const modeRadios = [];
+          [
+            ["kw", "Nur KW"],
+            ["bath", "Nur Bad"],
+            ["kitchenBath", "Küche + Bad"],
+            ["other", "Sonstige Stelle"]
+          ].forEach(([value, label]) => {
+            const option = document.createElement("label");
+            option.className = "mobile-temp-mode-option";
+            const radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = `temp-mode-${page.id}-${row.index}`;
+            radio.value = value;
+            radio.checked = row.tempMode === value;
+            const text = document.createElement("span");
+            text.textContent = label;
+            radio.addEventListener("change", () => {
+              if (!radio.checked) return;
+              ensureDateTime();
+              row.tempMode = value;
+              row.kwOnly = value === "kw";
+              updateMobileTempMode();
+              saveState();
+            });
+            option.appendChild(radio);
+            option.appendChild(text);
+            modeGrid.appendChild(option);
+            modeRadios.push(radio);
+          });
+          temps.appendChild(modeGrid);
+
+          const modeNote = document.createElement("div");
+          modeNote.className = "mobile-temp-note";
+          modeNote.textContent = "Nicht benötigte Felder werden ausgeblendet; vorhandene Werte bleiben gespeichert.";
+          temps.appendChild(modeNote);
+
+          const otherLocationWrap = document.createElement("label");
+          otherLocationWrap.className = "mobile-stack mobile-temp-location";
+          otherLocationWrap.innerHTML = '<span>Bezeichnung der sonstigen Stelle</span>';
+          const otherLocationInput = document.createElement("input");
+          otherLocationInput.type = "text";
+          otherLocationInput.value = row.tempLocationOther || "";
+          otherLocationInput.placeholder = "z. B. Unreinraum oder Waschküche UG";
+          otherLocationInput.addEventListener("input", () => { ensureDateTime(); row.tempLocationOther = otherLocationInput.value; saveState(); });
+          otherLocationWrap.appendChild(otherLocationInput);
+          temps.appendChild(otherLocationWrap);
+
           const kwWrap = document.createElement("label"); kwWrap.className = "mobile-stack"; kwWrap.innerHTML = '<span>KW min.</span>';
           kwInput = document.createElement("input"); kwInput.type = "number"; kwInput.step = "0.1"; kwInput.value = row.kwTemp || ""; kwInput.placeholder = "20,0";
           kwInput.addEventListener("input", () => { ensureDateTime(); row.kwTemp = kwInput.value; saveState(); }); kwWrap.appendChild(kwInput); temps.appendChild(kwWrap);
+
           const wwRow = document.createElement("div"); wwRow.className = "mobile-grid-2";
-          const wwKWrap = document.createElement("label"); wwKWrap.className = "mobile-stack"; wwKWrap.innerHTML = '<span>WW Küche max.</span>';
+          const wwKWrap = document.createElement("label"); wwKWrap.className = "mobile-stack";
+          const wwKLabel = document.createElement("span"); wwKLabel.textContent = "WW Küche max."; wwKWrap.appendChild(wwKLabel);
           wwKInput = document.createElement("input"); wwKInput.type = "number"; wwKInput.step = "0.1"; wwKInput.value = row.wwKitchen || ""; wwKInput.placeholder = "60,0";
           wwKInput.addEventListener("input", () => { ensureDateTime(); row.wwKitchen = wwKInput.value; saveState(); }); wwKWrap.appendChild(wwKInput);
-          const wwBWrap = document.createElement("label"); wwBWrap.className = "mobile-stack"; wwBWrap.innerHTML = '<span>WW Bad max.</span>';
+          const wwBWrap = document.createElement("label"); wwBWrap.className = "mobile-stack";
+          const wwBLabel = document.createElement("span"); wwBLabel.textContent = "WW Bad max."; wwBWrap.appendChild(wwBLabel);
           wwBInput = document.createElement("input"); wwBInput.type = "number"; wwBInput.step = "0.1"; wwBInput.value = row.wwBath || ""; wwBInput.placeholder = "60,0";
           wwBInput.addEventListener("input", () => { ensureDateTime(); row.wwBath = wwBInput.value; saveState(); }); wwBWrap.appendChild(wwBInput);
           wwRow.appendChild(wwKWrap); wwRow.appendChild(wwBWrap); temps.appendChild(wwRow);
 
-          const flags = document.createElement("div"); flags.className = "mobile-grid-2";
-          const turbWrap = document.createElement("label"); turbWrap.className = "mobile-stack"; turbWrap.innerHTML = '<span style="font-size:0.75rem; color:var(--muted); font-weight:700">Auffälligk.</span>';
-          const turbCheck = document.createElement("label"); turbCheck.className = "mobile-check";
-          const turbCb = document.createElement("input"); turbCb.type = "checkbox"; turbCb.checked = !!row.turbidityFlag; turbCb.style.accentColor = "#2563eb"; turbCb.addEventListener("change", () => { ensureDateTime(); row.turbidityFlag = turbCb.checked; saveState(); });
-          const turbText = document.createElement("span"); turbText.textContent = "Trüb/Verfärbt"; turbCheck.appendChild(turbCb); turbCheck.appendChild(turbText); turbWrap.appendChild(turbCheck);
+          updateMobileTempMode = () => {
+            const mode = normalizeTemperatureMode(row);
+            row.tempMode = mode;
+            row.kwOnly = mode === "kw";
+            modeRadios.forEach(radio => { radio.checked = radio.value === mode; });
 
-          const aerWrap = document.createElement("label"); aerWrap.className = "mobile-stack"; aerWrap.innerHTML = '<span>Strahlregler</span>';
+            const isHeizraum = (row.roomType || "").startsWith("Heizraum");
+            const kitchenActive = mode === "kitchenBath";
+            const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+
+            otherLocationWrap.style.display = mode === "other" ? "grid" : "none";
+            wwKWrap.style.display = kitchenActive ? "grid" : "none";
+            wwBWrap.style.display = bathActive ? "grid" : "none";
+            wwRow.style.display = (kitchenActive || bathActive) ? "grid" : "none";
+            wwRow.style.gridTemplateColumns = (kitchenActive && bathActive) ? "1fr 1fr" : "1fr";
+
+            if (isHeizraum) {
+              wwKLabel.textContent = "WW-Abgang max.";
+              wwBLabel.textContent = "Zirk.-RL max.";
+            } else {
+              wwKLabel.textContent = "WW Küche max.";
+              if (mode === "bath") wwBLabel.textContent = "WW Bad max.";
+              else if (mode === "other") wwBLabel.textContent = "WW sonst. Stelle max.";
+              else wwBLabel.textContent = "WW Bad max.";
+            }
+          };
+          updateMobileTempMode();
+
+          row.issueType = normalizeIssueType(row);
+          if (typeof row.issuePresent !== "boolean") row.issuePresent = !!row.issueType;
+
+          const issues = document.createElement("div");
+          issues.className = "mobile-issues";
+
+          const mobileIssueToggle = document.createElement("label");
+          mobileIssueToggle.className = "mobile-issue-toggle";
+          const mobileIssueCb = document.createElement("input");
+          mobileIssueCb.type = "checkbox";
+          mobileIssueCb.checked = !!row.issuePresent;
+          const mobileIssueToggleText = document.createElement("span");
+          mobileIssueToggleText.textContent = "Auffälligkeit / Defekt";
+          mobileIssueToggle.appendChild(mobileIssueCb);
+          mobileIssueToggle.appendChild(mobileIssueToggleText);
+          issues.appendChild(mobileIssueToggle);
+
+          const mobileIssueSelect = document.createElement("select");
+          mobileIssueSelect.className = "mobile-issue-select";
+          [
+            ["", "Bitte auswählen …"],
+            ["turbidity", "Trübung / Färbung"],
+            ["fixtureDefect", "Armatur defekt (Verdacht auf KW-Übertrag)"],
+            ["aeratorStuck", "Strahlregler fest"],
+            ["longTkmax", "Lange Ablaufzeit bis TKmax"],
+            ["other", "Sonstiges"]
+          ].forEach(([value, labelText]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = labelText;
+            mobileIssueSelect.appendChild(option);
+          });
+          mobileIssueSelect.value = row.issueType || "";
+          issues.appendChild(mobileIssueSelect);
+
+          const mobileOtherIssueWrap = document.createElement("label");
+          mobileOtherIssueWrap.className = "mobile-stack mobile-issue-other";
+          mobileOtherIssueWrap.innerHTML = '<span>Sonstige Auffälligkeit</span>';
+          const mobileOtherIssueInput = document.createElement("input");
+          mobileOtherIssueInput.type = "text";
+          mobileOtherIssueInput.value = row.otherIssueText || "";
+          mobileOtherIssueInput.placeholder = "kurz beschreiben";
+          mobileOtherIssueInput.addEventListener("input", () => { ensureDateTime(); row.otherIssueText = mobileOtherIssueInput.value; saveState(); });
+          mobileOtherIssueWrap.appendChild(mobileOtherIssueInput);
+          issues.appendChild(mobileOtherIssueWrap);
+
+          function updateMobileIssueState() {
+            const active = !!row.issuePresent;
+            mobileIssueCb.checked = active;
+            mobileIssueSelect.style.display = active ? "block" : "none";
+            mobileOtherIssueWrap.style.display = active && row.issueType === "other" ? "grid" : "none";
+          }
+
+          mobileIssueCb.addEventListener("change", () => {
+            ensureDateTime();
+            row.issuePresent = mobileIssueCb.checked;
+            if (!row.issuePresent) {
+              row.issueType = "";
+              mobileIssueSelect.value = "";
+              syncLegacyIssueFlags(row, "");
+            }
+            updateMobileIssueState();
+            saveState();
+            if (row.issuePresent) setTimeout(() => mobileIssueSelect.focus(), 0);
+          });
+
+          mobileIssueSelect.addEventListener("change", () => {
+            ensureDateTime();
+            row.issueType = mobileIssueSelect.value;
+            row.issuePresent = true;
+            syncLegacyIssueFlags(row, row.issueType);
+            updateMobileIssueState();
+            saveState();
+            if (row.issueType === "other") setTimeout(() => mobileOtherIssueInput.focus(), 0);
+          });
+
+          updateMobileIssueState();
+
+          const aerWrap = document.createElement("label"); aerWrap.className = "mobile-stack"; aerWrap.innerHTML = '<span>Strahlregler getauscht</span>';
           const aerRow = document.createElement("div"); aerRow.className = "mobile-checkrow";
           const aerCheck = document.createElement("label"); aerCheck.className = "mobile-check";
           const aerCb = document.createElement("input"); aerCb.type = "checkbox"; aerCb.checked = !!row.aeratorChanged; aerCb.style.accentColor = "var(--primary)"; aerCb.addEventListener("change", () => { ensureDateTime(); row.aeratorChanged = aerCb.checked; saveState(); });
-          const aerText = document.createElement("span"); aerText.textContent = "getauscht"; aerCheck.appendChild(aerCb); aerCheck.appendChild(aerText);
+          const aerText = document.createElement("span"); aerText.textContent = "ja"; aerCheck.appendChild(aerCb); aerCheck.appendChild(aerText);
           const aerCount = document.createElement("input"); aerCount.type = "number"; aerCount.min = "0"; aerCount.step = "1"; aerCount.value = row.aeratorChangedCount || ""; aerCount.placeholder = "Anz."; aerCount.style.width = "100%"; aerCount.style.minHeight = "34px"; aerCount.style.textAlign = "center"; aerCount.style.padding = "2px"; aerCount.style.fontSize = "0.9rem"; aerCount.style.border = "1px solid var(--primary)"; aerCount.style.borderRadius = "6px";
           aerCount.addEventListener("input", () => { ensureDateTime(); row.aeratorChangedCount = aerCount.value; saveState(); });
           aerRow.appendChild(aerCheck); aerRow.appendChild(aerCount); aerWrap.appendChild(aerRow);
-          flags.appendChild(turbWrap); flags.appendChild(aerWrap);
 
           const notesWrap = document.createElement("label"); notesWrap.className = "mobile-stack"; notesWrap.innerHTML = '<span>Bemerkung</span>';
           const notesInput = document.createElement("textarea"); notesInput.rows = 3; notesInput.value = row.notes || ""; notesInput.placeholder = "Nur Auffälligkeiten oder Besonderheiten"; notesInput.style.fontSize = "0.9rem";
@@ -2125,7 +2485,7 @@
           notesInput.addEventListener("blur", () => { if (row.index === page.rows.length && isRowFilled(row)) promptNewPageSameObject(); });
           notesWrap.appendChild(notesInput);
 
-          body.appendChild(row1); body.appendChild(unitWrap); body.appendChild(temps); body.appendChild(flags); body.appendChild(notesWrap);
+          body.appendChild(row1); body.appendChild(unitWrap); body.appendChild(temps); body.appendChild(issues); body.appendChild(aerWrap); body.appendChild(notesWrap);
           card.appendChild(head); card.appendChild(body); td.appendChild(card); tr.appendChild(td); tbody.appendChild(tr);
           return;
         }
@@ -2244,7 +2604,7 @@ tr.appendChild(tdIdx);
           ensureDateTime();
           row.roomType = roomTypeSelect.value;
           saveState();
-          updateHeizraumLabels();
+          updateTemperatureModeState();
         });
         tdRoomType.appendChild(roomTypeSelect);
         tr.appendChild(tdRoomType);
@@ -2297,44 +2657,85 @@ tr.appendChild(tdIdx);
           updateKwWarning();
         });
 
-        function updateKwOnlyState() {
-          const disabled = !!row.kwOnly;
-          wwKInput.disabled = disabled;
-          wwBInput.disabled = disabled;
-          tdWWK.classList.toggle("temp-disabled", disabled);
-          tdWWB.classList.toggle("temp-disabled", disabled);
-          if (disabled) {
-            if (row.wwKitchen) row.wwKitchen = "";
-            if (row.wwBath) row.wwBath = "";
-            wwKInput.value = "";
-            wwBInput.value = "";
-            wwKInput.placeholder = "—";
-            wwBInput.placeholder = "—";
-          } else {
-            updateHeizraumLabels();
-          }
+        row.tempMode = normalizeTemperatureMode(row);
+        row.kwOnly = row.tempMode === "kw";
+
+        function updateTemperatureModeState() {
+          const mode = normalizeTemperatureMode(row);
+          row.tempMode = mode;
+          row.kwOnly = mode === "kw";
+
+          const kitchenActive = mode === "kitchenBath";
+          const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+
+          if (otherLocationWrap) otherLocationWrap.style.display = mode === "other" ? "block" : "none";
+          wwKInput.disabled = !kitchenActive;
+          wwBInput.disabled = !bathActive;
+          tdWWK.classList.toggle("temp-disabled", !kitchenActive);
+          tdWWB.classList.toggle("temp-disabled", !bathActive);
+
+          // Werte bleiben im Datenmodell erhalten, werden in inaktiven Feldern aber nicht angezeigt.
+          wwKInput.value = kitchenActive ? (row.wwKitchen || "") : "";
+          wwBInput.value = bathActive ? (row.wwBath || "") : "";
+          wwKInput.placeholder = kitchenActive ? "60,0" : "—";
+          wwBInput.placeholder = bathActive ? "60,0" : "—";
+
+          modeRadios.forEach(radio => { radio.checked = radio.value === mode; });
+          updateHeizraumLabels();
         }
 
         const kwWrap = document.createElement("div");
         kwWrap.className = "kw-cell-wrap";
         kwWrap.appendChild(kwInput);
 
-        const kwOnlyWrap = document.createElement("label");
-        kwOnlyWrap.className = "kw-only-wrap";
-        const kwOnlyCb = document.createElement("input");
-        kwOnlyCb.type = "checkbox";
-        kwOnlyCb.checked = !!row.kwOnly;
-        const kwOnlyText = document.createElement("span");
-        kwOnlyText.textContent = "nur KW";
-        kwOnlyCb.addEventListener("change", () => {
-          ensureDateTime();
-          row.kwOnly = kwOnlyCb.checked;
-          updateKwOnlyState();
-          saveState();
+        const modeGrid = document.createElement("div");
+        modeGrid.className = "temp-mode-grid";
+        const modeRadios = [];
+        [
+          ["kw", "Nur KW"],
+          ["bath", "Nur Bad"],
+          ["kitchenBath", "Küche+Bad"],
+          ["other", "Sonstige"]
+        ].forEach(([value, label]) => {
+          const option = document.createElement("label");
+          option.className = "temp-mode-option";
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = `temp-mode-${page.id}-${row.index}`;
+          radio.value = value;
+          radio.checked = row.tempMode === value;
+          const text = document.createElement("span");
+          text.textContent = label;
+          radio.addEventListener("change", () => {
+            if (!radio.checked) return;
+            ensureDateTime();
+            row.tempMode = value;
+            row.kwOnly = value === "kw";
+            updateTemperatureModeState();
+            saveState();
+          });
+          option.appendChild(radio);
+          option.appendChild(text);
+          modeGrid.appendChild(option);
+          modeRadios.push(radio);
         });
-        kwOnlyWrap.appendChild(kwOnlyCb);
-        kwOnlyWrap.appendChild(kwOnlyText);
-        kwWrap.appendChild(kwOnlyWrap);
+        kwWrap.appendChild(modeGrid);
+
+        const otherLocationWrap = document.createElement("div");
+        otherLocationWrap.className = "temp-location-other";
+        const otherLocationInput = document.createElement("input");
+        otherLocationInput.type = "text";
+        otherLocationInput.value = row.tempLocationOther || "";
+        otherLocationInput.placeholder = "z. B. Unreinraum";
+        otherLocationInput.title = "Bezeichnung der sonstigen Stelle";
+        otherLocationInput.addEventListener("input", () => { ensureDateTime(); row.tempLocationOther = otherLocationInput.value; saveState(); });
+        otherLocationWrap.appendChild(otherLocationInput);
+        kwWrap.appendChild(otherLocationWrap);
+
+        const modeHelp = document.createElement("div");
+        modeHelp.className = "temp-mode-help";
+        modeHelp.textContent = "Werte bleiben beim Wechsel erhalten";
+        kwWrap.appendChild(modeHelp);
 
         tdKW.appendChild(kwWrap);
         tr.appendChild(tdKW);
@@ -2376,48 +2777,108 @@ tr.appendChild(tdIdx);
         tr.appendChild(tdWWB);
 
         function updateHeizraumLabels() {
+          const mode = normalizeTemperatureMode(row);
           const isHeizraum = (row.roomType || "").startsWith("Heizraum");
+          const kitchenActive = mode === "kitchenBath";
+          const bathActive = mode === "bath" || mode === "other" || mode === "kitchenBath";
+
           if (isHeizraum) {
             tdWWK.dataset.label = "WW-Abgang";
             tdWWB.dataset.label = "Zirk.-RL";
-            if (!row.kwOnly && (!wwKInput.placeholder || wwKInput.placeholder === "60,0" || wwKInput.placeholder === "—")) {
-              wwKInput.placeholder = "z. B. 60,0";
-            }
-            if (!row.kwOnly && (!wwBInput.placeholder || wwBInput.placeholder === "60,0" || wwBInput.placeholder === "—")) {
-              wwBInput.placeholder = "z. B. 55,0";
-            }
+            if (kitchenActive) wwKInput.placeholder = "z. B. 60,0";
+            if (bathActive) wwBInput.placeholder = "z. B. 55,0";
           } else {
             tdWWK.dataset.label = "WW Küche";
-            tdWWB.dataset.label = "WW Bad";
-            if (!row.kwOnly && !row.wwKitchen) wwKInput.placeholder = "60,0";
-            if (!row.kwOnly && !row.wwBath) wwBInput.placeholder = "60,0";
+            if (mode === "bath") tdWWB.dataset.label = "WW Bad";
+            else if (mode === "other") tdWWB.dataset.label = "WW sonst. Stelle";
+            else tdWWB.dataset.label = "WW Bad";
+            if (kitchenActive && !row.wwKitchen) wwKInput.placeholder = "60,0";
+            if (bathActive && !row.wwBath) wwBInput.placeholder = "60,0";
           }
         }
 
-        updateHeizraumLabels();
         updateKwWarning();
-        updateKwOnlyState();
+        updateTemperatureModeState();
+
+        row.issueType = normalizeIssueType(row);
+        if (typeof row.issuePresent !== "boolean") row.issuePresent = !!row.issueType;
 
         const tdTurb = document.createElement("td");
         tdTurb.classList.add("turbcol");
-        tdTurb.dataset.label = "Trübung/Färbung";
-        const turbLabel = document.createElement("label");
-        const turbCb = document.createElement("input");
-        turbCb.type = "checkbox";
-        turbCb.checked = row.turbidityFlag;
-        const turbText = document.createElement("span");
-        turbText.textContent = " ja";
+        tdTurb.dataset.label = "Auffälligkeit / Defekt";
 
-        turbCb.addEventListener("change", () => {
+        const issuePicker = document.createElement("div");
+        issuePicker.className = "issue-picker";
+
+        const desktopIssueToggle = document.createElement("label");
+        desktopIssueToggle.className = "issue-toggle";
+        const desktopIssueCb = document.createElement("input");
+        desktopIssueCb.type = "checkbox";
+        desktopIssueCb.checked = !!row.issuePresent;
+        const desktopIssueToggleText = document.createElement("span");
+        desktopIssueToggleText.textContent = "ja";
+        desktopIssueToggle.appendChild(desktopIssueCb);
+        desktopIssueToggle.appendChild(desktopIssueToggleText);
+        issuePicker.appendChild(desktopIssueToggle);
+
+        const desktopIssueSelect = document.createElement("select");
+        desktopIssueSelect.className = "issue-select";
+        [
+          ["", "Bitte auswählen …"],
+          ["turbidity", "Trübung / Färbung"],
+          ["fixtureDefect", "Armatur defekt (Verdacht auf KW-Übertrag)"],
+          ["aeratorStuck", "Strahlregler fest"],
+          ["longTkmax", "Lange Ablaufzeit bis TKmax"],
+          ["other", "Sonstiges"]
+        ].forEach(([value, labelText]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = labelText;
+          desktopIssueSelect.appendChild(option);
+        });
+        desktopIssueSelect.value = row.issueType || "";
+        issuePicker.appendChild(desktopIssueSelect);
+
+        const desktopOtherIssueInput = document.createElement("input");
+        desktopOtherIssueInput.type = "text";
+        desktopOtherIssueInput.className = "issue-other-input";
+        desktopOtherIssueInput.value = row.otherIssueText || "";
+        desktopOtherIssueInput.placeholder = "Sonstiges kurz beschreiben";
+        desktopOtherIssueInput.addEventListener("input", () => { ensureDateTime(); row.otherIssueText = desktopOtherIssueInput.value; saveState(); });
+        issuePicker.appendChild(desktopOtherIssueInput);
+
+        function updateDesktopIssueState() {
+          const active = !!row.issuePresent;
+          desktopIssueCb.checked = active;
+          desktopIssueSelect.style.display = active ? "block" : "none";
+          desktopOtherIssueInput.style.display = active && row.issueType === "other" ? "block" : "none";
+        }
+
+        desktopIssueCb.addEventListener("change", () => {
           ensureDateTime();
-          row.turbidityFlag = turbCb.checked;
+          row.issuePresent = desktopIssueCb.checked;
+          if (!row.issuePresent) {
+            row.issueType = "";
+            desktopIssueSelect.value = "";
+            syncLegacyIssueFlags(row, "");
+          }
+          updateDesktopIssueState();
           saveState();
-          updateKwWarning();
+          if (row.issuePresent) setTimeout(() => desktopIssueSelect.focus(), 0);
         });
 
-        turbLabel.appendChild(turbCb);
-        turbLabel.appendChild(turbText);
-        tdTurb.appendChild(turbLabel);
+        desktopIssueSelect.addEventListener("change", () => {
+          ensureDateTime();
+          row.issueType = desktopIssueSelect.value;
+          row.issuePresent = true;
+          syncLegacyIssueFlags(row, row.issueType);
+          updateDesktopIssueState();
+          saveState();
+          if (row.issueType === "other") setTimeout(() => desktopOtherIssueInput.focus(), 0);
+        });
+
+        updateDesktopIssueState();
+        tdTurb.appendChild(issuePicker);
         tr.appendChild(tdTurb);
 
         const tdAer = document.createElement("td");
@@ -2602,7 +3063,11 @@ function renderAll() {
         try {
           const data = JSON.parse(e.target.result);
           if (Array.isArray(data.pages)) {
-            pages = data.pages.map(p => ({ ...p, performedBy: normalizeWorkerName((p && p.performedBy) || workerName) }));
+            pages = data.pages.map(p => ({
+              ...p,
+              performedBy: normalizeWorkerName((p && p.performedBy) || workerName),
+              rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
+            }));
             activePageId = pages[0] ? pages[0].id : null;
             saveState();
             renderAll();
