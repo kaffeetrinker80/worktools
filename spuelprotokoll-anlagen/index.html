@@ -18,96 +18,8 @@
       font-size: 0.9rem;
     }
 
-    h1 {
-      margin-bottom: 0;
-      font-size: 1.3rem;
-    }
-
-    .subtitle {
-      margin-top: 4px;
-      color: #555;
-      font-size: 0.9rem;
-    }
-
-    .subtitle-small {
-      font-size: 0.8rem;
-      color: #777;
-      display: block;
-      margin-top: 2px;
-    }
-
-    .toolbar {
-      margin: 12px 0;
-      font-size: 0.85rem;
-    }
-
-    .toolbar-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    .toolbar-row-top {
-      align-items: flex-end;
-    }
-
-    .toolbar-row label {
-      display: flex;
-      flex-direction: column;
-      font-size: 0.9rem;
-      gap: 3px;
-    }
-
-    .toolbar-row select {
-      padding: 6px 8px;
-      font-size: 0.95rem;
-      min-width: 160px;
-    }
-
-    .toolbar-row button {
-      padding: 6px 10px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
     @media (max-width: 800px) {
-      body {
-        margin: 8px;
-      }
-
-      h1 {
-        font-size: 1.1rem;
-      }
-
-      .toolbar-row-top {
-        width: 100%;
-      }
-
-      .toolbar-row-top label {
-        flex: 1 1 45%;
-      }
-
-      .toolbar-row-middle,
-      .toolbar-row-bottom,
-      .toolbar-row-search {
-        width: 100%;
-      }
-
-      .toolbar-row-middle button,
-      .toolbar-row-bottom button,
-      .toolbar-row-search button {
-        flex: 1 1 48%;
-      }
-    }
-
-    .page-meta {
-      margin: 6px 0 4px 0;
-      font-size: 0.85rem;
-    }
-
-    .page-meta span {
-      font-weight: bold;
+      body { margin: 8px; }
     }
 
     .location-panel{
@@ -172,13 +84,6 @@
     .page-list-toggle-note{
       font-size: 0.78rem;
       color: var(--muted);
-    }
-
-    .page-group-title {
-      font-weight: bold;
-      margin-top: 4px;
-      margin-right: 4px;
-      display: block;
     }
 
     .page-badge {
@@ -432,12 +337,12 @@
     }
 
     .search-results {
-      margin: 6px 0 10px 0;
+      margin: 10px 0 0;
       font-size: 0.85rem;
     }
 
     .search-results-item {
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
 
     .search-link {
@@ -547,7 +452,6 @@
         background: #fff;
       }
 
-      .toolbar,
       .page-list,
       .search-results,
       .modal-overlay {
@@ -568,56 +472,65 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 9999;
+      padding: 14px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(2px);
     }
 
     .modal {
-      background: #fff;
+      width: min(560px, 96vw);
       padding: 16px;
-      border-radius: 6px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      width: 320px;
-      max-width: 95%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.32);
       font-size: 0.9rem;
     }
 
     .modal h2 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      font-size: 1.05rem;
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 1.08rem;
+      font-weight: 800;
     }
 
     .modal label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 0.85rem;
     }
 
     .modal select,
     .modal input[type="text"] {
       width: 100%;
-      padding: 4px 6px;
-      font-size: 0.9rem;
+      padding: 10px;
       box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .modal select:focus,
+    .modal input[type="text"]:focus {
+      border-color: rgba(37,99,235,.6);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
     }
 
     .modal-buttons {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 14px;
     }
 
-    .modal-buttons button {
-      padding: 6px 10px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-  
-    /* --- Material-ish Layout (v2.8) --- */
     :root{
       --bg:#f3f4f6;
       --card:#ffffff;
@@ -627,15 +540,12 @@
       --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
       --primary:#2563eb;
       --danger:#dc2626;
-      --btn:#e5e7eb;
     }
 
     body{
       background: var(--bg);
       color: var(--text);
     }
-
-    .toolbar { display:none; } /* legacy */
 
     .toolbar-grid{
       display:flex;
@@ -658,17 +568,12 @@
     }
     .card-body{ font-size: 0.9rem; }
 
-    /* v2.81: Seiten-Export ist der wichtigste Handgriff für die Kollegen beim
-       Spülen (die Auswertungsdaten landen darüber bei Marco) - deshalb eigene,
-       optisch hervorgehobene Karte statt in "Sicherung" untergemischt. */
     .highlight-card{
       border: 2px solid var(--primary);
       background: #eff6ff;
     }
     .highlight-card .card-title{ color: #1d4ed8; }
 
-    /* v2.81: Anlage/Bereich verwalten + restliche Sicherung werden selten
-       gebraucht -> in ein einklappbares "Einstellungen"-Element verschoben. */
     .settings-details.card{ padding: 0; }
     .settings-details > .settings-summary{
       cursor: pointer;
@@ -768,22 +673,13 @@
       margin-bottom: 6px;
     }
 
-    /* search results inside card */
-    .search-results{
-      margin: 10px 0 0 0;
-      font-size: 0.85rem;
-    }
-
-    /* keep old results item styles compatible */
-    .search-results-item{ margin-bottom: 4px; }
-
     @media print{
       .toolbar-grid{ display:none !important; }
       #searchResults{ display:none !important; }
     }
 
-  
-    /* Toast */
+
+    /* Hinweisbanner */
     .toast{
       position: fixed;
       left: 50%;
@@ -804,35 +700,12 @@
     }
     .toast.show{ opacity: 1; }
 
-  
-    /* Topbar */
-    .topbar{
-      background: #1f2937; /* anthracite */
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: 14px;
-      padding: 14px 16px;
-      color: #fff;
-      box-shadow: 0 10px 30px rgba(0,0,0,.12);
-      margin-bottom: 12px;
-    }
-    .topbar-title{
-      font-size: 1.55rem;
-      font-weight: 800;
-      letter-spacing: .2px;
-      line-height: 1.1;
-    }
-    .topbar-sub{
-      margin-top: 6px;
-      font-size: 0.92rem;
-      color: rgba(255,255,255,.78);
-    }
 
-  
   .header { border-radius: 0 0 16px 16px;
-    background: #1f2327; /* darker anthracite */
+    background: #1f2327;
     color: #fff;
     padding: 18px 16px;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.28); /* material-like elevation */
+    box-shadow: 0 8px 18px rgba(0,0,0,0.28);
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
   .header-title {
@@ -884,25 +757,6 @@
   flex-wrap:wrap;
   margin-top: 12px;
 }
-.fab{
-  position: fixed;
-  right: 16px;
-  bottom: 72px;
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
-  border:none;
-  background: #1f2327;
-  color:#fff;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
-  font-size: 28px;
-  cursor:pointer;
-  z-index: 9000;
-}
-.fab:active{ transform: scale(0.98); }
-
-
-/* --- Unified Material Dialogs (v2.25) --- */
 .dialog-overlay{
   position: fixed;
   inset: 0;
@@ -963,53 +817,9 @@
 .dialog-actions .btn{
   border-radius: 12px;
 }
-/* Make existing manage modal match material (keep IDs) */
-.modal-overlay{
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(2px);
-}
-.modal{
-  width: min(560px, 96vw);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.32);
-  border: 1px solid var(--border);
-  padding: 16px;
-}
-.modal h2{
-  font-size: 1.08rem;
-  font-weight: 800;
-}
 
 
-/* --- Manage Modal: match Material cards/buttons (v2.25 modal fix) --- */
-.modal label{
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-}
-.modal select,
-.modal input[type="text"]{
-  width: 100%;
-  padding: 10px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  font-size: 0.95rem;
-  color: var(--text);
-  outline: none;
-  box-sizing: border-box;
-}
-.modal select:focus,
-.modal input[type="text"]:focus{
-  border-color: rgba(37,99,235,.6);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
-}
-.modal-buttons{
-  margin-top: 14px;
-}
-
-
-/* --- Sticky table header (table view) --- */
+/* Fixierte Tabellenüberschrift */
 @media (min-width: 801px){
   .table-wrapper{
     overflow-x: auto;
@@ -1025,112 +835,6 @@
 }
 
 
-/* --- Page history: show only active badge + collapsible history (v2.28) --- */
-.page-active-row{
-  display:flex;
-  align-items:center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 8px 0 6px 0;
-}
-.page-active-label{
-  font-size: 0.82rem;
-  color: var(--muted);
-  font-weight: 800;
-}
-.page-history{
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  margin: 8px 0;
-  overflow: hidden;
-}
-.page-history summary{
-  padding: 10px 12px;
-  font-weight: 800;
-  color: var(--text);
-  cursor: pointer;
-  list-style: none;
-}
-.page-history summary::-webkit-details-marker{ display:none; }
-.page-history summary::after{
-  content: "▾";
-  float: right;
-  opacity: .7;
-}
-.page-history[open] summary::after{ content:"▴"; }
-.page-history-inner{
-  padding: 8px 10px 10px 10px;
-  border-top: 1px solid var(--border);
-}
-.page-history-sub{
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin: 6px 0 4px 0;
-  font-weight: 700;
-}
-
-
-/* --- Anlage dropdown page list (v2.30) --- */
-.anlage-group{
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  margin: 10px 0;
-  overflow: hidden;
-}
-.anlage-group summary{
-  padding: 10px 12px;
-  font-weight: 900;
-  color: var(--text);
-  cursor: pointer;
-  list-style: none;
-}
-.anlage-group summary::-webkit-details-marker{ display:none; }
-.anlage-group summary::after{
-  content: "▾";
-  float: right;
-  opacity: .7;
-}
-.anlage-group[open] summary::after{ content:"▴"; }
-
-.anlage-group-inner{
-  padding: 10px 10px 12px 10px;
-  border-top: 1px solid var(--border);
-}
-.anlage-active-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-.anlage-active-row .label{
-  font-size: 0.82rem;
-  color: var(--muted);
-  font-weight: 800;
-}
-.page-badges-wrap{
-  display:flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.page-badge.smallish{
-  padding: 4px 8px;
-  font-size: 0.78rem;
-}
-.bereich-subtitle{
-  margin: 10px 0 6px 0;
-  font-size: 0.82rem;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-
-/* --- Page list: inline dropdown per Anlage+BEREICH (v2.32) --- */
 .page-anlage-block{
   margin: 8px 0 12px 0;
 }
@@ -1153,7 +857,6 @@
   cursor:pointer;
 }
 .page-dd summary::-webkit-details-marker{ display:none; }
-/* Make summary look like a normal badge */
 .page-dd .dd-badge{
   display:inline-block;
   margin: 2px 0;
@@ -1169,7 +872,6 @@
   color:#fff;
   font-weight: 800;
 }
-/* Dropdown panel */
 .page-dd[open] .dd-panel{
   display:block;
 }
@@ -1207,16 +909,12 @@
 }
 
 
-
-    /* --- v2.43 mobile workview stable --- */
     @media (max-width: 800px){
       .mobile-worker-box{display:grid;gap:6px;margin:8px 0 10px 0;padding:10px;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
       .mobile-worker-box label{font-size:.8rem;font-weight:700;color:var(--muted)}
       .mobile-worker-box input,.mobile-worker-box select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:#fff;font-size:.92rem}
       .mobile-worker-hint{font-size:.76rem;color:var(--muted);line-height:1.35}
 
-      /* v2.70: Auf Smartphone nur das mobile Bearbeiter-Feld anzeigen.
-         Das Desktop-Feld bleibt im Hintergrund vorhanden, wird aber optisch ausgeblendet. */
       .worker-desktop-box{display:none !important;}
       tbody.mobile-worklist{display:grid !important;gap:10px}
       tbody.mobile-worklist tr,tbody.mobile-worklist td{display:block !important;border:none !important;padding:0 !important;background:transparent !important}
@@ -1254,15 +952,12 @@
       .mobile-aerator-title{font-size:.71rem;line-height:1.05;font-weight:700;color:var(--text)}
       .mobile-aerator-controls{display:grid;grid-template-columns:minmax(0,1fr) 46px;gap:4px;align-items:center}
       .mobile-aerator-count{width:100%!important;min-height:30px!important;text-align:center;padding:2px!important;font-size:.82rem!important;border:1px solid var(--primary)!important;border-radius:6px!important}
-      .mobile-checkrow{display:grid;grid-template-columns:1fr 56px;gap:2px;align-items:center}
       .mobile-check{display:flex;align-items:center;gap:3px;min-height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:1px 4px;justify-content:flex-start;overflow:visible;white-space:nowrap;font-size:.78rem;color:var(--text);font-weight:600}
       .mobile-check input{width:17px;height:17px}
     }
 
-    
-    .fab-up{ position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%; background:#1f2937; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:9999; cursor:pointer; font-size:24px; transition:opacity 0.2s, transform 0.2s; opacity:0; pointer-events:none; }
-    .fab-up.visible{ opacity:1; pointer-events:auto; }
 
+    .fab-up{ position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%; background:#1f2937; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:9999; cursor:pointer; font-size:24px; transition:opacity 0.2s, transform 0.2s; opacity:0; pointer-events:none; }
     .fab-up.visible{ opacity:1; pointer-events:auto; }
 
     .fab-next{ position:fixed; right:20px; bottom:86px; width:56px; height:56px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(37,99,235,0.45); z-index:9999; cursor:pointer; font-size:22px; transition:opacity 0.2s, transform 0.2s; opacity:0; pointer-events:none; border:none; }
@@ -1296,8 +991,7 @@
     <div class="header-worker" id="headerWorker"></div>
   </div>
 
-  
-  <!-- v2.72: Mobile Bearbeiter-Box fest unter dem Header (nur auf Smartphone sichtbar) -->
+
   <div id="mobileWorkerBar" class="mobile-worker-box" style="display:none;">
     <label for="workerNameInline">👤 Wer arbeitet hier</label>
     <select id="workerNameInline" aria-label="Bearbeiter auswählen"></select>
@@ -1399,7 +1093,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.86 · Bereinigter Datenimport & Standort-Schutz</div>
+    Daten werden lokal im Browser gespeichert · Version 2.86</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1443,9 +1137,7 @@
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
   <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">☰</button>
   <script>
-    // v2.86: bereinigte stabile Basis.
-    // Der Browser-Speicher beginnt bewusst neu; bestehende Protokolle werden
-    // einmalig über den Seiten-Import übernommen. Keine automatische Löschung.
+    // Eigener Speicherstand für den einmaligen, kontrollierten Datenimport.
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
         "Bungalows"
@@ -1483,10 +1175,7 @@
     };
 
     const STORAGE_KEY = "spuelprotokoll_pages_v4_clean";
-    // Bewusst kein automatischer Zugriff auf ältere Browser-Speicherstände.
-    // Dadurch kann eine fehlerhafte Altversion die saubere Datenbasis nicht
-    // erneut überschreiben. Übernahme erfolgt kontrolliert per JSON-Import.
-    const LEGACY_STORAGE_KEYS = [STORAGE_KEY];
+    // Vorhandene Protokolle werden einmalig kontrolliert per JSON importiert.
     const ANLAGEN_KEY = "spuelprotokoll_anlagen_v2";
     const WORKER_NAME_KEY = "spuelprotokoll_worker_name_v1";
     const WORKER_LIST_KEY = "spuelprotokoll_worker_list_v1";
@@ -1502,8 +1191,7 @@
 
     let searchHighlightPageId = null;
     let searchHighlightRowIndex = null;
-    // v2.82: Seitenliste zeigt standardmäßig nur den aktuellen Standort,
-    // um nicht wieder alle Anlagen/Bereiche auf einmal aufzublähen.
+    // Standardmäßig wird nur der aktuelle Standort in der Seitenliste angezeigt.
     let showAllLocationsInList = false;
 
     const SCHENK_ANLAGE = "Dr.-Schenk-Stift";
@@ -1818,7 +1506,6 @@
     }
 
 
-
     function clone(obj) {
       return JSON.parse(JSON.stringify(obj));
     }
@@ -2081,6 +1768,7 @@
       "Pflegebad",
       "Putzraum / Reinigungsraum",
       "Sanitär- & Personalbereich",
+      "Sanitärraum WC/Bad",
       "Sonstiger Raum / Bereich",
       "Teeküche / Stationsküche",
       "Umkleide (mit integriertem Waschbereich)",
@@ -2111,15 +1799,11 @@
       placeholder.textContent = "–";
       select.appendChild(placeholder);
 
-      // Frühere Raumtypen bleiben sichtbar und werden nicht verworfen.
-      if (current && !ROOM_TYPE_OPTIONS.includes(current)) {
-        const legacyOption = document.createElement("option");
-        legacyOption.value = current;
-        legacyOption.textContent = `${current} (bisheriger Eintrag)`;
-        select.appendChild(legacyOption);
-      }
+      const options = current && !ROOM_TYPE_OPTIONS.includes(current)
+        ? [...ROOM_TYPE_OPTIONS, current].sort((a, b) => a.localeCompare(b, "de"))
+        : ROOM_TYPE_OPTIONS;
 
-      ROOM_TYPE_OPTIONS.forEach(label => {
+      options.forEach(label => {
         const option = document.createElement("option");
         option.value = label;
         option.textContent = label;
@@ -2150,6 +1834,7 @@
           return ["Waschbecken", "Dusche", "Handwaschbecken", "Sonstige Entnahmestelle"];
         case "Personal-WC / Patienten-WC / Besucher-WC":
         case "Sanitär- & Personalbereich":
+        case "Sanitärraum WC/Bad":
           return ["Handwaschbecken", "Waschbecken", "Dusche", "Sonstige Entnahmestelle"];
         case "Waschküche":
           return ["Ausgussbecken", "Spüle", "Waschbecken", "Sonstige Entnahmestelle"];
@@ -2168,12 +1853,11 @@
       placeholder.textContent = "Bitte auswählen …";
       select.appendChild(placeholder);
 
-      // Alte freie Angaben bleiben als bisheriger Eintrag auswählbar.
       if (current && !options.includes(current)) {
-        const legacyOption = document.createElement("option");
-        legacyOption.value = current;
-        legacyOption.textContent = `${current} (bisheriger Eintrag)`;
-        select.appendChild(legacyOption);
+        const existingOption = document.createElement("option");
+        existingOption.value = current;
+        existingOption.textContent = current;
+        select.appendChild(existingOption);
       }
 
       options.forEach(label => {
@@ -2211,7 +1895,7 @@
       return "";
     }
 
-    function syncLegacyIssueFlags(row, issueType) {
+    function syncIssueCompatibilityFlags(row, issueType) {
       row.turbidityFlag = issueType === "turbidity";
       row.fixtureDefectFlag = issueType === "fixtureDefect";
       row.aeratorStuckFlag = issueType === "aeratorStuck";
@@ -2233,7 +1917,7 @@
         tempMode: mode,
         issueType,
         issuePresent,
-        // Legacy-Feld bleibt für ältere JSON-Versionen erhalten.
+        // Kompatibilitätsfeld für vorhandene Importdateien.
         kwOnly: mode === "kw"
       };
     }
@@ -2395,32 +2079,27 @@
 }
 
     function loadState() {
-      let selectedData = null;
-      let selectedKey = null;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
 
-      for (const key of LEGACY_STORAGE_KEYS) {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        try {
-          const parsed = JSON.parse(raw);
-          const candidatePages = Array.isArray(parsed)
-            ? parsed
-            : (Array.isArray(parsed && parsed.pages) ? parsed.pages : null);
-          if (!candidatePages || !candidatePages.length) continue;
-          selectedData = Array.isArray(parsed) ? { pages: parsed, activePageId: null } : parsed;
-          selectedKey = key;
-          break;
-        } catch (e) {
-          console.warn(`Gespeicherte Daten unter ${key} konnten nicht gelesen werden.`, e);
-        }
+      let selectedData;
+      try {
+        const parsed = JSON.parse(raw);
+        const candidatePages = Array.isArray(parsed)
+          ? parsed
+          : (Array.isArray(parsed && parsed.pages) ? parsed.pages : null);
+        if (!candidatePages || !candidatePages.length) return false;
+        selectedData = Array.isArray(parsed) ? { pages: parsed, activePageId: null } : parsed;
+      } catch (e) {
+        console.warn("Gespeicherte Daten konnten nicht gelesen werden.", e);
+        return false;
       }
-
-      if (!selectedData) return false;
 
       try {
         pages = selectedData.pages.map(p => ({
           ...p,
           pageNumber: Number.isInteger(Number(p && p.pageNumber)) && Number(p.pageNumber) > 0 ? Number(p.pageNumber) : null,
+          created: cleanLocationLabel(p && p.created) || timestampString(),
           anlage: cleanLocationLabel(p && p.anlage),
           bereich: cleanLocationLabel(p && p.bereich),
           performedBy: normalizeWorkerName(p && p.performedBy),
@@ -2445,11 +2124,7 @@
 
         ensureUniquePageNumbers();
 
-        // Normalisierten Zustand unter dem sauberen v4-Schlüssel sichern.
         saveState();
-        if (selectedKey && selectedKey !== STORAGE_KEY) {
-          console.info(`Spülprotokoll-Daten wurden von ${selectedKey} nach ${STORAGE_KEY} übernommen.`);
-        }
         return true;
       } catch (e) {
         console.error("Fehler beim Laden:", e);
@@ -2697,20 +2372,10 @@
     }
 
 
-
-
-
-
-
-
-
     function getActivePage() {
       return pages.find(p => p.id === activePageId) || null;
     }
-
-    // v2.81: "Wo arbeitest du gerade?" - Anlage + Bereich wählen, dann automatisch
-    // die richtige Seite öffnen bzw. anlegen. Wird über das ✎ im Header und beim
-    // allerersten Start (noch keine gespeicherten Daten) aufgerufen.
+    // Wählt einen Standort und öffnet das passende vorhandene Protokoll.
     async function openStandortWechsel() {
       const anlagen = Object.keys(anlagenData || {});
       if (!anlagen.length) {
@@ -2821,7 +2486,7 @@
       info.textContent = `Nr. ${index} – ${page.anlage} / ${page.bereich}${getPageWorker(page) ? " · " + getPageWorker(page) : ""} (erstellt: ${page.created})`;
     }
 
-    
+
     function toast(message, actionLabel = null, actionFn = null, duration = 5000){
       const el = document.getElementById("toast");
       if (!el) return;
@@ -3002,9 +2667,7 @@
       });
       thead.appendChild(headerRow);
       table.appendChild(thead);
-
-      // v2.72: Mobile-Worker-Box ist jetzt fest unter dem Header –
-      // hier nur noch sicherstellen, dass die aktive Seite den globalen workerName hat.
+      // Die aktive Seite verwendet den global ausgewählten Bearbeiter.
       if (page && !page.performedBy && workerName) {
         setPageWorker(page, workerName);
       }
@@ -3336,7 +2999,7 @@
             if (!row.issuePresent) {
               row.issueType = "";
               mobileIssueSelect.value = "";
-              syncLegacyIssueFlags(row, "");
+              syncIssueCompatibilityFlags(row, "");
             }
             updateMobileIssueState();
             saveState();
@@ -3347,7 +3010,7 @@
             ensureDateTime();
             row.issueType = mobileIssueSelect.value;
             row.issuePresent = true;
-            syncLegacyIssueFlags(row, row.issueType);
+            syncIssueCompatibilityFlags(row, row.issueType);
             updateMobileIssueState();
             saveState();
             if (row.issueType === "other") setTimeout(() => mobileOtherIssueInput.focus(), 0);
@@ -3744,7 +3407,7 @@ tr.appendChild(tdIdx);
           if (!row.issuePresent) {
             row.issueType = "";
             desktopIssueSelect.value = "";
-            syncLegacyIssueFlags(row, "");
+            syncIssueCompatibilityFlags(row, "");
           }
           updateDesktopIssueState();
           saveState();
@@ -3755,7 +3418,7 @@ tr.appendChild(tdIdx);
           ensureDateTime();
           row.issueType = desktopIssueSelect.value;
           row.issuePresent = true;
-          syncLegacyIssueFlags(row, row.issueType);
+          syncIssueCompatibilityFlags(row, row.issueType);
           updateDesktopIssueState();
           saveState();
           if (row.issueType === "other") setTimeout(() => desktopOtherIssueInput.focus(), 0);
@@ -3845,10 +3508,10 @@ notesInput.addEventListener("blur", () => {
 
       table.appendChild(tbody);
       wrapper.appendChild(table);
-      
+
   container.appendChild(wrapper);
 
-  
+
 const actions = document.createElement("div");
   actions.className = "table-actions";
 
@@ -3872,8 +3535,7 @@ function renderAll() {
       renderWorkerPickers();
     }
 
-    
-    
+
     // --- Save-As (File System Access API) ---
     function supportsSavePicker(){
       return !!(window.showSaveFilePicker);
@@ -3913,11 +3575,6 @@ function renderAll() {
     }
 
 
-    
-            
-
-    
-    
     function exportPagesJSON() {
       const inp = document.getElementById("workerNameInput");
       if (inp && inp.value && inp.value !== MANUAL_WORKER_VALUE) workerName = canonicalWorkerName(inp.value);
@@ -3935,7 +3592,6 @@ function renderAll() {
       const filename = `spuelprotokoll_seiten_${stamp}_${workerPart}.json`;
       saveWithPicker(filename, blob);
     }
-
 
 
     function importPagesJSONFile(file) {
@@ -3969,6 +3625,7 @@ function renderAll() {
               pageNumber: Number.isInteger(Number(page.pageNumber)) && Number(page.pageNumber) > 0
                 ? Number(page.pageNumber)
                 : index + 1,
+              created: cleanLocationLabel(page.created) || timestampString(),
               anlage: cleanLocationLabel(page.anlage),
               bereich: cleanLocationLabel(page.bereich),
               performedBy: canonicalWorkerName(page.performedBy),
@@ -4033,7 +3690,6 @@ Dr.-Schenk-Stift wird dabei dem Bereich „Betreutes Wohnen“ zugeordnet.`,
       const filename = `spuelprotokoll_anlagen_${stamp}_${workerPart}.json`;
       saveWithPicker(filename, blob);
     }
-
 
 
     function importAnlagenJSONFile(file) {
@@ -4599,19 +4255,16 @@ case "4":
       initWorkerPickers();
       // Initialer Check kommt beim ersten Fokus/Intervall, damit beim Start kein Popup-Spam entsteht.
       if (!loaded || !pages.length) {
-        // Sauberer Erststart: Import-Schaltfläche anzeigen und nichts automatisch
-        // anlegen. So kann der Altbestand kontrolliert einmalig importiert werden.
+        // Beim Erststart wird nichts automatisch angelegt.
         renderAll();
       } else {
-        // 2.80-Bestand bleibt erhalten; die neue Oberfläche setzt nur die
-        // Standort-Navigation und die gefilterte Seitenliste darüber.
+        // Vorhandenen importierten Bestand öffnen.
         if (!getActivePage()) activePageId = pages[0].id;
         renderAll();
       }
     });
   </script>
 
-  <!-- Unified Material Dialog (replaces alert/confirm/prompt in v2.25) -->
   <div id="dialogOverlay" class="dialog-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="dialog" aria-labelledby="dialogTitle">
       <div class="dialog-header">
@@ -4626,7 +4279,5 @@ case "4":
     </div>
   </div>
 
-<script>
-</script>
 </body>
 </html>
