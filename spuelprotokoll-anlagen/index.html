@@ -213,7 +213,7 @@
 
     .temp-mode-grid {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 3px;
       margin-top: 4px;
       min-width: 118px;
@@ -229,7 +229,8 @@
       background: #fff;
       font-size: 0.66rem;
       line-height: 1.05;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
       cursor: pointer;
     }
 
@@ -280,6 +281,11 @@
       height: 14px;
       margin: 0;
       accent-color: var(--primary);
+    }
+
+    .temp-mode-grid .kw-only-toggle {
+      margin-top: 0;
+      min-width: 0;
     }
 
 
@@ -966,8 +972,8 @@
       .mobile-temp-mode-option{display:flex;align-items:center;gap:6px;min-height:38px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:6px 8px;font-size:.8rem;font-weight:700;cursor:pointer}
       .mobile-temp-mode-option:has(input:checked){border-color:var(--primary);background:#eff6ff;color:#1d4ed8}
       .mobile-temp-mode-option input{width:17px!important;height:17px;margin:0;accent-color:var(--primary)}
-      .mobile-temp-mode-option:last-child{grid-column:1 / -1}
-      .mobile-kw-only-toggle{display:flex;align-items:center;gap:8px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:7px 10px;font-size:.82rem;font-weight:800;cursor:pointer}
+      .mobile-temp-mode-option{white-space:normal;overflow-wrap:anywhere}
+      .mobile-kw-only-toggle{display:flex;align-items:center;gap:8px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:7px 10px;font-size:.82rem;font-weight:800;cursor:pointer;white-space:normal;overflow-wrap:anywhere;min-width:0}
       .mobile-kw-only-toggle:has(input:checked){border-color:var(--primary);background:#eff6ff;color:#1d4ed8}
       .mobile-kw-only-toggle input{width:18px!important;height:18px;margin:0;accent-color:var(--primary)}
       .mobile-temp-note{font-size:.72rem;color:var(--muted);line-height:1.3}
@@ -1124,7 +1130,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.87</div>
+    Daten werden lokal im Browser gespeichert · Version 2.88</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1812,13 +1818,10 @@
     const GENERIC_EXTRACTION_POINTS = [
       "Ausgussbecken",
       "Dusche",
-      "Handwaschbecken",
-      "Probenahmehahn",
+      "Reihen-WB",
+      "Sonstige Entnahmestelle",
       "Spüle",
-      "Steckbeckenspüle",
-      "Waschbecken",
-      "Waschbecken im Bewohner-/Patientenzimmer",
-      "Sonstige Entnahmestelle"
+      "Waschbecken"
     ];
 
     function populateRoomTypeSelect(select, currentValue = "") {
@@ -1850,25 +1853,6 @@
           return ["WW-Abgang", "Zirkulations-RL", "KW"];
         case "Hausanschlussraum":
           return ["Probenahmehahn nach dem Wasserzähler", "Sonstige Entnahmestelle"];
-        case "Bewohner- / Patientenzimmer":
-          return ["Waschbecken im Bewohner-/Patientenzimmer", "Handwaschbecken", "Sonstige Entnahmestelle"];
-        case "Teeküche / Stationsküche":
-        case "Kantine / Großküche":
-        case "Pausenraum / Aufenthaltsraum":
-          return ["Spüle", "Handwaschbecken", "Sonstige Entnahmestelle"];
-        case "Unreinraum":
-          return ["Ausgussbecken", "Spüle", "Steckbeckenspüle", "Handwaschbecken", "Sonstige Entnahmestelle"];
-        case "Putzraum / Reinigungsraum":
-          return ["Ausgussbecken", "Spüle", "Sonstige Entnahmestelle"];
-        case "Pflegebad":
-        case "Waschraum / Duschraum":
-          return ["Waschbecken", "Dusche", "Handwaschbecken", "Sonstige Entnahmestelle"];
-        case "Personal-WC / Patienten-WC / Besucher-WC":
-        case "Sanitär- & Personalbereich":
-        case "Sanitärraum WC/Bad":
-          return ["Handwaschbecken", "Waschbecken", "Dusche", "Sonstige Entnahmestelle"];
-        case "Waschküche":
-          return ["Ausgussbecken", "Spüle", "Waschbecken", "Sonstige Entnahmestelle"];
         default:
           return GENERIC_EXTRACTION_POINTS;
       }
@@ -2861,7 +2845,7 @@
           mobileKwOnlyCheckbox.type = "checkbox";
           mobileKwOnlyCheckbox.checked = row.kwOnly === true;
           const mobileKwOnlyText = document.createElement("span");
-          mobileKwOnlyText.textContent = "Nur KW";
+          mobileKwOnlyText.textContent = "KW";
           mobileKwOnlyCheckbox.addEventListener("change", () => {
             ensureDateTime();
             row.kwOnly = mobileKwOnlyCheckbox.checked;
@@ -2870,11 +2854,11 @@
           });
           mobileKwOnlyToggle.appendChild(mobileKwOnlyCheckbox);
           mobileKwOnlyToggle.appendChild(mobileKwOnlyText);
-          temps.appendChild(mobileKwOnlyToggle);
+          modeGrid.appendChild(mobileKwOnlyToggle);
 
           const modeNote = document.createElement("div");
           modeNote.className = "mobile-temp-note";
-          modeNote.textContent = "Stelle auswählen; „Nur KW“ blendet die Warmwasserfelder aus. Vorhandene Werte bleiben gespeichert.";
+          modeNote.textContent = "Stelle auswählen; „KW“ blendet die Warmwasserfelder aus. Vorhandene Werte bleiben gespeichert.";
           temps.appendChild(modeNote);
 
           const otherLocationWrap = document.createElement("label");
@@ -3347,7 +3331,7 @@ tr.appendChild(tdIdx);
         kwOnlyCheckbox.type = "checkbox";
         kwOnlyCheckbox.checked = row.kwOnly === true;
         const kwOnlyText = document.createElement("span");
-        kwOnlyText.textContent = "Nur KW";
+        kwOnlyText.textContent = "KW";
         kwOnlyCheckbox.addEventListener("change", () => {
           ensureDateTime();
           row.kwOnly = kwOnlyCheckbox.checked;
@@ -3356,7 +3340,7 @@ tr.appendChild(tdIdx);
         });
         kwOnlyToggle.appendChild(kwOnlyCheckbox);
         kwOnlyToggle.appendChild(kwOnlyText);
-        kwWrap.appendChild(kwOnlyToggle);
+        modeGrid.appendChild(kwOnlyToggle);
 
         const otherLocationWrap = document.createElement("div");
         otherLocationWrap.className = "temp-location-other";
