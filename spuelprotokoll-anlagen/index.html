@@ -139,6 +139,23 @@
       font-size: 1rem;
       padding: 12px;
     }
+    .location-panel-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-left:auto;
+    }
+    .location-panel-actions.location-panel-empty{
+      flex:1 1 100%;
+    }
+    .location-panel-actions.location-panel-empty .location-switch-btn{
+      flex:1 1 220px;
+    }
+    .location-recovery-btn{
+      display:none;
+      flex:1 1 220px;
+    }
 
      .page-list {
       margin: 6px 0 4px 0;
@@ -1372,14 +1389,17 @@
       <span>Aktive Seite:</span>
       <span id="pageInfo"></span>
     </div>
-    <button type="button" id="locationSwitchBtn" class="btn primary location-switch-btn">Standort wechseln</button>
+    <div class="location-panel-actions" id="locationPanelActions">
+      <button type="button" id="locationSwitchBtn" class="btn primary location-switch-btn">Standort wechseln</button>
+      <button type="button" id="quickImportPagesBtn" class="btn location-recovery-btn">Vorhandene Seiten importieren</button>
+    </div>
   </div>
 
   <div class="page-list" id="pageList"></div>
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.82 · Standort-Panel & gefilterte Seitenliste</div>
+    Daten werden lokal im Browser gespeichert · Version 2.83 · Datenübernahme & Standort-Wechsel</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1423,6 +1443,9 @@
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
   <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">☰</button>
   <script>
+    // v2.83 basiert vollständig auf dem Daten-/Tabellenstand von v2.80.
+    // Ergänzt wurden ausschließlich die v2.82-Oberfläche, Standort-Navigation
+    // und eine robustere Übernahme bestehender Browser-/JSON-Daten.
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
         "Bungalows"
@@ -1460,6 +1483,11 @@
     };
 
     const STORAGE_KEY = "spuelprotokoll_pages_v3";
+    const LEGACY_STORAGE_KEYS = [
+      STORAGE_KEY,
+      "spuelprotokoll_pages_v2",
+      "spuelprotokoll_pages_v1"
+    ];
     const ANLAGEN_KEY = "spuelprotokoll_anlagen_v2";
     const WORKER_NAME_KEY = "spuelprotokoll_worker_name_v1";
     const WORKER_LIST_KEY = "spuelprotokoll_worker_list_v1";
@@ -2180,35 +2208,62 @@
 }
 
     function loadState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      try {
-        const data = JSON.parse(raw);
-        if (Array.isArray(data.pages)) {
-          pages = data.pages.map(p => ({
-            ...p,
-            performedBy: normalizeWorkerName(p && p.performedBy),
-            rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
-          }));
+      let selectedData = null;
+      let selectedKey = null;
 
-          // Falls der globale Name noch leer ist, aus den vorhandenen Seiten
-          // den vollständigsten Namen übernehmen. Anschließend alle Seiten
-          // vereinheitlichen, damit jede Anlage denselben Bearbeiter zeigt.
-          if (!normalizeWorkerName(workerName)) {
-            workerName = findBestStoredWorkerName(pages);
-            if (workerName) saveWorkerName();
-          }
-          syncWorkerAcrossPages();
-
-          activePageId = data.activePageId || (pages[0] && pages[0].id);
-          // Reparierte Bearbeiternamen sofort dauerhaft zurückschreiben.
-          saveState();
-          return true;
+      for (const key of LEGACY_STORAGE_KEYS) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        try {
+          const parsed = JSON.parse(raw);
+          const candidatePages = Array.isArray(parsed)
+            ? parsed
+            : (Array.isArray(parsed && parsed.pages) ? parsed.pages : null);
+          if (!candidatePages || !candidatePages.length) continue;
+          selectedData = Array.isArray(parsed) ? { pages: parsed, activePageId: null } : parsed;
+          selectedKey = key;
+          break;
+        } catch (e) {
+          console.warn(`Gespeicherte Daten unter ${key} konnten nicht gelesen werden.`, e);
         }
+      }
+
+      if (!selectedData) return false;
+
+      try {
+        pages = selectedData.pages.map(p => ({
+          ...p,
+          performedBy: normalizeWorkerName(p && p.performedBy),
+          rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
+        }));
+
+        // Falls der globale Name noch leer ist, aus den vorhandenen Seiten
+        // den vollständigsten Namen übernehmen. Anschließend alle Seiten
+        // vereinheitlichen, damit jede Anlage denselben Bearbeiter zeigt.
+        if (!normalizeWorkerName(workerName)) {
+          workerName = findBestStoredWorkerName(pages);
+          if (workerName) saveWorkerName();
+        }
+        syncWorkerAcrossPages();
+
+        const requestedActiveId = selectedData.activePageId || null;
+        activePageId = pages.some(p => p.id === requestedActiveId)
+          ? requestedActiveId
+          : (pages[0] && pages[0].id);
+
+        // Altbestand sofort unter dem aktuellen v3-Schlüssel sichern. So bleibt
+        // die 2.80-Datenstruktur vollständig kompatibel mit der neuen Oberfläche.
+        saveState();
+        if (selectedKey && selectedKey !== STORAGE_KEY) {
+          console.info(`Spülprotokoll-Daten wurden von ${selectedKey} nach ${STORAGE_KEY} übernommen.`);
+        }
+        return true;
       } catch (e) {
         console.error("Fehler beim Laden:", e);
+        pages = [];
+        activePageId = null;
+        return false;
       }
-      return false;
     }
 
     function initAnlageDropdowns() {
@@ -2545,14 +2600,20 @@
 
     function renderLocationPanel(){
       const btn = document.getElementById("locationSwitchBtn");
+      const recoveryBtn = document.getElementById("quickImportPagesBtn");
+      const actions = document.getElementById("locationPanelActions");
       if (!btn) return;
       const page = getActivePage();
       if (!page){
         btn.textContent = "Wo arbeitest du gerade?";
         btn.classList.add("location-switch-cta");
+        if (recoveryBtn) recoveryBtn.style.display = "inline-flex";
+        if (actions) actions.classList.add("location-panel-empty");
       } else {
         btn.textContent = "Standort wechseln";
         btn.classList.remove("location-switch-cta");
+        if (recoveryBtn) recoveryBtn.style.display = "none";
+        if (actions) actions.classList.remove("location-panel-empty");
       }
     }
 
@@ -4038,6 +4099,10 @@ case "4":
       document.getElementById("importPagesBtn").addEventListener("click", () => {
         pagesImportInput.click();
       });
+      const quickImportPagesBtn = document.getElementById("quickImportPagesBtn");
+      if (quickImportPagesBtn) {
+        quickImportPagesBtn.addEventListener("click", () => pagesImportInput.click());
+      }
       pagesImportInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -4232,12 +4297,15 @@ case "4":
       initEvents();
       initWorkerPickers();
       // Initialer Check kommt beim ersten Fokus/Intervall, damit beim Start kein Popup-Spam entsteht.
-      if (!loaded) {
+      if (!loaded || !pages.length) {
         renderAll();
-        // Kein gespeicherter Zustand vorhanden: erst fragen, wo gerade
+        // Kein nutzbarer gespeicherter Zustand vorhanden: erst fragen, wo gerade
         // gearbeitet wird, statt blind die erste Anlage zu nehmen.
         openStandortWechsel();
       } else {
+        // 2.80-Bestand bleibt erhalten; die neue Oberfläche setzt nur die
+        // Standort-Navigation und die gefilterte Seitenliste darüber.
+        if (!getActivePage()) activePageId = pages[0].id;
         renderAll();
       }
     });
