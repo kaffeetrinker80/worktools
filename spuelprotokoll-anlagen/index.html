@@ -110,9 +110,51 @@
       font-weight: bold;
     }
 
+    .location-panel{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 10px 0 4px 0;
+      box-shadow: var(--shadow);
+    }
+    .location-panel-info{
+      font-size: 0.85rem;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .location-panel-info span{ font-weight: bold; }
+    .location-switch-btn{
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .location-switch-btn.location-switch-cta{
+      flex: 1 1 100%;
+      text-align: center;
+      font-size: 1rem;
+      padding: 12px;
+    }
+
      .page-list {
       margin: 6px 0 4px 0;
       font-size: 0.8rem;
+    }
+
+    .page-list-toggle{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .page-list-toggle-note{
+      font-size: 0.78rem;
+      color: var(--muted);
     }
 
     .page-group-title {
@@ -793,29 +835,6 @@
     color: rgba(255,255,255,0.96);
     overflow-wrap: anywhere;
   }
-  .header-location-row{
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: space-between;
-  }
-  .header-location-row .header-sub{ margin: 0; flex: 1; min-width: 0; }
-  .header-edit-btn{
-    flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .header-edit-btn:active{ transform: scale(0.96); }
-  .header-edit-btn:hover{ background: rgba(255,255,255,0.2); }
   .row-idx-wrap{
     display:flex;
     align-items:center;
@@ -1256,10 +1275,7 @@
   <div class="header">
     <div class="header-title">Spülprotokoll – Kontrolle der Wassertemperaturen</div>
     <div class="header-sub">Objektbezogene Hygienespülungen</div>
-    <div class="header-location-row">
-      <div class="header-sub" id="headerContext">Anlage &amp; Bereich</div>
-      <button type="button" id="changeLocationBtn" class="header-edit-btn" aria-label="Standort wechseln" title="Standort wechseln">✎</button>
-    </div>
+    <div class="header-sub" id="headerContext">Anlage &amp; Bereich</div>
     <div class="header-worker" id="headerWorker"></div>
   </div>
 
@@ -1318,7 +1334,7 @@
           <button id="addAnlageBtn" class="btn">+ Anlage/Bereich hinzufügen</button>
           <button id="manageAnlagenBtn" class="btn">Verwalten</button>
         </div>
-        <div class="hint">Tipp: Zum Wechseln des aktuellen Standorts lieber das ✎-Symbol oben im Kopfbereich nutzen – hier geht es nur um das Anlegen/Umbenennen/Löschen von Anlagen und Bereichen selbst.</div>
+        <div class="hint">Tipp: Zum Wechseln des aktuellen Standorts lieber den Button „Standort wechseln“ bei der aktiven Seite nutzen – hier geht es nur um das Anlegen/Umbenennen/Löschen von Anlagen und Bereichen selbst.</div>
 
         <div class="divider"></div>
 
@@ -1351,17 +1367,19 @@
     </details>
   </div>
 
-  <div class="page-meta">
-
-    <span>Aktive Seite:</span>
-    <span id="pageInfo"></span>
+  <div class="location-panel" id="locationPanel">
+    <div class="location-panel-info">
+      <span>Aktive Seite:</span>
+      <span id="pageInfo"></span>
+    </div>
+    <button type="button" id="locationSwitchBtn" class="btn primary location-switch-btn">Standort wechseln</button>
   </div>
 
   <div class="page-list" id="pageList"></div>
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.81 · Kompakter Kopfbereich & Standort-Flow</div>
+    Daten werden lokal im Browser gespeichert · Version 2.82 · Standort-Panel & gefilterte Seitenliste</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1457,6 +1475,9 @@
 
     let searchHighlightPageId = null;
     let searchHighlightRowIndex = null;
+    // v2.82: Seitenliste zeigt standardmäßig nur den aktuellen Standort,
+    // um nicht wieder alle Anlagen/Bereiche auf einmal aufzublähen.
+    let showAllLocationsInList = false;
 
     // --- Unified Dialog helpers (Material-ish) ---
     const _dialog = {
@@ -2240,6 +2261,8 @@
         return;
       }
 
+      const active = getActivePage();
+
       // Sort pages by Anlage / Bereich / created
       const sorted = [...pages].sort((a, b) => {
         const anA = a.anlage || "";
@@ -2253,19 +2276,60 @@
         return crA.localeCompare(crB);
       });
 
+      const activeAnlage = active ? (active.anlage || "(ohne Anlage)") : null;
+      const activeBereich = active ? (active.bereich || "(ohne Bereich)") : null;
+      const filterActive = !!active && !showAllLocationsInList;
+      const hiddenAnlagenBereiche = new Set();
+
       // Build groups: Anlage -> Bereich -> pages[]
       const anlageMap = new Map();
       sorted.forEach(p => {
         const anlage = p.anlage || "(ohne Anlage)";
         const bereich = p.bereich || "(ohne Bereich)";
+        if (filterActive && (anlage !== activeAnlage || bereich !== activeBereich)) {
+          hiddenAnlagenBereiche.add(anlage + "||" + bereich);
+          return;
+        }
         if (!anlageMap.has(anlage)) anlageMap.set(anlage, new Map());
         const bMap = anlageMap.get(anlage);
         if (!bMap.has(bereich)) bMap.set(bereich, []);
         bMap.get(bereich).push(p);
       });
 
-      const active = getActivePage();
-      const activeKey = active ? ((active.anlage || "(ohne Anlage)") + "||" + (active.bereich || "(ohne Bereich)")) : null;
+      // Umschalter: nur aktueller Standort <-> alle Standorte
+      if (active) {
+        const toggleRow = document.createElement("div");
+        toggleRow.className = "page-list-toggle";
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.type = "button";
+        toggleBtn.className = "btn small";
+        toggleBtn.textContent = showAllLocationsInList ? "Nur aktuellen Standort anzeigen" : "Alle Standorte anzeigen";
+        toggleBtn.addEventListener("click", () => {
+          showAllLocationsInList = !showAllLocationsInList;
+          renderPageList();
+        });
+        toggleRow.appendChild(toggleBtn);
+
+        if (filterActive && hiddenAnlagenBereiche.size) {
+          const note = document.createElement("span");
+          note.className = "page-list-toggle-note";
+          note.textContent = `${hiddenAnlagenBereiche.size} weitere${hiddenAnlagenBereiche.size === 1 ? "r" : ""} Standort${hiddenAnlagenBereiche.size === 1 ? "" : "e"} ausgeblendet`;
+          toggleRow.appendChild(note);
+        }
+
+        container.appendChild(toggleRow);
+      }
+
+      if (!anlageMap.size) {
+        const empty = document.createElement("div");
+        empty.className = "hint";
+        empty.textContent = "Keine Seiten für den aktuellen Standort.";
+        container.appendChild(empty);
+        return;
+      }
+
+      const activeKey = active ? (activeAnlage + "||" + activeBereich) : null;
 
       // Render each Anlage block
       anlageMap.forEach((bMap, anlageName) => {
@@ -2477,6 +2541,19 @@
       activePageId = sorted[idx].id;
       saveState();
       renderAll();
+    }
+
+    function renderLocationPanel(){
+      const btn = document.getElementById("locationSwitchBtn");
+      if (!btn) return;
+      const page = getActivePage();
+      if (!page){
+        btn.textContent = "Wo arbeitest du gerade?";
+        btn.classList.add("location-switch-cta");
+      } else {
+        btn.textContent = "Standort wechseln";
+        btn.classList.remove("location-switch-cta");
+      }
     }
 
     function renderPageInfo() {
@@ -3517,6 +3594,7 @@ const actions = document.createElement("div");
 function renderAll() {
       renderPageList();
       renderPageInfo();
+      renderLocationPanel();
       renderTable();
       updateHeaderContext();
       renderWorkerPickers();
@@ -3939,7 +4017,7 @@ case "4":
 
     function initEvents() {
 
-      document.getElementById("changeLocationBtn").addEventListener("click", () => {
+      document.getElementById("locationSwitchBtn").addEventListener("click", () => {
         openStandortWechsel();
       });
 
