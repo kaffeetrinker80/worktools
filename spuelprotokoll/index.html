@@ -293,9 +293,32 @@
     padding-right:44% !important;
   }
 
-      @page{size:A4 landscape; margin:10mm}
+      /* Erzwungenes Querformat: Viele mobile Browser (v.a. Android/Chrome-Druckdialog)
+         ignorieren "size: landscape" und drucken trotzdem Hochformat.
+         Trick: Die Papierseite bleibt Hochformat (A4 210x297mm, margin 0),
+         der komplette Inhalt (.app) wird per CSS-Transform um 90° gedreht.
+         Ergebnis: Auf dem Papier erscheint der Inhalt immer quer - unabhängig
+         davon, ob der Drucktreiber/Dialog Querformat unterstützt oder anbietet. */
+      @page{size:A4 portrait; margin:0}
+      html, body{
+        margin:0 !important;
+        width:210mm;
+        height:297mm;
+        overflow:hidden;
+      }
       body{background:#fff; font-size:11px}
-      .app{max-width:none; padding:0}
+      .app{
+        max-width:none;
+        box-sizing:border-box;
+        position:absolute;
+        top:0;
+        left:0;
+        width:297mm;
+        height:210mm;
+        padding:10mm;
+        transform-origin:top left;
+        transform:translate(210mm, 0) rotate(90deg);
+      }
       .header{
         border-radius:0;
         box-shadow:none;
@@ -1081,7 +1104,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.2.1</div>
+    <div class="footer">Made with Love © · Version 2.2.3</div>
   </div>
 
   <button id="fabUp" class="fab-up" title="Nach oben">↑</button>
@@ -1098,6 +1121,10 @@ th .sub{
       const mm = String(d.getMonth()+1).padStart(2,'0');
       const dd = String(d.getDate()).padStart(2,'0');
       return `${yyyy}-${mm}-${dd}`;
+    }
+    function nowHM(){
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }
     function filenameStamp(){
       const d = new Date();
@@ -1388,6 +1415,15 @@ function escapeHtml(value){
         const index = Number(e.target.dataset.index);
         if (!field || Number.isNaN(index) || !state.rows[index]) return;
         state.rows[index][field] = e.target.value;
+
+        // Sobald ein anderes Feld der Zeile befüllt wird, Datum/Uhrzeit automatisch
+        // eintragen - aber nur, wenn dort noch nichts steht (kein Überschreiben).
+        if (field !== 'date' && field !== 'time' && e.target.value) {
+          const row = state.rows[index];
+          if (!row.date) row.date = todayISO();
+          if (!row.time) row.time = nowHM();
+        }
+
         saveState();
         syncPrintMirrors();
       }
