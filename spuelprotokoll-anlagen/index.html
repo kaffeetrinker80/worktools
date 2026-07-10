@@ -1399,7 +1399,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.83 · Datenübernahme & Standort-Wechsel</div>
+    Daten werden lokal im Browser gespeichert · Version 2.84 · Standort-Wechsel & Duplikatbereinigung</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1443,9 +1443,9 @@
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
   <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">☰</button>
   <script>
-    // v2.83 basiert vollständig auf dem Daten-/Tabellenstand von v2.80.
-    // Ergänzt wurden ausschließlich die v2.82-Oberfläche, Standort-Navigation
-    // und eine robustere Übernahme bestehender Browser-/JSON-Daten.
+    // v2.84 basiert vollständig auf dem Daten-/Tabellenstand von v2.80.
+    // Enthalten sind die v2.82-Oberfläche, Standort-Navigation, robuste
+    // Datenübernahme sowie die gezielte Bereinigung der leeren Dr.-Schenk-Doppelseite 15.
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
         "Bungalows"
@@ -2207,6 +2207,54 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+    // v2.84: In Marcos bestehendem Datenbestand war Dr.-Schenk-Stift als
+    // globale Seite 14 und 15 direkt doppelt vorhanden. Seite 14 enthält die
+    // Einträge, Seite 15 ist leer. Nur genau dieser bekannte Fall wird einmalig
+    // bereinigt; andere neue oder leere Seiten bleiben unangetastet.
+    const SCHENK_DUPLICATE_FIX_KEY = "spuelprotokoll_fix_schenk_page15_v1";
+
+    function rowHasMeaningfulData(row) {
+      if (!row || typeof row !== "object") return false;
+      const textFields = [
+        "date", "time", "floor", "roomType", "unit", "kwTemp",
+        "tempLocationOther", "wwKitchen", "wwBath", "issueType",
+        "otherIssueText", "aeratorChangedCount", "notes"
+      ];
+      const hasText = textFields.some(key => String(row[key] ?? "").trim() !== "");
+      const hasFlag = [
+        "issuePresent", "turbidityFlag", "fixtureDefectFlag",
+        "aeratorStuckFlag", "longTkmaxFlag", "otherIssueFlag",
+        "aeratorChanged"
+      ].some(key => row[key] === true);
+      const changedMode = normalizeTemperatureMode(row) !== "kitchenBath";
+      return hasText || hasFlag || changedMode;
+    }
+
+    function pageHasMeaningfulData(page) {
+      return Array.isArray(page?.rows) && page.rows.some(rowHasMeaningfulData);
+    }
+
+    function cleanupKnownSchenkDuplicatePage15() {
+      if (localStorage.getItem(SCHENK_DUPLICATE_FIX_KEY) === "done") return false;
+      if (pages.length < 15) return false;
+
+      const page14 = pages[13];
+      const page15 = pages[14];
+      const isSchenk = page => page &&
+        page.anlage === "Dr.-Schenk-Stift" &&
+        page.bereich === "Dr.-Schenk-Stift";
+
+      if (!isSchenk(page14) || !isSchenk(page15)) return false;
+      if (!pageHasMeaningfulData(page14) || pageHasMeaningfulData(page15)) return false;
+
+      const removedId = page15.id;
+      pages.splice(14, 1);
+      if (activePageId === removedId) activePageId = page14.id;
+      localStorage.setItem(SCHENK_DUPLICATE_FIX_KEY, "done");
+      console.info("Leere Dr.-Schenk-Stift-Doppelseite 15 wurde entfernt; Seite 14 bleibt erhalten.");
+      return true;
+    }
+
     function loadState() {
       let selectedData = null;
       let selectedKey = null;
@@ -2250,6 +2298,8 @@
         activePageId = pages.some(p => p.id === requestedActiveId)
           ? requestedActiveId
           : (pages[0] && pages[0].id);
+
+        cleanupKnownSchenkDuplicatePage15();
 
         // Altbestand sofort unter dem aktuellen v3-Schlüssel sichern. So bleibt
         // die 2.80-Datenstruktur vollständig kompatibel mit der neuen Oberfläche.
@@ -3758,6 +3808,7 @@ function renderAll() {
             syncWorkerAcrossPages();
 
             activePageId = pages[0] ? pages[0].id : null;
+            cleanupKnownSchenkDuplicatePage15();
             saveState();
             renderAll();
             uiAlert("Seiten-Import erfolgreich.");
