@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
-<head> 
+<head>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -1357,7 +1357,7 @@
 
         <div class="subhead">Spülprotokoll-Seiten</div>
         <div class="btn-row">
-          <button id="newPageBtn" class="btn">+ Neue Seite</button>
+          <button id="newPageBtn" class="btn">Seite öffnen / neu anlegen</button>
           <button id="deletePageBtn" class="btn danger">Seite löschen</button>
         </div>
         <div class="hint">Seiten sind nach Anlage/Bereich gruppiert. Tippe unten auf eine Seite, um sie zu öffnen.</div>
@@ -1399,7 +1399,7 @@
   <div id="tableContainer"></div>
 
   <div class="footer">
-    Daten werden lokal im Browser gespeichert · Version 2.84 · Standort-Wechsel & Duplikatbereinigung</div>
+    Daten werden lokal im Browser gespeichert · Version 2.85 · Standort-Schutz & freie Seitennummern</div>
 
   <!-- Modal für Anlagenverwaltung -->
   <div id="modalOverlay" class="modal-overlay">
@@ -1443,9 +1443,9 @@
   <button id="fabNext" class="fab-next" title="Zur nächsten freien Zeile">⬇︎</button>
   <button id="fabPage" class="fab-page" title="Zur Seitenauswahl">☰</button>
   <script>
-    // v2.84 basiert vollständig auf dem Daten-/Tabellenstand von v2.80.
+    // v2.85 basiert vollständig auf dem Daten-/Tabellenstand von v2.80.
     // Enthalten sind die v2.82-Oberfläche, Standort-Navigation, robuste
-    // Datenübernahme sowie die gezielte Bereinigung der leeren Dr.-Schenk-Doppelseite 15.
+    // Datenübernahme, eindeutige Standortzuordnung und stabile Seitennummern.
     const DEFAULT_ANLAGEN = {
       "Anna-Hintermayr-Stift": [
         "Bungalows"
@@ -1455,7 +1455,7 @@
         "Neubau mit Praxen"
       ],
       "Dr.-Schenk-Stift": [
-        "Dr.-Schenk-Stift",
+        "Betreutes Wohnen",
         "Neidhart-Wohnungen"
       ],
       "Hospital-Stift": [
@@ -1506,6 +1506,120 @@
     // v2.82: Seitenliste zeigt standardmäßig nur den aktuellen Standort,
     // um nicht wieder alle Anlagen/Bereiche auf einmal aufzublähen.
     let showAllLocationsInList = false;
+
+    const SCHENK_ANLAGE = "Dr.-Schenk-Stift";
+    const SCHENK_OLD_BEREICH = "Dr.-Schenk-Stift";
+    const SCHENK_NEW_BEREICH = "Betreutes Wohnen";
+    const SCHENK_MIGRATION_KEY = "spuelprotokoll_migration_schenk_betreutes_wohnen_v1";
+
+    function cleanLocationLabel(value) {
+      return String(value ?? "").trim().replace(/\s+/g, " ");
+    }
+
+    function locationCompareKey(value) {
+      return cleanLocationLabel(value)
+        .toLocaleLowerCase("de-DE")
+        .replace(/[^a-z0-9äöüß]/gi, "");
+    }
+
+    function sameLocationName(a, b) {
+      return locationCompareKey(a) === locationCompareKey(b);
+    }
+
+    function samePageLocation(page, anlage, bereich) {
+      return !!page && sameLocationName(page.anlage, anlage) && sameLocationName(page.bereich, bereich);
+    }
+
+    function findPagesForLocation(anlage, bereich) {
+      return pages.filter(page => samePageLocation(page, anlage, bereich));
+    }
+
+    function dedupeNames(values) {
+      const result = [];
+      const seen = new Set();
+      (Array.isArray(values) ? values : []).forEach(value => {
+        const name = cleanLocationLabel(value);
+        const key = locationCompareKey(name);
+        if (!name || !key || seen.has(key)) return;
+        seen.add(key);
+        result.push(name);
+      });
+      return result;
+    }
+
+    function normalizeAnlagenStructure(source) {
+      const result = {};
+      const canonicalByKey = new Map();
+      Object.entries(source && typeof source === "object" ? source : {}).forEach(([rawAnlage, rawBereiche]) => {
+        const anlage = cleanLocationLabel(rawAnlage);
+        const key = locationCompareKey(anlage);
+        if (!anlage || !key) return;
+        let canonical = canonicalByKey.get(key);
+        if (!canonical) {
+          canonical = anlage;
+          canonicalByKey.set(key, canonical);
+          result[canonical] = [];
+        }
+        result[canonical] = dedupeNames([...(result[canonical] || []), ...(Array.isArray(rawBereiche) ? rawBereiche : [])]);
+      });
+      return result;
+    }
+
+    function migrateSchenkAreaInAnlagen() {
+      let changed = false;
+      Object.keys(anlagenData || {}).forEach(anlage => {
+        if (!sameLocationName(anlage, SCHENK_ANLAGE)) return;
+        const before = Array.isArray(anlagenData[anlage]) ? anlagenData[anlage] : [];
+        const after = dedupeNames(before.map(bereich =>
+          sameLocationName(bereich, SCHENK_OLD_BEREICH) ? SCHENK_NEW_BEREICH : bereich
+        ));
+        if (JSON.stringify(before) !== JSON.stringify(after)) changed = true;
+        anlagenData[anlage] = after;
+      });
+      return changed;
+    }
+
+    function migrateSchenkAreaInPages() {
+      let changed = false;
+      pages.forEach(page => {
+        if (sameLocationName(page.anlage, SCHENK_ANLAGE) && sameLocationName(page.bereich, SCHENK_OLD_BEREICH)) {
+          page.bereich = SCHENK_NEW_BEREICH;
+          changed = true;
+        }
+      });
+      return changed;
+    }
+
+    function getPageNumber(page) {
+      const value = Number(page && page.pageNumber);
+      if (Number.isInteger(value) && value > 0) return value;
+      const index = pages.findIndex(item => item && page && item.id === page.id);
+      return index >= 0 ? index + 1 : 0;
+    }
+
+    function getSmallestFreePageNumber() {
+      const used = new Set();
+      pages.forEach(page => {
+        const value = Number(page && page.pageNumber);
+        if (Number.isInteger(value) && value > 0) used.add(value);
+      });
+      let candidate = 1;
+      while (used.has(candidate)) candidate += 1;
+      return candidate;
+    }
+
+    function ensureUniquePageNumbers() {
+      const used = new Set();
+      pages.forEach(page => {
+        let value = Number(page && page.pageNumber);
+        if (!Number.isInteger(value) || value <= 0 || used.has(value)) {
+          value = 1;
+          while (used.has(value)) value += 1;
+          page.pageNumber = value;
+        }
+        used.add(value);
+      });
+    }
 
     // --- Unified Dialog helpers (Material-ish) ---
     const _dialog = {
@@ -1912,16 +2026,23 @@
         try {
           const data = JSON.parse(raw);
           if (data && typeof data === "object") {
-            anlagenData = data;
+            anlagenData = normalizeAnlagenStructure(data);
           }
         } catch (e) {}
       }
       if (!Object.keys(anlagenData).length) {
         anlagenData = clone(DEFAULT_ANLAGEN);
       }
+      anlagenData = normalizeAnlagenStructure(anlagenData);
+      if (migrateSchenkAreaInAnlagen()) {
+        console.info("Dr.-Schenk-Stift: Bereich wurde in Betreutes Wohnen umbenannt.");
+      }
+      saveAnlagen();
     }
 
     function saveAnlagen() {
+      anlagenData = normalizeAnlagenStructure(anlagenData);
+      migrateSchenkAreaInAnlagen();
       localStorage.setItem(ANLAGEN_KEY, JSON.stringify(anlagenData));
 }
 
@@ -2148,15 +2269,18 @@
     }
 
     function createNewPage(anlage, bereich) {
-      const id = "P" + Date.now();
+      const cleanAnlage = cleanLocationLabel(anlage);
+      const cleanBereich = cleanLocationLabel(bereich);
+      const id = "P" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
       const rows = [];
       for (let i = 1; i <= 25; i++) {
         rows.push(createEmptyRow(i));
       }
       const page = {
         id,
-        anlage,
-        bereich,
+        pageNumber: getSmallestFreePageNumber(),
+        anlage: cleanAnlage,
+        bereich: cleanBereich,
         created: timestampString(),
         performedBy: normalizeWorkerName(workerName),
         rows
@@ -2165,30 +2289,32 @@
       activePageId = id;
       saveState();
       renderAll();
+      return page;
     }
 
     function duplicateActivePage() {
-      const page = pages.find(p => p.id === activePageId);
-      if (!page) return;
-      createNewPage(page.anlage, page.bereich);
+      promptNewPageSameObject();
     }
 
     async function deleteActivePage() {
       const page = pages.find(p => p.id === activePageId);
       if (!page) return;
-      const index = pages.findIndex(p => p.id === page.id) + 1;
+      const index = getPageNumber(page);
       const ok = await uiConfirm(
         `Achtung:\n\nSoll die Seite ${index} für\n${page.anlage} – ${page.bereich}\nwirklich gelöscht werden?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`
       );
       if (!ok) return;
+      const sameLocationPages = findPagesForLocation(page.anlage, page.bereich).filter(p => p.id !== page.id);
       pages = pages.filter(p => p.id !== page.id);
-      activePageId = pages.length ? pages[0].id : null;
+      const fallback = sameLocationPages[0] || pages.slice().sort((a, b) => getPageNumber(a) - getPageNumber(b))[0] || null;
+      activePageId = fallback ? fallback.id : null;
       saveState();
       renderAll();
     }
 
     function saveState() {
       const globalName = normalizeWorkerName(workerName);
+      ensureUniquePageNumbers();
       pages = pages.map(p => {
         const rows = Array.isArray(p?.rows) ? p.rows : [];
         rows.forEach((row, i) => {
@@ -2199,6 +2325,9 @@
         });
         return {
           ...p,
+          pageNumber: getPageNumber(p),
+          anlage: cleanLocationLabel(p && p.anlage),
+          bereich: cleanLocationLabel(p && p.bereich),
           performedBy: globalName || normalizeWorkerName(p && p.performedBy),
           rows
         };
@@ -2207,52 +2336,29 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-    // v2.84: In Marcos bestehendem Datenbestand war Dr.-Schenk-Stift als
-    // globale Seite 14 und 15 direkt doppelt vorhanden. Seite 14 enthält die
-    // Einträge, Seite 15 ist leer. Nur genau dieser bekannte Fall wird einmalig
-    // bereinigt; andere neue oder leere Seiten bleiben unangetastet.
-    const SCHENK_DUPLICATE_FIX_KEY = "spuelprotokoll_fix_schenk_page15_v1";
+    // v2.85: Einmalige Migration des gleichnamigen Bereichs sowie Bereinigung
+    // versehentlich erzeugter leerer Seiten am Dr.-Schenk-Stift. Seiten mit
+    // Messdaten werden niemals automatisch gelöscht.
+    function cleanupEmptySchenkDuplicatePages() {
+      if (localStorage.getItem(SCHENK_MIGRATION_KEY) === "done") return false;
 
-    function rowHasMeaningfulData(row) {
-      if (!row || typeof row !== "object") return false;
-      const textFields = [
-        "date", "time", "floor", "roomType", "unit", "kwTemp",
-        "tempLocationOther", "wwKitchen", "wwBath", "issueType",
-        "otherIssueText", "aeratorChangedCount", "notes"
-      ];
-      const hasText = textFields.some(key => String(row[key] ?? "").trim() !== "");
-      const hasFlag = [
-        "issuePresent", "turbidityFlag", "fixtureDefectFlag",
-        "aeratorStuckFlag", "longTkmaxFlag", "otherIssueFlag",
-        "aeratorChanged"
-      ].some(key => row[key] === true);
-      const changedMode = normalizeTemperatureMode(row) !== "kitchenBath";
-      return hasText || hasFlag || changedMode;
-    }
+      const matches = findPagesForLocation(SCHENK_ANLAGE, SCHENK_NEW_BEREICH);
+      const meaningful = matches.filter(pageHasMeaningfulData);
+      const empty = matches.filter(page => !pageHasMeaningfulData(page));
+      let changed = false;
 
-    function pageHasMeaningfulData(page) {
-      return Array.isArray(page?.rows) && page.rows.some(rowHasMeaningfulData);
-    }
+      if (meaningful.length && empty.length) {
+        const removedIds = new Set(empty.map(page => page.id));
+        pages = pages.filter(page => !removedIds.has(page.id));
+        if (removedIds.has(activePageId)) {
+          activePageId = meaningful.slice().sort((a, b) => getPageNumber(a) - getPageNumber(b))[0].id;
+        }
+        changed = true;
+        console.info(`${empty.length} leere doppelte Dr.-Schenk-Stift-Seite(n) wurden entfernt.`);
+      }
 
-    function cleanupKnownSchenkDuplicatePage15() {
-      if (localStorage.getItem(SCHENK_DUPLICATE_FIX_KEY) === "done") return false;
-      if (pages.length < 15) return false;
-
-      const page14 = pages[13];
-      const page15 = pages[14];
-      const isSchenk = page => page &&
-        page.anlage === "Dr.-Schenk-Stift" &&
-        page.bereich === "Dr.-Schenk-Stift";
-
-      if (!isSchenk(page14) || !isSchenk(page15)) return false;
-      if (!pageHasMeaningfulData(page14) || pageHasMeaningfulData(page15)) return false;
-
-      const removedId = page15.id;
-      pages.splice(14, 1);
-      if (activePageId === removedId) activePageId = page14.id;
-      localStorage.setItem(SCHENK_DUPLICATE_FIX_KEY, "done");
-      console.info("Leere Dr.-Schenk-Stift-Doppelseite 15 wurde entfernt; Seite 14 bleibt erhalten.");
-      return true;
+      localStorage.setItem(SCHENK_MIGRATION_KEY, "done");
+      return changed;
     }
 
     function loadState() {
@@ -2281,9 +2387,14 @@
       try {
         pages = selectedData.pages.map(p => ({
           ...p,
+          pageNumber: Number.isInteger(Number(p && p.pageNumber)) && Number(p.pageNumber) > 0 ? Number(p.pageNumber) : null,
+          anlage: cleanLocationLabel(p && p.anlage),
+          bereich: cleanLocationLabel(p && p.bereich),
           performedBy: normalizeWorkerName(p && p.performedBy),
           rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
         }));
+        ensureUniquePageNumbers();
+        migrateSchenkAreaInPages();
 
         // Falls der globale Name noch leer ist, aus den vorhandenen Seiten
         // den vollständigsten Namen übernehmen. Anschließend alle Seiten
@@ -2299,7 +2410,8 @@
           ? requestedActiveId
           : (pages[0] && pages[0].id);
 
-        cleanupKnownSchenkDuplicatePage15();
+        cleanupEmptySchenkDuplicatePages();
+        ensureUniquePageNumbers();
 
         // Altbestand sofort unter dem aktuellen v3-Schlüssel sichern. So bleibt
         // die 2.80-Datenstruktur vollständig kompatibel mit der neuen Oberfläche.
@@ -2460,7 +2572,7 @@
           const activeInGroup = arr.find(p => p.id === activePageId);
           if (activeInGroup) primary = activeInGroup;
 
-          const primaryGlobalIndex = pages.findIndex(pp => pp.id === primary.id) + 1;
+          const primaryGlobalIndex = getPageNumber(primary);
           const primaryLocalIndex = arr.indexOf(primary) + 1;
 
           if (arr.length === 1) {
@@ -2517,7 +2629,7 @@
           arr.forEach(p => { if (p.id !== activePageId) ordered.push(p); });
 
           ordered.forEach((p) => {
-            const idxGlobal = pages.findIndex(pp => pp.id === p.id) + 1;
+            const idxGlobal = getPageNumber(p);
             const idxLocal = arr.indexOf(p) + 1;
             const b = document.createElement("span");
             b.className = "page-badge" + (p.id === activePageId ? " active" : "");
@@ -2604,10 +2716,11 @@
       await routeToLocation(anlage, bereich);
     }
 
-    // Verzweigung: keine Seite -> anlegen, genau eine -> direkt öffnen,
-    // mehrere -> Auswahl (neueste zuerst) + Option für eine weitere neue Seite.
+    // Standortwechsel erzeugt niemals eine zweite Seite für einen bereits
+    // vorhandenen Standort. Neue Fortsetzungsseiten gibt es nur bewusst über
+    // „Neue Seite (gleiches Objekt)“ in der geöffneten Seite.
     async function routeToLocation(anlage, bereich) {
-      const matches = pages.filter(p => p.anlage === anlage && p.bereich === bereich);
+      const matches = findPagesForLocation(anlage, bereich);
 
       if (matches.length === 0) {
         createNewPage(anlage, bereich);
@@ -2619,29 +2732,28 @@
         activePageId = matches[0].id;
         saveState();
         renderAll();
+        toast(`Vorhandene Seite ${getPageNumber(matches[0])} geöffnet.`);
         return;
       }
 
-      const sorted = [...matches].sort((a, b) => (b.created || "").localeCompare(a.created || ""));
-      const optionNew = "+ Neue Seite anlegen";
-      const labels = sorted.map(p => {
-        const globalIdx = pages.findIndex(pp => pp.id === p.id) + 1;
-        return `Seite ${globalIdx} (erstellt ${p.created})`;
+      const sorted = [...matches].sort((a, b) => {
+        const dataDiff = Number(pageHasMeaningfulData(b)) - Number(pageHasMeaningfulData(a));
+        if (dataDiff) return dataDiff;
+        return (b.created || "").localeCompare(a.created || "");
       });
-      labels.push(optionNew);
+      const labels = sorted.map(p => {
+        const status = pageHasMeaningfulData(p) ? "mit Einträgen" : "leer";
+        return `Seite ${getPageNumber(p)} · ${status} · erstellt ${p.created || "-"}`;
+      });
 
       const choice = await uiSelect(
-        `${matches.length} Seiten für ${anlage} · ${bereich} gefunden. Welche fortsetzen?`,
+        `${matches.length} vorhandene Seiten für ${anlage} · ${bereich} gefunden. Welche öffnen?`,
         labels,
         labels[0],
-        "Seite wählen"
+        "Vorhandene Seite wählen"
       );
       if (choice === null) return;
 
-      if (choice === optionNew) {
-        createNewPage(anlage, bereich);
-        return;
-      }
       const idx = labels.indexOf(choice);
       activePageId = sorted[idx].id;
       saveState();
@@ -2674,7 +2786,7 @@
         info.textContent = "keine Seite ausgewählt";
         return;
       }
-      const index = pages.findIndex(p => p.id === page.id) + 1;
+      const index = getPageNumber(page);
       info.textContent = `Nr. ${index} – ${page.anlage} / ${page.bereich}${getPageWorker(page) ? " · " + getPageWorker(page) : ""} (erstellt: ${page.created})`;
     }
 
@@ -2717,7 +2829,7 @@
         if (workerEl) workerEl.textContent = normalizeWorkerName(workerName) ? `Bearbeiter: ${normalizeWorkerName(workerName)}` : "";
         return;
       }
-      const pageIndex = pages.findIndex(p => p.id === page.id) + 1;
+      const pageIndex = getPageNumber(page);
       el.textContent = `${page.anlage} · ${page.bereich} · Seite ${pageIndex}`;
       if (workerEl) {
         const name = getPageWorker(page);
@@ -2739,7 +2851,25 @@
     async function promptNewPageSameObject() {
       const page = getActivePage();
       if (!page) return;
-      const ok = await uiConfirm(`Neue Seite erstellen und mit ${page.anlage} / ${page.bereich} fortfahren?`);
+
+      if (!pageHasMeaningfulData(page)) {
+        await uiAlert(`Seite ${getPageNumber(page)} ist noch leer. Bitte zuerst diese Seite verwenden, statt eine weitere leere Seite anzulegen.`, "Keine doppelte Leerseite");
+        return;
+      }
+
+      const existingEmpty = findPagesForLocation(page.anlage, page.bereich)
+        .filter(candidate => candidate.id !== page.id && !pageHasMeaningfulData(candidate))
+        .sort((a, b) => getPageNumber(a) - getPageNumber(b))[0];
+      if (existingEmpty) {
+        activePageId = existingEmpty.id;
+        saveState();
+        renderAll();
+        await uiAlert(`Es gibt bereits die leere Seite ${getPageNumber(existingEmpty)} für diesen Standort. Sie wurde geöffnet.`, "Vorhandene Seite geöffnet");
+        return;
+      }
+
+      const nextNumber = getSmallestFreePageNumber();
+      const ok = await uiConfirm(`Neue Fortsetzungsseite ${nextNumber} erstellen und mit ${page.anlage} / ${page.bereich} fortfahren?`, "Neue Protokollseite");
       if (!ok) return;
       createNewPage(page.anlage, page.bereich);
       // createNewPage does renderAll already
@@ -3785,9 +3915,14 @@ function renderAll() {
           if (Array.isArray(data.pages)) {
             pages = data.pages.map(p => ({
               ...p,
+              pageNumber: Number.isInteger(Number(p && p.pageNumber)) && Number(p.pageNumber) > 0 ? Number(p.pageNumber) : null,
+              anlage: cleanLocationLabel(p && p.anlage),
+              bereich: cleanLocationLabel(p && p.bereich),
               performedBy: canonicalWorkerName(p && p.performedBy),
               rows: Array.isArray(p?.rows) ? p.rows.map((r, i) => normalizeRowData(r, i + 1)) : []
             }));
+            ensureUniquePageNumbers();
+            migrateSchenkAreaInPages();
 
             // Erweiterte Bearbeiterliste aus Sicherungen übernehmen.
             if (Array.isArray(data.workerList)) {
@@ -3808,7 +3943,8 @@ function renderAll() {
             syncWorkerAcrossPages();
 
             activePageId = pages[0] ? pages[0].id : null;
-            cleanupKnownSchenkDuplicatePage15();
+            cleanupEmptySchenkDuplicatePages();
+            ensureUniquePageNumbers();
             saveState();
             renderAll();
             uiAlert("Seiten-Import erfolgreich.");
@@ -3842,7 +3978,8 @@ function renderAll() {
         try {
           const data = JSON.parse(e.target.result);
           if (data.anlagen && typeof data.anlagen === "object") {
-            anlagenData = data.anlagen;
+            anlagenData = normalizeAnlagenStructure(data.anlagen);
+            migrateSchenkAreaInAnlagen();
             saveAnlagen();
             initAnlageDropdowns();
             uiAlert("Anlagen-Import erfolgreich.");
@@ -3966,12 +4103,28 @@ function renderAll() {
               uiAlert("Bitte einen neuen Namen eingeben.");
               return;
             }
-            anlagenData[newName] = anlagenData[selectedAnlage];
+            const cleanNewAnlage = cleanLocationLabel(newName);
+            if (sameLocationName(cleanNewAnlage, selectedAnlage)) {
+              uiAlert("Der neue Anlagenname ist identisch mit dem bisherigen Namen.");
+              return;
+            }
+            const duplicateAnlage = Object.keys(anlagenData).find(name =>
+              name !== selectedAnlage && sameLocationName(name, cleanNewAnlage)
+            );
+            if (duplicateAnlage) {
+              uiAlert(`Die Anlage „${duplicateAnlage}“ existiert bereits. Ein Objekt kann nicht doppelt angelegt werden.`);
+              return;
+            }
+            anlagenData[cleanNewAnlage] = anlagenData[selectedAnlage];
             delete anlagenData[selectedAnlage];
+            pages.forEach(page => {
+              if (sameLocationName(page.anlage, selectedAnlage)) page.anlage = cleanNewAnlage;
+            });
             saveAnlagen();
+            saveState();
             initAnlageDropdowns();
             closeModal();
-            uiAlert("Anlage wurde umbenannt.");
+            uiAlert("Anlage wurde umbenannt; vorhandene Protokolle wurden mitgenommen.");
             break;
 
           case "3":
@@ -3981,6 +4134,11 @@ function renderAll() {
             }
             if (!selectedBereich) {
               uiAlert("Bitte einen Bereich auswählen.");
+              return;
+            }
+            const linkedBereichPages = findPagesForLocation(selectedAnlage, selectedBereich);
+            if (linkedBereichPages.length) {
+              uiAlert(`Der Bereich „${selectedBereich}“ ist mit ${linkedBereichPages.length} Protokollseite(n) verknüpft und kann deshalb nicht gelöscht werden. Bitte den Bereich bei Bedarf umbenennen; die vorhandenen Daten werden dabei automatisch mitgenommen.`);
               return;
             }
             if (await uiConfirm(`Bereich „${selectedBereich}“ wirklich löschen?`, "Bestätigen")) {
@@ -4003,11 +4161,13 @@ function renderAll() {
               return;
             }
             if (!anlagenData[selectedAnlage]) anlagenData[selectedAnlage] = [];
-            if (anlagenData[selectedAnlage].includes(newName)) {
-              uiAlert(`Der Bereich „${newName}“ existiert bereits.`);
+            const cleanNewBereich = cleanLocationLabel(newName);
+            const existingBereich = anlagenData[selectedAnlage].find(name => sameLocationName(name, cleanNewBereich));
+            if (existingBereich) {
+              uiAlert(`Der Bereich „${existingBereich}“ existiert bereits. Ein Standort kann nicht doppelt angelegt werden.`);
               return;
             }
-            anlagenData[selectedAnlage].push(newName);
+            anlagenData[selectedAnlage].push(cleanNewBereich);
             saveAnlagen();
             initAnlageDropdowns();
             try{
@@ -4015,7 +4175,7 @@ function renderAll() {
               const bs = document.getElementById("bereichSelect");
               as.value = selectedAnlage;
               as.dispatchEvent(new Event("change"));
-              bs.value = newName;
+              bs.value = cleanNewBereich;
             }catch(e){}
             closeModal();
             uiAlert("Bereich wurde hinzugefügt.");
@@ -4034,15 +4194,33 @@ case "4":
               uiAlert("Bitte einen neuen Namen eingeben.");
               return;
             }
+            const cleanRenamedBereich = cleanLocationLabel(newName);
+            if (sameLocationName(cleanRenamedBereich, selectedBereich)) {
+              uiAlert("Der neue Bereichsname ist identisch mit dem bisherigen Namen.");
+              return;
+            }
+            const duplicateBereich = bereiche.find(name =>
+              name !== selectedBereich && sameLocationName(name, cleanRenamedBereich)
+            );
+            if (duplicateBereich) {
+              uiAlert(`Der Bereich „${duplicateBereich}“ existiert bereits. Ein Standort kann nicht doppelt angelegt werden.`);
+              return;
+            }
             const idx2 = bereiche.indexOf(selectedBereich);
             if (idx2 >= 0) {
-              bereiche[idx2] = newName;
-              anlagenData[selectedAnlage] = bereiche;
+              bereiche[idx2] = cleanRenamedBereich;
+              anlagenData[selectedAnlage] = dedupeNames(bereiche);
+              pages.forEach(page => {
+                if (sameLocationName(page.anlage, selectedAnlage) && sameLocationName(page.bereich, selectedBereich)) {
+                  page.bereich = cleanRenamedBereich;
+                }
+              });
               saveAnlagen();
+              saveState();
               initAnlageDropdowns();
               refreshModalBereiche();
               closeModal();
-              uiAlert("Bereich umbenannt.");
+              uiAlert("Bereich umbenannt; vorhandene Protokolle wurden mitgenommen.");
             }
             break;
         }
@@ -4082,7 +4260,7 @@ case "4":
         (p.rows || []).forEach(row => {
           if (!row || !row.unit) return;
           if (String(row.unit).toLowerCase().includes(term)) {
-            results.push({ page: p, pageIndex: pIndex, row });
+            results.push({ page: p, pageIndex: pIndex, pageNumber: getPageNumber(p), row });
           }
         });
       });
@@ -4096,7 +4274,7 @@ case "4":
       const maxShown = 50;
       let html = `Gefundene Einträge (${results.length}):<br>`;
       results.slice(0, maxShown).forEach((r) => {
-        const pNum = r.pageIndex + 1;
+        const pNum = r.pageNumber || (r.pageIndex + 1);
         const label = `${pNum}: ${r.page.anlage} – ${r.page.bereich}, ${r.row.floor || ""} ${r.row.unit || ""} (Datum: ${r.row.date || "-"})`;
         html += `<div class="search-results-item"><a href="#" class="search-link" data-page-id="${r.page.id}" data-row-index="${r.row.index}">${label}</a></div>`;
       });
@@ -4133,10 +4311,10 @@ case "4":
         openStandortWechsel();
       });
 
-      document.getElementById("newPageBtn").addEventListener("click", () => {
+      document.getElementById("newPageBtn").addEventListener("click", async () => {
         const anlage = document.getElementById("anlageSelect").value;
         const bereich = document.getElementById("bereichSelect").value;
-        createNewPage(anlage, bereich);
+        await routeToLocation(anlage, bereich);
       });
 
       document.getElementById("deletePageBtn").addEventListener("click", () => {
