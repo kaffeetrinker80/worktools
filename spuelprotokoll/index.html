@@ -1052,6 +1052,241 @@ th .sub{
   .fab-up, .fab-next-row { display: none !important; }
 }
 
+
+/* ===== v2.3.0 · Sticky Suchfeld (nur Mobile) ===== */
+.search-bar{ display:none; }
+
+@media screen and (max-width: 800px){
+  .search-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    position:sticky;
+    top:0;
+    z-index:900;
+    margin:0 0 10px 0;
+    padding:8px 10px;
+    background:rgba(31,41,55,.97);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:12px;
+    box-shadow:0 6px 16px rgba(0,0,0,.22);
+  }
+  .search-bar .search-ico{
+    flex:0 0 auto;
+    font-size:1rem;
+    line-height:1;
+    opacity:.9;
+  }
+  .search-bar input{
+    flex:1 1 auto;
+    min-width:0;
+    min-height:40px;
+    font-size:16px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.10);
+    color:#fff;
+    border-radius:10px;
+    padding:8px 10px;
+    outline:none;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  .search-bar input::placeholder{ color:rgba(255,255,255,.55); }
+  .search-bar input::-webkit-search-cancel-button{ display:none; }
+  .search-bar .search-clear{
+    flex:0 0 auto;
+    width:34px;
+    height:34px;
+    border:none;
+    border-radius:10px;
+    background:rgba(255,255,255,.14);
+    color:#fff;
+    font-size:1.2rem;
+    line-height:1;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .search-bar .search-count{
+    flex:0 0 auto;
+    font-size:.76rem;
+    font-weight:700;
+    color:rgba(255,255,255,.72);
+    white-space:nowrap;
+    min-width:3.2rem;
+    text-align:right;
+  }
+  .search-bar.has-query .search-count{ color:#93c5fd; }
+}
+
+
+/* ===== v2.3.0 · Druck mit echter Seitenaufteilung =====
+   Vorher wurde die komplette .app als EIN rotierter, absolut positionierter
+   Block gedruckt. Sobald der Inhalt laenger als eine Seite war, hat der
+   Browser den Block umbrochen - die Zeilen im Uebergangsbereich sind dabei
+   verloren gegangen (im Beispiel Nr. 17-23).
+   Jetzt: JS baut vor dem Druck einen eigenen #printRoot mit fertig
+   aufgeteilten Seiten. Jede Seite ist ein eigenes, fest bemasstes A4-Blatt
+   mit eigener Rotation - dadurch kann nichts mehr in den Umbruch fallen. */
+#printRoot{ display:none; }
+
+@media print{
+  @page{ size:A4 portrait; margin:0; }
+
+  html, body{
+    width:auto !important;
+    height:auto !important;
+    overflow:visible !important;
+    margin:0 !important;
+    padding:0 !important;
+    background:#fff !important;
+  }
+
+  .app,
+  .search-bar,
+  .fab-up,
+  .fab-next-row,
+  #toast{ display:none !important; }
+
+  #printRoot{ display:block !important; }
+
+  .print-page{
+    position:relative;
+    width:210mm;
+    height:296mm;
+    overflow:hidden;
+    page-break-after:always;
+    break-after:page;
+    page-break-inside:avoid;
+    break-inside:avoid;
+  }
+  .print-page:last-child{
+    page-break-after:auto;
+    break-after:auto;
+  }
+
+  .print-sheet{
+    position:absolute;
+    top:0;
+    left:0;
+    width:296mm;
+    height:210mm;
+    transform-origin:top left;
+    transform:translateX(210mm) rotate(90deg);
+    padding:8mm 9mm 5mm 9mm;
+    display:flex;
+    flex-direction:column;
+    font-family:Arial, Helvetica, sans-serif;
+    font-size:10px;
+    color:#000;
+    background:#fff;
+  }
+
+  .p-head{
+    display:flex;
+    align-items:flex-start;
+    gap:10mm;
+    border-bottom:1px solid #000;
+    padding-bottom:2mm;
+    margin-bottom:3mm;
+  }
+  .p-title{
+    flex:0 0 42%;
+    font-size:15px;
+    font-weight:700;
+    line-height:1.15;
+  }
+  .p-facts{
+    flex:1 1 auto;
+    font-size:7pt;
+    line-height:1.2;
+    color:#8a8a8a;
+  }
+  .p-facts strong{ color:#8a8a8a; }
+
+  .p-meta{
+    display:grid;
+    grid-template-columns:1.7fr 1.2fr 1.2fr;
+    gap:8mm;
+    margin-bottom:3mm;
+  }
+  .p-meta > div{ min-width:0; }
+  .p-meta span{
+    display:block;
+    font-size:9px;
+    font-weight:700;
+    margin-bottom:1mm;
+  }
+  .p-meta b{
+    display:block;
+    font-weight:400;
+    font-size:11px;
+    border-bottom:1px solid #000;
+    padding-bottom:1mm;
+    min-height:4.5mm;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .p-table-wrap{
+    flex:1 1 auto;
+    min-height:0;
+  }
+  table.p-table{
+    width:100% !important;
+    min-width:0 !important;
+    height:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    background:#fff;
+  }
+  table.p-table th,
+  table.p-table td{
+    display:table-cell !important;
+    border:1px solid #000 !important;
+    vertical-align:middle !important;
+    padding:2px 3px !important;
+    overflow:hidden;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+  table.p-table thead th{
+    position:static !important;
+    background:#fff !important;
+    font-size:9px !important;
+    font-weight:700;
+    text-align:center;
+    line-height:1.05;
+  }
+  table.p-table thead th .sub{
+    display:block;
+    font-size:0.8em !important;
+    font-weight:400;
+  }
+  table.p-table td{
+    font-size:10px;
+    line-height:1.15;
+  }
+  table.p-table td.p-idx{ text-align:left; color:#b0b0b0; font-size:8pt; }
+  table.p-table td.p-date,
+  table.p-table td.p-time,
+  table.p-table td.p-floor,
+  table.p-table td.p-num{ text-align:center; white-space:nowrap; }
+  table.p-table th.p-kw, table.p-table td.p-kw{ color:#1e40af !important; }
+  table.p-table th.p-ww, table.p-table td.p-ww{ color:#b91c1c !important; }
+  table.p-table th.p-aer, table.p-table td.p-aer{ color:#777 !important; }
+  table.p-table td.p-notes{ font-size:9px; }
+
+  .p-foot{
+    flex:0 0 auto;
+    padding-top:1.5mm;
+    font-size:8px;
+    color:#8a8a8a;
+    display:flex;
+    justify-content:space-between;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1092,6 +1327,13 @@ th .sub{
       </div>
     </div>
 
+    <div class="search-bar" id="searchBar">
+      <span class="search-ico" aria-hidden="true">🔎</span>
+      <input type="search" id="rowSearch" placeholder="Suchen: Bewohner, Lage, #17 …" autocomplete="off" aria-label="Zeile suchen">
+      <button type="button" class="search-clear" id="rowSearchClear" title="Suche leeren">×</button>
+      <span class="search-count" id="rowSearchCount"></span>
+    </div>
+
     <div class="card table-card">
       <div class="table-wrap">
         <table>
@@ -1121,8 +1363,11 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.2.4</div>
+    <div class="footer">Made with Love © · Version 2.3.0</div>
   </div>
+
+  <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
+  <div id="printRoot" aria-hidden="true"></div>
 
   <button id="fabUp" class="fab-up" title="Nach oben">↑</button>
   <button id="fabNextRow" class="fab-next-row" title="Zur nächsten freien Zeile">⬇︎</button>
@@ -1334,6 +1579,7 @@ th .sub{
         tbody.appendChild(tr);
       });
       syncPrintMirrors();
+      if (typeof window.applyRowFilter === 'function') window.applyRowFilter();
     }
 
     
@@ -1630,15 +1876,162 @@ function syncPrintMirrors(){
   });
 }
 
+/* ===== v2.3.0 · Druckaufbereitung =====
+   Zeilen pro Druckseite. Bei Bedarf hier anpassen - kleiner = mehr Luft. */
+const ROWS_PER_PRINT_PAGE = 16;
+
+const PRINT_COLUMNS = [
+  { key:'__idx',      cls:'p-idx',           head:'Nr.',                 width:'3%'  },
+  { key:'date',       cls:'p-date',          head:'Datum',               width:'8%'  },
+  { key:'time',       cls:'p-time',          head:'Uhrzeit',             width:'6%'  },
+  { key:'floor',      cls:'p-floor',         head:'Stockwerk',           width:'6.5%'},
+  { key:'resident',   cls:'p-resident',      head:'Lage / Bewohner',     width:'19%' },
+  { key:'kwTemp',     cls:'p-num p-kw',      head:'KW Temp.|(min.)',     width:'6.5%'},
+  { key:'wwKitchen',  cls:'p-num p-ww',      head:'WW Küche|(max.)',     width:'6.5%'},
+  { key:'wwBathWb',   cls:'p-num p-ww',      head:'WW Bad WB|(max.)',    width:'6.5%'},
+  { key:'wwTubShower',cls:'p-num p-ww',      head:'WW Wanne / Dusche|(max.)', width:'7%' },
+  { key:'wwGuestWc',  cls:'p-num p-ww',      head:'WW Gäste-WC|(max.)',  width:'6.5%'},
+  { key:'aeratorCount',cls:'p-num p-aer',    head:'Strahlregler getauscht|(Anz.)', width:'7%' },
+  { key:'notes',      cls:'p-notes',         head:'Bemerkung',           width:'17%' }
+];
+
+function printHeadCells(){
+  return PRINT_COLUMNS.map(c => {
+    const parts = c.head.split('|');
+    const sub = parts[1] ? `<span class="sub">${escapeHtml(parts[1])}</span>` : '';
+    const kw = c.cls.includes('p-kw') ? ' p-kw' : '';
+    const ww = c.cls.includes('p-ww') ? ' p-ww' : '';
+    const aer = c.cls.includes('p-aer') ? ' p-aer' : '';
+    return `<th class="${kw}${ww}${aer}" style="width:${c.width}">${escapeHtml(parts[0])}${sub}</th>`;
+  }).join('');
+}
+
+function printRowHtml(row, number){
+  return '<tr>' + PRINT_COLUMNS.map(c => {
+    let val;
+    if (c.key === '__idx') val = number;
+    else if (c.key === 'date') val = formatDateForPrint(row.date || '');
+    else val = row[c.key] || '';
+    return `<td class="${c.cls}">${escapeHtml(val)}</td>`;
+  }).join('') + '</tr>';
+}
+
+function buildPrintDom(){
+  const root = document.getElementById('printRoot');
+  if (!root) return;
+
+  const titleEl = document.getElementById('mainTitleEditable');
+  const title = normalizeTitle(titleEl ? titleEl.textContent : '');
+  const factsEl = document.querySelector('.header .print-info');
+  const facts = factsEl ? factsEl.innerHTML : '';
+
+  const rows = Array.isArray(state.rows) ? state.rows : [];
+  const pageCount = Math.max(1, Math.ceil(rows.length / ROWS_PER_PRINT_PAGE));
+  const head = printHeadCells();
+
+  let html = '';
+  for (let p = 0; p < pageCount; p++){
+    const start = p * ROWS_PER_PRINT_PAGE;
+    const chunk = rows.slice(start, start + ROWS_PER_PRINT_PAGE);
+    const body = chunk.map((r, i) => printRowHtml(r, start + i + 1)).join('');
+
+    html += `
+      <div class="print-page">
+        <div class="print-sheet">
+          <div class="p-head">
+            <div class="p-title">${escapeHtml(title)}</div>
+            <div class="p-facts">${facts}</div>
+          </div>
+          <div class="p-meta">
+            <div><span>Einsatzort</span><b>${escapeHtml(state.meta.site || '')}</b></div>
+            <div><span>Auftraggeber</span><b>${escapeHtml(state.meta.client || '')}</b></div>
+            <div><span>Ausgeführt durch</span><b>${escapeHtml(state.meta.performedBy || '')}</b></div>
+          </div>
+          <div class="p-table-wrap">
+            <table class="p-table">
+              <thead><tr>${head}</tr></thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+          <div class="p-foot">
+            <span>${escapeHtml(state.meta.site || '')}</span>
+            <span>Seite ${p + 1} von ${pageCount} · Zeilen ${start + 1}–${start + chunk.length}</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  root.innerHTML = html;
+}
+
 function prepareForPrint(){
   updateActiveFieldFromDom();
   syncPrintMirrors();
+  buildPrintDom();
 }
 
 document.addEventListener('input', syncPrintMirrors);
 document.addEventListener('change', syncPrintMirrors);
 window.addEventListener('beforeprint', prepareForPrint);
 window.addEventListener('pagehide', prepareForPrint);
+
+// --- v2.3.0: Zeilensuche (sticky, Mobile) ---
+(function(){
+  const bar   = document.getElementById('searchBar');
+  const input = document.getElementById('rowSearch');
+  const clear = document.getElementById('rowSearchClear');
+  const count = document.getElementById('rowSearchCount');
+  if (!bar || !input) return;
+
+  function rowHaystack(row, number){
+    return [
+      number,
+      '#' + number,
+      row.date || '',
+      formatDateForPrint(row.date || ''),
+      row.time || '',
+      row.floor || '',
+      row.resident || '',
+      row.kwTemp || '',
+      row.wwKitchen || '',
+      row.wwBathWb || '',
+      row.wwTubShower || '',
+      row.wwGuestWc || '',
+      row.aeratorCount || '',
+      row.notes || ''
+    ].join(' ').toLowerCase();
+  }
+
+  function applyRowFilter(){
+    const q = String(input.value || '').trim().toLowerCase();
+    const terms = q ? q.split(/\s+/) : [];
+    const trs = document.querySelectorAll('#tableBody tr');
+    let shown = 0;
+
+    trs.forEach((tr, idx) => {
+      const row = state.rows[idx] || {};
+      const hay = rowHaystack(row, idx + 1);
+      const hit = !terms.length || terms.every(t => hay.includes(t));
+      tr.style.display = hit ? '' : 'none';
+      if (hit) shown++;
+    });
+
+    bar.classList.toggle('has-query', !!terms.length);
+    if (count) count.textContent = terms.length ? `${shown}/${trs.length}` : `${trs.length}`;
+  }
+
+  window.applyRowFilter = applyRowFilter;
+
+  input.addEventListener('input', applyRowFilter);
+  input.addEventListener('search', applyRowFilter);
+  clear && clear.addEventListener('click', () => {
+    input.value = '';
+    applyRowFilter();
+    input.focus();
+  });
+
+  applyRowFilter();
+})();
 
 // --- FAB Scroll-Logik (nur Mobile) ---
 (function(){
