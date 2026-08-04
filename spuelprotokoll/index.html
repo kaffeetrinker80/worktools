@@ -1056,6 +1056,10 @@ th .sub{
 /* ===== v2.3.0 · Sticky Suchfeld (nur Mobile) ===== */
 .search-bar{ display:none; }
 
+/* Muss die mobilen "display:block !important"-Regeln fuer tr ueberstimmen.
+   Hoehere Spezifitaet (#id + Element + Klasse) + !important. */
+#tableBody tr.row-hidden{ display:none !important; }
+
 @media screen and (max-width: 800px){
   .search-bar{
     display:flex;
@@ -1152,7 +1156,7 @@ th .sub{
   .print-page{
     position:relative;
     width:210mm;
-    height:296mm;
+    height:295mm;
     overflow:hidden;
     page-break-after:always;
     break-after:page;
@@ -1172,7 +1176,7 @@ th .sub{
     height:210mm;
     transform-origin:top left;
     transform:translateX(210mm) rotate(90deg);
-    padding:8mm 9mm 5mm 9mm;
+    padding:8mm 10mm 8mm 10mm;
     display:flex;
     flex-direction:column;
     font-family:Arial, Helvetica, sans-serif;
@@ -1363,7 +1367,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.3.0</div>
+    <div class="footer">Made with Love © · Version 2.3.2</div>
   </div>
 
   <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
@@ -2012,7 +2016,7 @@ window.addEventListener('pagehide', prepareForPrint);
       const row = state.rows[idx] || {};
       const hay = rowHaystack(row, idx + 1);
       const hit = !terms.length || terms.every(t => hay.includes(t));
-      tr.style.display = hit ? '' : 'none';
+      tr.classList.toggle('row-hidden', !hit);
       if (hit) shown++;
     });
 
