@@ -1275,23 +1275,23 @@ th .sub{
   table.p-table{
     width:100% !important;
     min-width:0 !important;
+    height:100%;
     border-collapse:collapse;
     table-layout:fixed;
     background:#fff;
   }
-  /* Feste Zeilenhoehe: eine lange Bemerkung darf die Zeile nicht mehr
-     hoeher machen als alle anderen. Der Platz reicht fuer ca. 3 Zeilen
-     Text. Wert hier anpassen, wenn ROWS_PER_PRINT_PAGE geaendert wird. */
+  /* Die Tabelle streckt sich wieder ueber die ganze Seitenhoehe, die Zeilen
+     teilen sich den Platz gleichmaessig auf - kein weisser Rand unten.
+     "height" wirkt in Tabellen als Mindesthoehe, nicht als Deckel. */
   table.p-table tbody tr{
     height:8.4mm;
-    max-height:8.4mm;
   }
   table.p-table tbody td{
-    height:8.4mm;
     overflow:hidden;
   }
-  /* Clipping-Container: begrenzt den Textfluss innerhalb der Zelle,
-     ohne dass die Zeile mitwaechst. */
+  /* Umbruchbremse: Bewohner und Bemerkung laufen in diesen Container.
+     Er begrenzt, wie hoch der Text die Zeile ziehen kann - dadurch bleiben
+     alle Zeilen gleich hoch, auch wenn eine Bemerkung mehrfach umbricht. */
   .p-clip{
     display:block;
     max-height:7.6mm;
@@ -1344,7 +1344,7 @@ th .sub{
   table.p-table th.p-kw, table.p-table td.p-kw{ color:#1e40af !important; }
   table.p-table th.p-ww, table.p-table td.p-ww{ color:#b91c1c !important; }
   table.p-table th.p-aer, table.p-table td.p-aer{ color:#777 !important; }
-  table.p-table td.p-notes{ font-size:8px; line-height:1.12; }
+  table.p-table td.p-notes{ font-size:9px; line-height:1.15; }
 
   .p-foot{
     flex:0 0 auto;
@@ -1441,7 +1441,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.4.2</div>
+    <div class="footer">Made with Love © · Version 2.4.3</div>
   </div>
 
   <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
