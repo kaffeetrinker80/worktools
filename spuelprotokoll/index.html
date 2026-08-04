@@ -154,6 +154,7 @@
     input[type="date"],
     input[type="time"],
     input[type="number"],
+    input.num-input,
     input[type="text"],
     textarea,
     select{
@@ -165,7 +166,7 @@
       background:#fff;
       min-height:38px;
     }
-    input[type="number"]{text-align:center}
+    input[type="number"], input.num-input{text-align:center}
     textarea{
       resize:vertical;
       min-height:38px;
@@ -270,6 +271,7 @@
       input[type="date"],
       input[type="time"],
       input[type="number"],
+      input.num-input,
       input[type="text"],
       textarea,
       select{font-size:16px;}
@@ -1040,7 +1042,8 @@ th .sub{
     color:var(--muted);
     line-height:1;
   }
-  .mobile-temps .mobile-stack input[type="number"]{ text-align:center; }
+  .mobile-temps .mobile-stack input[type="number"],
+  .mobile-temps .mobile-stack input.num-input{ text-align:center; }
   .mobile-kw input{ border-color:#93c5fd; background:#eff6ff; }
   .mobile-ww input{ border-color:#fecaca; background:#fff7f7; }
 }
@@ -1272,10 +1275,27 @@ th .sub{
   table.p-table{
     width:100% !important;
     min-width:0 !important;
-    height:100%;
     border-collapse:collapse;
     table-layout:fixed;
     background:#fff;
+  }
+  /* Feste Zeilenhoehe: eine lange Bemerkung darf die Zeile nicht mehr
+     hoeher machen als alle anderen. Der Platz reicht fuer ca. 3 Zeilen
+     Text. Wert hier anpassen, wenn ROWS_PER_PRINT_PAGE geaendert wird. */
+  table.p-table tbody tr{
+    height:8.4mm;
+    max-height:8.4mm;
+  }
+  table.p-table tbody td{
+    height:8.4mm;
+    overflow:hidden;
+  }
+  /* Clipping-Container: begrenzt den Textfluss innerhalb der Zelle,
+     ohne dass die Zeile mitwaechst. */
+  .p-clip{
+    display:block;
+    max-height:7.6mm;
+    overflow:hidden;
   }
   table.p-table th,
   table.p-table td{
@@ -1324,7 +1344,7 @@ th .sub{
   table.p-table th.p-kw, table.p-table td.p-kw{ color:#1e40af !important; }
   table.p-table th.p-ww, table.p-table td.p-ww{ color:#b91c1c !important; }
   table.p-table th.p-aer, table.p-table td.p-aer{ color:#777 !important; }
-  table.p-table td.p-notes{ font-size:9px; }
+  table.p-table td.p-notes{ font-size:8px; line-height:1.12; }
 
   .p-foot{
     flex:0 0 auto;
@@ -1421,7 +1441,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.4.1</div>
+    <div class="footer">Made with Love © · Version 2.4.2</div>
   </div>
 
   <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
@@ -1573,7 +1593,7 @@ th .sub{
                   </label>
                   <label class="mobile-stack">
                     <span>Strahlregler getauscht</span>
-                    <input type="number" step="1" min="0" inputmode="numeric" placeholder="Anz." data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}">
+                    <input type="text" inputmode="numeric" class="num-input" placeholder="Anz." data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}">
                   </label>
                 </div>
 
@@ -1590,11 +1610,11 @@ th .sub{
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
                         <span>KW min. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwKitchen" data-index="${idx}" value="${escapeAttr(row.kwKitchen)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="kwKitchen" data-index="${idx}" value="${escapeAttr(row.kwKitchen)}">
                       </label>
                       <label class="mobile-stack mobile-ww">
                         <span>WW max. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}">
                       </label>
                     </div>
                   </div>
@@ -1604,11 +1624,11 @@ th .sub{
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
                         <span>KW min. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwBathWb" data-index="${idx}" value="${escapeAttr(row.kwBathWb)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="kwBathWb" data-index="${idx}" value="${escapeAttr(row.kwBathWb)}">
                       </label>
                       <label class="mobile-stack mobile-ww">
                         <span>WW max. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}">
                       </label>
                     </div>
                   </div>
@@ -1618,11 +1638,11 @@ th .sub{
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
                         <span>KW min. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwTubShower" data-index="${idx}" value="${escapeAttr(row.kwTubShower)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="kwTubShower" data-index="${idx}" value="${escapeAttr(row.kwTubShower)}">
                       </label>
                       <label class="mobile-stack mobile-ww">
                         <span>WW max. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}">
                       </label>
                     </div>
                   </div>
@@ -1632,11 +1652,11 @@ th .sub{
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
                         <span>KW min. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}">
                       </label>
                       <label class="mobile-stack mobile-ww">
                         <span>WW max. °C</span>
-                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}">
+                        <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}">
                       </label>
                     </div>
                   </div>
@@ -1666,15 +1686,15 @@ th .sub{
           <td class="time-col" data-label="Uhrzeit"><input type="time" data-field="time" data-index="${idx}" value="${escapeAttr(row.time)}"><span class="print-time-value">${escapeHtml(row.time || "")}</span></td>
           <td class="floor-col" data-label="Stockwerk">${floorSelectHtml(row.floor).replace('data-field="floor"', `data-field="floor" data-index="${idx}"`)}<span class="print-floor-value">${escapeHtml(row.floor || "")}</span></td>
           <td class="resident-col" data-label="Lage / Bewohner"><input type="text" placeholder="" data-field="resident" data-index="${idx}" value="${escapeAttr(row.resident)}"><span class="print-resident-value">${escapeHtml(row.resident || "")}</span></td>
-          <td class="temp-col kw-col" data-label="Küche KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwKitchen" data-index="${idx}" value="${escapeAttr(row.kwKitchen)}"></td>
-          <td class="temp-col ww-col" data-label="Küche WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}"></td>
-          <td class="temp-col kw-col" data-label="Bad WB KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwBathWb" data-index="${idx}" value="${escapeAttr(row.kwBathWb)}"></td>
-          <td class="temp-col ww-col" data-label="Bad WB WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}"></td>
-          <td class="temp-col kw-col" data-label="Wanne / Dusche KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwTubShower" data-index="${idx}" value="${escapeAttr(row.kwTubShower)}"></td>
-          <td class="temp-col ww-col" data-label="Wanne / Dusche WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}"></td>
-          <td class="temp-col kw-col" data-label="Gäste-Bad / WC KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}"></td>
-          <td class="temp-col ww-col" data-label="Gäste-Bad / WC WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}"></td>
-          <td class="temp-col aerator-col" data-label="Strahlregler getauscht (Anz.)"><input type="number" step="1" min="0" data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}"></td>
+          <td class="temp-col kw-col" data-label="Küche KW (min. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="kwKitchen" data-index="${idx}" value="${escapeAttr(row.kwKitchen)}"></td>
+          <td class="temp-col ww-col" data-label="Küche WW (max. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}"></td>
+          <td class="temp-col kw-col" data-label="Bad WB KW (min. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="kwBathWb" data-index="${idx}" value="${escapeAttr(row.kwBathWb)}"></td>
+          <td class="temp-col ww-col" data-label="Bad WB WW (max. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}"></td>
+          <td class="temp-col kw-col" data-label="Wanne / Dusche KW (min. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="kwTubShower" data-index="${idx}" value="${escapeAttr(row.kwTubShower)}"></td>
+          <td class="temp-col ww-col" data-label="Wanne / Dusche WW (max. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}"></td>
+          <td class="temp-col kw-col" data-label="Gäste-Bad / WC KW (min. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}"></td>
+          <td class="temp-col ww-col" data-label="Gäste-Bad / WC WW (max. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}"></td>
+          <td class="temp-col aerator-col" data-label="Strahlregler getauscht (Anz.)"><input type="text" inputmode="numeric" class="num-input" data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}"></td>
           <td class="notes-col" data-label="Bemerkung"><textarea data-field="notes" data-index="${idx}">${escapeHtml(row.notes)}</textarea></td>
         `;
         tbody.appendChild(tr);
@@ -1986,7 +2006,7 @@ const PRINT_COLUMNS = [
   { key:'date',        cls:'p-date'     },
   { key:'time',        cls:'p-time'     },
   { key:'floor',       cls:'p-floor'    },
-  { key:'resident',    cls:'p-resident' },
+  { key:'resident',    cls:'p-resident', clip:true },
   { key:'kwKitchen',   cls:'p-num p-kw', unit:true },
   { key:'wwKitchen',   cls:'p-num p-ww', unit:true },
   { key:'kwBathWb',    cls:'p-num p-kw', unit:true },
@@ -1996,7 +2016,7 @@ const PRINT_COLUMNS = [
   { key:'kwGuestWc',   cls:'p-num p-kw', unit:true },
   { key:'wwGuestWc',   cls:'p-num p-ww', unit:true },
   { key:'aeratorCount',cls:'p-num p-aer'},
-  { key:'notes',       cls:'p-notes'    }
+  { key:'notes',       cls:'p-notes', clip:true }
 ];
 
 function printHeadHtml(){
@@ -2029,8 +2049,19 @@ function printRowHtml(row, number){
     else if (c.key === 'date') val = formatDateForPrint(row.date || '');
     else val = row[c.key] || '';
     val = String(val);
-    const unit = (c.unit && val.trim()) ? '<span class="p-unit"> °C</span>' : '';
-    return `<td class="${c.cls}">${escapeHtml(val)}${unit}</td>`;
+
+    // "°C" nur anhaengen, wenn wirklich ein Messwert drinsteht.
+    // Platzhalter wie "-" oder "n.v." bleiben unveraendert stehen.
+    const hasNumber = /\d/.test(val);
+    const unit = (c.unit && hasNumber) ? '<span class="p-unit"> °C</span>' : '';
+
+    // Spalten, die umbrechen koennen, laufen in einen Clipping-Container,
+    // damit sie die Zeilenhoehe nicht sprengen.
+    const inner = c.clip
+      ? `<span class="p-clip">${escapeHtml(val)}${unit}</span>`
+      : `${escapeHtml(val)}${unit}`;
+
+    return `<td class="${c.cls}">${inner}</td>`;
   }).join('') + '</tr>';
 }
 
