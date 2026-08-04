@@ -115,7 +115,7 @@
       width:100%;
       border-collapse:collapse;
       background:#fff;
-      min-width:1320px;
+      min-width:1500px;
     }
     thead th{
       position:sticky;
@@ -146,8 +146,9 @@
     .time-col{width:88px}
     .floor-col{width:92px}
     .resident-col{width:240px}
-    .temp-col{width:92px}
+    .temp-col{width:78px}
     .aerator-col{width:92px}
+    .grp-col{text-align:center}
     .notes-col{width:220px}
 
     input[type="date"],
@@ -964,8 +965,8 @@ th .sub{
   }
   .mobile-row-body{
     display:grid;
-    gap:12px;
-    padding:12px;
+    gap:10px;
+    padding:10px;
   }
   .mobile-grid-2{
     display:grid;
@@ -998,14 +999,46 @@ th .sub{
     border:1px solid var(--border);
     border-radius:12px;
     background:#f8fafc;
-    padding:10px;
+    padding:8px;
     display:grid;
-    gap:10px;
+    gap:7px;
+  }
+  .mobile-outlet{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    border-top:1px dashed var(--border);
+    padding-top:6px;
+  }
+  .mobile-outlet:first-of-type{ border-top:none; padding-top:0; }
+  .mobile-outlet-name{
+    grid-column:1 / -1;
+    font-size:.74rem;
+    font-weight:800;
+    color:#374151;
+    line-height:1;
+    margin:0;
+  }
+  .mobile-outlet .mobile-grid-2{
+    grid-column:1 / -1;
+    gap:6px;
+  }
+  .mobile-outlet .mobile-stack{ gap:2px; }
+  .mobile-outlet .mobile-stack > span{
+    font-size:.66rem;
+    font-weight:700;
+    line-height:1;
+  }
+  .mobile-outlet .mobile-stack input{
+    min-height:34px;
+    padding:5px 7px;
+    text-align:center;
   }
   .mobile-temps-title{
-    font-size:.77rem;
+    font-size:.72rem;
     font-weight:800;
     color:var(--muted);
+    line-height:1;
   }
   .mobile-temps .mobile-stack input[type="number"]{ text-align:center; }
   .mobile-kw input{ border-color:#93c5fd; background:#eff6ff; }
@@ -1271,6 +1304,18 @@ th .sub{
     font-size:10px;
     line-height:1.15;
   }
+  table.p-table thead th.p-grp{
+    font-size:9px !important;
+    letter-spacing:.01em;
+  }
+  table.p-table .p-unit{
+    font-size:0.78em;
+    color:#777;
+    white-space:nowrap;
+  }
+  table.p-table td.p-kw .p-unit,
+  table.p-table td.p-ww .p-unit{ color:inherit; opacity:.62; }
+  table.p-table td.p-num{ font-size:9px; }
   table.p-table td.p-idx{ text-align:left; color:#b0b0b0; font-size:8pt; }
   table.p-table td.p-date,
   table.p-table td.p-time,
@@ -1343,18 +1388,27 @@ th .sub{
         <table>
           <thead>
             <tr>
-              <th class="idx-col">Nr.</th>
-              <th class="date-col">Datum</th>
-              <th class="time-col">Uhrzeit</th>
-              <th class="floor-col">Stockwerk</th>
-              <th class="resident-col">Lage / Bewohner</th>
-              <th class="temp-col">KW Temp.<span class="sub">(min.)</span></th>
-              <th class="temp-col">WW Küche<span class="sub">(max.)</span></th>
-              <th class="temp-col">WW Bad WB<span class="sub">(max.)</span></th>
-              <th class="temp-col">WW Wanne / Dusche<span class="sub">(max.)</span></th>
-              <th class="temp-col">WW Gäste-WC<span class="sub">(max.)</span></th>
-              <th class="temp-col">Strahlregler getauscht<br><span class="sub">(Anz.)</span></th>
-              <th class="notes-col">Bemerkung</th>
+              <th class="idx-col" rowspan="2">Nr.</th>
+              <th class="date-col" rowspan="2">Datum</th>
+              <th class="time-col" rowspan="2">Uhrzeit</th>
+              <th class="floor-col" rowspan="2">Stockwerk</th>
+              <th class="resident-col" rowspan="2">Lage / Bewohner</th>
+              <th class="grp-col" colspan="2">Küche</th>
+              <th class="grp-col" colspan="2">Bad Waschbecken</th>
+              <th class="grp-col" colspan="2">Wanne / Dusche</th>
+              <th class="grp-col" colspan="2">Gäste-Bad / WC</th>
+              <th class="aerator-col" rowspan="2">Strahlregler getauscht<br><span class="sub">(Anz.)</span></th>
+              <th class="notes-col" rowspan="2">Bemerkung</th>
+            </tr>
+            <tr>
+              <th class="temp-col kw-col">KW °C<span class="sub">(min.)</span></th>
+              <th class="temp-col ww-col">WW °C<span class="sub">(max.)</span></th>
+              <th class="temp-col kw-col">KW °C<span class="sub">(min.)</span></th>
+              <th class="temp-col ww-col">WW °C<span class="sub">(max.)</span></th>
+              <th class="temp-col kw-col">KW °C<span class="sub">(min.)</span></th>
+              <th class="temp-col ww-col">WW °C<span class="sub">(max.)</span></th>
+              <th class="temp-col kw-col">KW °C<span class="sub">(min.)</span></th>
+              <th class="temp-col ww-col">WW °C<span class="sub">(max.)</span></th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -1367,7 +1421,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.3.2</div>
+    <div class="footer">Made with Love © · Version 2.4.1</div>
   </div>
 
   <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
@@ -1410,11 +1464,14 @@ th .sub{
         time:'',
         floor:'',
         resident:'',
-        kwTemp:'',
+        kwKitchen:'',
         wwKitchen:'',
+        kwBathWb:'',
         wwBathWb:'',
-        wwGuestWc:'',
+        kwTubShower:'',
         wwTubShower:'',
+        kwGuestWc:'',
+        wwGuestWc:'',
         aeratorCount:'',
         notes:''
       };
@@ -1439,11 +1496,16 @@ th .sub{
         time: row?.time || '',
         floor: row?.floor || '',
         resident: row?.resident || row?.unit || row?.roomType || '',
-        kwTemp: row?.kwTemp || '',
+        // Migration v2.4.0: frueher gab es nur EIN Kaltwasserfeld (kwTemp).
+        // Das wird der Kueche zugeordnet, damit Altdaten nicht verloren gehen.
+        kwKitchen: row?.kwKitchen || row?.kwTemp || '',
         wwKitchen: row?.wwKitchen || '',
+        kwBathWb: row?.kwBathWb || '',
         wwBathWb: row?.wwBathWb || row?.wwBath || '',
-        wwGuestWc: row?.wwGuestWc || row?.wwGaesteWc || '',
+        kwTubShower: row?.kwTubShower || '',
         wwTubShower: row?.wwTubShower || '',
+        kwGuestWc: row?.kwGuestWc || '',
+        wwGuestWc: row?.wwGuestWc || row?.wwGaesteWc || '',
         aeratorCount: row?.aeratorCount || row?.aeratorChangedCount || '',
         notes: row?.notes || ''
       };
@@ -1489,10 +1551,10 @@ th .sub{
       state.rows.forEach((row, idx) => {
         const tr = document.createElement('tr');
         // FAB "nächste freie Zeile": Zeile gilt als leer wenn kein Datum und kein Bewohner
-        const isFreeRow = !row.date && !row.resident && !row.kwTemp && !row.wwKitchen;
+        const isFreeRow = !row.date && !row.resident && !row.kwKitchen && !row.wwKitchen;
         if (isFreeRow) tr.setAttribute('data-free-row', 'true');
         tr.innerHTML = `
-          <td class="mobile-card-cell" colspan="12">
+          <td class="mobile-card-cell" colspan="15">
             <div class="mobile-row-card">
               <div class="mobile-row-head">
                 <div class="mobile-row-no">Nr. ${idx + 1}</div>
@@ -1521,30 +1583,62 @@ th .sub{
                 </label>
 
                 <div class="mobile-temps">
-                  <div class="mobile-temps-title">Temperaturen</div>
-                  <label class="mobile-stack mobile-kw">
-                    <span>KW Temp. min.</span>
-                    <input type="number" step="0.1" inputmode="decimal" placeholder="20,0" data-field="kwTemp" data-index="${idx}" value="${escapeAttr(row.kwTemp)}">
-                  </label>
-                  <div class="mobile-grid-2">
-                    <label class="mobile-stack mobile-ww">
-                      <span>WW Küche max.</span>
-                      <input type="number" step="0.1" inputmode="decimal" placeholder="60,0" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}">
-                    </label>
-                    <label class="mobile-stack mobile-ww">
-                      <span>WW Bad WB max.</span>
-                      <input type="number" step="0.1" inputmode="decimal" placeholder="60,0" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}">
-                    </label>
+                  <div class="mobile-temps-title">Temperaturen (°C)</div>
+
+                  <div class="mobile-outlet">
+                    <div class="mobile-outlet-name">Küche</div>
+                    <div class="mobile-grid-2">
+                      <label class="mobile-stack mobile-kw">
+                        <span>KW min. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwKitchen" data-index="${idx}" value="${escapeAttr(row.kwKitchen)}">
+                      </label>
+                      <label class="mobile-stack mobile-ww">
+                        <span>WW max. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}">
+                      </label>
+                    </div>
                   </div>
-                  <div class="mobile-grid-2">
-                    <label class="mobile-stack mobile-ww">
-                      <span>WW Wanne / Dusche max.</span>
-                      <input type="number" step="0.1" inputmode="decimal" placeholder="60,0" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}">
-                    </label>
-                    <label class="mobile-stack mobile-ww">
-                      <span>WW Gäste-WC max.</span>
-                      <input type="number" step="0.1" inputmode="decimal" placeholder="60,0" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}">
-                    </label>
+
+                  <div class="mobile-outlet">
+                    <div class="mobile-outlet-name">Bad Waschbecken</div>
+                    <div class="mobile-grid-2">
+                      <label class="mobile-stack mobile-kw">
+                        <span>KW min. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwBathWb" data-index="${idx}" value="${escapeAttr(row.kwBathWb)}">
+                      </label>
+                      <label class="mobile-stack mobile-ww">
+                        <span>WW max. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}">
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="mobile-outlet">
+                    <div class="mobile-outlet-name">Wanne / Dusche</div>
+                    <div class="mobile-grid-2">
+                      <label class="mobile-stack mobile-kw">
+                        <span>KW min. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwTubShower" data-index="${idx}" value="${escapeAttr(row.kwTubShower)}">
+                      </label>
+                      <label class="mobile-stack mobile-ww">
+                        <span>WW max. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}">
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="mobile-outlet">
+                    <div class="mobile-outlet-name">Gäste-Bad / WC</div>
+                    <div class="mobile-grid-2">
+                      <label class="mobile-stack mobile-kw">
+                        <span>KW min. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}">
+                      </label>
+                      <label class="mobile-stack mobile-ww">
+                        <span>WW max. °C</span>
+                        <input type="number" step="0.1" inputmode="decimal" placeholder="°C" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}">
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -1572,11 +1666,14 @@ th .sub{
           <td class="time-col" data-label="Uhrzeit"><input type="time" data-field="time" data-index="${idx}" value="${escapeAttr(row.time)}"><span class="print-time-value">${escapeHtml(row.time || "")}</span></td>
           <td class="floor-col" data-label="Stockwerk">${floorSelectHtml(row.floor).replace('data-field="floor"', `data-field="floor" data-index="${idx}"`)}<span class="print-floor-value">${escapeHtml(row.floor || "")}</span></td>
           <td class="resident-col" data-label="Lage / Bewohner"><input type="text" placeholder="" data-field="resident" data-index="${idx}" value="${escapeAttr(row.resident)}"><span class="print-resident-value">${escapeHtml(row.resident || "")}</span></td>
-          <td class="temp-col kw-col" data-label="KW Temp. (min.)"><input type="number" step="0.1" inputmode="decimal" data-field="kwTemp" data-index="${idx}" value="${escapeAttr(row.kwTemp)}"></td>
-          <td class="temp-col ww-col" data-label="WW Küche (max.)"><input type="number" step="0.1" inputmode="decimal" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}"></td>
-          <td class="temp-col ww-col" data-label="WW Bad WB (max.)"><input type="number" step="0.1" inputmode="decimal" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}"></td>
-          <td class="temp-col ww-col" data-label="WW Wanne / Dusche (max.)"><input type="number" step="0.1" inputmode="decimal" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}"></td>
-          <td class="temp-col ww-col" data-label="WW Gäste-WC (max.)"><input type="number" step="0.1" inputmode="decimal" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}"></td>
+          <td class="temp-col kw-col" data-label="Küche KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwKitchen" data-index="${idx}" value="${escapeAttr(row.kwKitchen)}"></td>
+          <td class="temp-col ww-col" data-label="Küche WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}"></td>
+          <td class="temp-col kw-col" data-label="Bad WB KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwBathWb" data-index="${idx}" value="${escapeAttr(row.kwBathWb)}"></td>
+          <td class="temp-col ww-col" data-label="Bad WB WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}"></td>
+          <td class="temp-col kw-col" data-label="Wanne / Dusche KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwTubShower" data-index="${idx}" value="${escapeAttr(row.kwTubShower)}"></td>
+          <td class="temp-col ww-col" data-label="Wanne / Dusche WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}"></td>
+          <td class="temp-col kw-col" data-label="Gäste-Bad / WC KW (min. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}"></td>
+          <td class="temp-col ww-col" data-label="Gäste-Bad / WC WW (max. °C)"><input type="number" step="0.1" inputmode="decimal" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}"></td>
           <td class="temp-col aerator-col" data-label="Strahlregler getauscht (Anz.)"><input type="number" step="1" min="0" data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}"></td>
           <td class="notes-col" data-label="Bemerkung"><textarea data-field="notes" data-index="${idx}">${escapeHtml(row.notes)}</textarea></td>
         `;
@@ -1847,7 +1944,7 @@ function updateActiveFieldFromDom(){
 }
 
 function syncDomControlsFromState(){
-  const fields = ['date','time','floor','resident','kwTemp','wwKitchen','wwBathWb','wwTubShower','wwGuestWc','aeratorCount','notes'];
+  const fields = ['date','time','floor','resident','kwKitchen','wwKitchen','kwBathWb','wwBathWb','kwTubShower','wwTubShower','kwGuestWc','wwGuestWc','aeratorCount','notes'];
   state.rows.forEach((row, idx) => {
     fields.forEach(field => {
       document.querySelectorAll(`[data-field="${field}"][data-index="${idx}"]`).forEach(el => {
@@ -1885,38 +1982,55 @@ function syncPrintMirrors(){
 const ROWS_PER_PRINT_PAGE = 16;
 
 const PRINT_COLUMNS = [
-  { key:'__idx',      cls:'p-idx',           head:'Nr.',                 width:'3%'  },
-  { key:'date',       cls:'p-date',          head:'Datum',               width:'8%'  },
-  { key:'time',       cls:'p-time',          head:'Uhrzeit',             width:'6%'  },
-  { key:'floor',      cls:'p-floor',         head:'Stockwerk',           width:'6.5%'},
-  { key:'resident',   cls:'p-resident',      head:'Lage / Bewohner',     width:'19%' },
-  { key:'kwTemp',     cls:'p-num p-kw',      head:'KW Temp.|(min.)',     width:'6.5%'},
-  { key:'wwKitchen',  cls:'p-num p-ww',      head:'WW Küche|(max.)',     width:'6.5%'},
-  { key:'wwBathWb',   cls:'p-num p-ww',      head:'WW Bad WB|(max.)',    width:'6.5%'},
-  { key:'wwTubShower',cls:'p-num p-ww',      head:'WW Wanne / Dusche|(max.)', width:'7%' },
-  { key:'wwGuestWc',  cls:'p-num p-ww',      head:'WW Gäste-WC|(max.)',  width:'6.5%'},
-  { key:'aeratorCount',cls:'p-num p-aer',    head:'Strahlregler getauscht|(Anz.)', width:'7%' },
-  { key:'notes',      cls:'p-notes',         head:'Bemerkung',           width:'17%' }
+  { key:'__idx',       cls:'p-idx'      },
+  { key:'date',        cls:'p-date'     },
+  { key:'time',        cls:'p-time'     },
+  { key:'floor',       cls:'p-floor'    },
+  { key:'resident',    cls:'p-resident' },
+  { key:'kwKitchen',   cls:'p-num p-kw', unit:true },
+  { key:'wwKitchen',   cls:'p-num p-ww', unit:true },
+  { key:'kwBathWb',    cls:'p-num p-kw', unit:true },
+  { key:'wwBathWb',    cls:'p-num p-ww', unit:true },
+  { key:'kwTubShower', cls:'p-num p-kw', unit:true },
+  { key:'wwTubShower', cls:'p-num p-ww', unit:true },
+  { key:'kwGuestWc',   cls:'p-num p-kw', unit:true },
+  { key:'wwGuestWc',   cls:'p-num p-ww', unit:true },
+  { key:'aeratorCount',cls:'p-num p-aer'},
+  { key:'notes',       cls:'p-notes'    }
 ];
 
-function printHeadCells(){
-  return PRINT_COLUMNS.map(c => {
-    const parts = c.head.split('|');
-    const sub = parts[1] ? `<span class="sub">${escapeHtml(parts[1])}</span>` : '';
-    const kw = c.cls.includes('p-kw') ? ' p-kw' : '';
-    const ww = c.cls.includes('p-ww') ? ' p-ww' : '';
-    const aer = c.cls.includes('p-aer') ? ' p-aer' : '';
-    return `<th class="${kw}${ww}${aer}" style="width:${c.width}">${escapeHtml(parts[0])}${sub}</th>`;
-  }).join('');
+function printHeadHtml(){
+  const pair = `
+    <th class="p-kw" style="width:5.1%">KW °C<span class="sub">(min.)</span></th>
+    <th class="p-ww" style="width:5.1%">WW °C<span class="sub">(max.)</span></th>`;
+  return `
+    <thead>
+      <tr>
+        <th rowspan="2" style="width:3%">Nr.</th>
+        <th rowspan="2" style="width:7.5%">Datum</th>
+        <th rowspan="2" style="width:5.5%">Uhrzeit</th>
+        <th rowspan="2" style="width:6%">Stockwerk</th>
+        <th rowspan="2" style="width:16.5%">Lage / Bewohner</th>
+        <th class="p-grp" colspan="2">Küche</th>
+        <th class="p-grp" colspan="2">Bad Waschbecken</th>
+        <th class="p-grp" colspan="2">Wanne / Dusche</th>
+        <th class="p-grp" colspan="2">Gäste-Bad / WC</th>
+        <th rowspan="2" style="width:6%">Strahlregler<span class="sub">(Anz.)</span></th>
+        <th rowspan="2" style="width:14.7%">Bemerkung</th>
+      </tr>
+      <tr>${pair}${pair}${pair}${pair}</tr>
+    </thead>`;
 }
 
 function printRowHtml(row, number){
   return '<tr>' + PRINT_COLUMNS.map(c => {
     let val;
-    if (c.key === '__idx') val = number;
+    if (c.key === '__idx') val = String(number);
     else if (c.key === 'date') val = formatDateForPrint(row.date || '');
     else val = row[c.key] || '';
-    return `<td class="${c.cls}">${escapeHtml(val)}</td>`;
+    val = String(val);
+    const unit = (c.unit && val.trim()) ? '<span class="p-unit"> °C</span>' : '';
+    return `<td class="${c.cls}">${escapeHtml(val)}${unit}</td>`;
   }).join('') + '</tr>';
 }
 
@@ -1931,7 +2045,7 @@ function buildPrintDom(){
 
   const rows = Array.isArray(state.rows) ? state.rows : [];
   const pageCount = Math.max(1, Math.ceil(rows.length / ROWS_PER_PRINT_PAGE));
-  const head = printHeadCells();
+  const head = printHeadHtml();
 
   let html = '';
   for (let p = 0; p < pageCount; p++){
@@ -1953,7 +2067,7 @@ function buildPrintDom(){
           </div>
           <div class="p-table-wrap">
             <table class="p-table">
-              <thead><tr>${head}</tr></thead>
+              ${head}
               <tbody>${body}</tbody>
             </table>
           </div>
@@ -1996,18 +2110,24 @@ window.addEventListener('pagehide', prepareForPrint);
       row.time || '',
       row.floor || '',
       row.resident || '',
-      row.kwTemp || '',
+      row.kwKitchen || '',
       row.wwKitchen || '',
+      row.kwBathWb || '',
       row.wwBathWb || '',
+      row.kwTubShower || '',
       row.wwTubShower || '',
+      row.kwGuestWc || '',
       row.wwGuestWc || '',
       row.aeratorCount || '',
       row.notes || ''
-    ].join(' ').toLowerCase();
+    ].join(' ').toLowerCase().replace(/,/g, '.');
   }
 
+  // Komma/Punkt gleichwertig: "50,2" findet auch "50.2"
+  function normQuery(q){ return q.replace(/,/g, '.'); }
+
   function applyRowFilter(){
-    const q = String(input.value || '').trim().toLowerCase();
+    const q = normQuery(String(input.value || '').trim().toLowerCase());
     const terms = q ? q.split(/\s+/) : [];
     const trs = document.querySelectorAll('#tableBody tr');
     let shown = 0;
