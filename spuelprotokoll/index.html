@@ -1441,7 +1441,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer">Made with Love © · Version 2.4.3</div>
+    <div class="footer">Made with Love © · Version 2.4.4</div>
   </div>
 
   <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
@@ -1731,7 +1731,7 @@ function escapeHtml(value){
 
     function buildExportFile(){
       const payload = {
-        version: 'einfach-2.2.0-mobile269',
+        version: '2.4.4',
         exportedAt: new Date().toISOString(),
         ...state
       };
@@ -1856,29 +1856,65 @@ function escapeHtml(value){
       });
 
       document.getElementById('importInput').addEventListener('change', (e) => {
-        const file = e.target.files?.[0];
+        const input = e.target;
+        const file = input.files?.[0];
         if (!file) return;
+
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            const parsed = JSON.parse(reader.result);
-            state.meta = {
-              site: parsed.meta?.site || '',
-              client: parsed.meta?.client || '',
-              performedBy: parsed.meta?.performedBy || ''
+            // Manche Editoren/Cloud-Speicher setzen vor das JSON ein UTF-8-BOM.
+            // JSON.parse() stolpert darueber in einigen Browsern.
+            const raw = String(reader.result ?? '').replace(/^\uFEFF/, '').trim();
+            if (!raw) throw new Error('Die gewählte Datei ist leer.');
+
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+              throw new Error('Die Datei enthält kein gültiges Spülprotokoll-Objekt.');
+            }
+
+            // Kompatibilitaet: aktuelle Exporte sowie aeltere 2.x-Dateien.
+            // Meta-Daten wurden in 2.x unter "meta" gespeichert; Top-Level-Fallback
+            // macht den Import auch gegen Zwischenversionen robust.
+            const sourceMeta = (parsed.meta && typeof parsed.meta === 'object') ? parsed.meta : parsed;
+            const importedRows = Array.isArray(parsed.rows)
+              ? parsed.rows
+              : (Array.isArray(parsed.data?.rows) ? parsed.data.rows : null);
+
+            if (!importedRows) {
+              throw new Error('Keine Datensätze ("rows") in der JSON-Datei gefunden.');
+            }
+
+            const nextState = {
+              meta: {
+                site: sourceMeta.site || '',
+                client: sourceMeta.client || '',
+                performedBy: sourceMeta.performedBy || ''
+              },
+              rows: importedRows.length
+                ? importedRows.map((r,i)=>normalizeImportedRow(r, i+1))
+                : makeDefaultState().rows
             };
-            state.rows = Array.isArray(parsed.rows) && parsed.rows.length
-              ? parsed.rows.map((r,i)=>normalizeImportedRow(r, i+1))
-              : makeDefaultState().rows;
+
+            // Erst nach erfolgreicher Prüfung den aktuellen Stand ersetzen.
+            state = nextState;
             saveState();
             renderAll();
-            toast('Import erfolgreich.');
+            toast(`Import erfolgreich · ${importedRows.length} Zeilen`);
           } catch (err) {
-            alert('Import fehlgeschlagen: ' + err.message);
+            console.error('JSON-Import fehlgeschlagen:', err);
+            const detail = err?.message || String(err);
+            alert('Import fehlgeschlagen.\n\n' + detail + '\n\nDie bestehenden Daten wurden nicht absichtlich verändert.');
+          } finally {
+            // Erlaubt, dieselbe Datei direkt nochmals auszuwaehlen.
+            input.value = '';
           }
         };
-        reader.readAsText(file);
-        e.target.value = '';
+        reader.onerror = () => {
+          alert('Import fehlgeschlagen: Die Datei konnte nicht gelesen werden.');
+          input.value = '';
+        };
+        reader.readAsText(file, 'UTF-8');
       });
     }
 
