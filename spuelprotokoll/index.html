@@ -196,52 +196,6 @@
       border-top:1px solid var(--border);
       background:#fafafa;
     }
-    .file-input-hidden{
-      position:absolute;
-      width:1px;height:1px;
-      opacity:0;
-      overflow:hidden;
-      clip:rect(0 0 0 0);
-      clip-path:inset(50%);
-      white-space:nowrap;
-      border:0;padding:0;margin:-1px;
-    }
-    .paste-overlay{
-      position:fixed;
-      inset:0;
-      background:rgba(15,23,42,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-      z-index:60;
-    }
-    .paste-overlay.show{display:flex}
-    .paste-box{
-      background:#fff;
-      border-radius:12px;
-      width:min(720px,100%);
-      max-height:90vh;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      padding:14px;
-      box-shadow:0 18px 50px rgba(0,0,0,.35);
-    }
-    .paste-box h3{margin:0;font-size:1rem}
-    .paste-box p{margin:0;font-size:.82rem;color:var(--muted)}
-    .paste-box textarea{
-      flex:1;
-      min-height:200px;
-      font-family:ui-monospace,Menlo,Consolas,monospace;
-      font-size:.8rem;
-      padding:8px;
-      border:1px solid var(--border);
-      border-radius:8px;
-      resize:vertical;
-    }
-    .paste-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-    .drop-active{outline:3px dashed var(--accent,#0f766e);outline-offset:-6px}
     .footer{
       color:var(--muted);
       font-size:.8rem;
@@ -398,7 +352,6 @@
       .toolbar-bottom,
       .icon-btn,
       .footer,
-      .paste-overlay,
       #importInput{display:none !important}
       .card{
         box-shadow:none;
@@ -1418,8 +1371,7 @@ th .sub{
           <button class="btn" id="downloadBtn">Download</button>
           <button class="btn" id="importBtn">Import JSON</button>
           <button class="btn primary" id="printBtn">Drucken</button>
-          <button class="btn" id="pasteImportBtn" title="JSON-Text direkt einfügen">JSON einfügen</button>
-          <input type="file" id="importInput" class="file-input-hidden" accept=".json,application/json,text/json,text/plain,application/octet-stream">
+          <input type="file" id="importInput" accept="application/json" hidden>
         </div>
       </div>
       <div class="print-info desi-facts">
@@ -1489,19 +1441,7 @@ th .sub{
       </div>
     </div>
 
-    <div class="footer" id="appFooter">Made with Love © · Version 2.4.6</div>
-  </div>
-
-  <div class="paste-overlay" id="pasteOverlay" aria-hidden="true">
-    <div class="paste-box">
-      <h3>JSON einfügen</h3>
-      <p>Falls der Datei-Dialog auf dem Gerät keine .json-Datei anbietet: Inhalt der Exportdatei hier einfügen.</p>
-      <textarea id="pasteArea" placeholder='{ "meta": { ... }, "rows": [ ... ] }' spellcheck="false"></textarea>
-      <div class="paste-actions">
-        <button class="btn" id="pasteCancelBtn">Abbrechen</button>
-        <button class="btn primary" id="pasteOkBtn">Importieren</button>
-      </div>
-    </div>
+    <div class="footer" id="appFooter">Made with Love ©</div>
   </div>
 
   <!-- Wird vor jedem Druck per JS neu aufgebaut (seitenweise, siehe buildPrintDom) -->
@@ -1511,7 +1451,7 @@ th .sub{
   <button id="fabNextRow" class="fab-next-row" title="Zur nächsten freien Zeile">⬇︎</button>
 
   <script>
-    const APP_VERSION = '2.4.6';
+    const APP_VERSION = '2.4.8';
     const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_1_9';
     const DEFAULT_ROWS = 14;
     const FLOOR_OPTIONS = ['', 'UG', 'EG', '1. OG', '2. OG', '3. OG', '4. OG', '5. OG', '6. OG', '7. OG'];
@@ -1922,140 +1862,101 @@ function escapeHtml(value){
         if (!file) return;
 
         try {
-          let raw = '';
-
-          // Primaerweg: File.text() ist bei lokalen Dateien deutlich robuster als
-          // der alte FileReader-Eventweg. Fallback fuer aeltere Browser bleibt erhalten.
-          if (typeof file.text === 'function') {
-            raw = await file.text();
-          } else {
-            raw = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-              reader.onerror = () => reject(reader.error || new Error('Datei konnte nicht gelesen werden.'));
-              reader.readAsText(file);
-            });
-          }
-
-          if (!String(raw ?? '').trim()) {
-            throw new Error(`Die Datei enthält keinen lesbaren Text (${file.name || 'JSON-Datei'}, ${file.size ?? '?'} Byte).`);
-          }
-
-          applyImportedJsonText(raw);
+          const raw = await readFileAsText(file);
+          applyImportedJson(raw);
         } catch (err) {
-          reportImportError(err);
+          console.error('JSON-Import fehlgeschlagen:', err);
+          let detail = err?.message || String(err);
+          if (err instanceof SyntaxError) {
+            detail = 'Die ausgewählte Datei enthält kein gültiges JSON.';
+          }
+          alert('Import fehlgeschlagen.\n\n' + detail + '\n\nDie vorhandenen Daten wurden nicht verändert.');
         } finally {
           // Erlaubt, dieselbe Datei direkt nochmals auszuwaehlen.
           input.value = '';
         }
       });
-
-      // Fallback 1: JSON-Text direkt einfuegen (fuer Geraete, deren Datei-Dialog
-      // .json-Dateien ausgraut - typisch bei iOS/Android-Dateiprovidern).
-      const pasteOverlay = document.getElementById('pasteOverlay');
-      const pasteArea = document.getElementById('pasteArea');
-      const openPaste = () => {
-        pasteArea.value = '';
-        pasteOverlay.classList.add('show');
-        pasteOverlay.setAttribute('aria-hidden', 'false');
-        setTimeout(() => pasteArea.focus(), 50);
-      };
-      const closePaste = () => {
-        pasteOverlay.classList.remove('show');
-        pasteOverlay.setAttribute('aria-hidden', 'true');
-      };
-      document.getElementById('pasteImportBtn').addEventListener('click', openPaste);
-      document.getElementById('pasteCancelBtn').addEventListener('click', closePaste);
-      pasteOverlay.addEventListener('click', (ev) => { if (ev.target === pasteOverlay) closePaste(); });
-      document.getElementById('pasteOkBtn').addEventListener('click', () => {
-        try {
-          applyImportedJsonText(pasteArea.value);
-          closePaste();
-        } catch (err) {
-          reportImportError(err);
-        }
-      });
-
-      // Fallback 2: Datei per Drag & Drop auf das Fenster ziehen (Desktop).
-      ['dragenter','dragover'].forEach(evt => {
-        window.addEventListener(evt, (ev) => {
-          if (!ev.dataTransfer || !Array.from(ev.dataTransfer.types || []).includes('Files')) return;
-          ev.preventDefault();
-          document.body.classList.add('drop-active');
-        });
-      });
-      ['dragleave','dragend'].forEach(evt => {
-        window.addEventListener(evt, () => document.body.classList.remove('drop-active'));
-      });
-      window.addEventListener('drop', async (ev) => {
-        const file = ev.dataTransfer?.files?.[0];
-        document.body.classList.remove('drop-active');
-        if (!file) return;
-        ev.preventDefault();
-        try {
-          const raw = await file.text();
-          applyImportedJsonText(raw);
-        } catch (err) {
-          reportImportError(err);
-        }
-      });
     }
 
-    // Gemeinsamer Import-Pfad fuer Datei, Einfuegen und Drag & Drop.
-    function applyImportedJsonText(rawText){
-      let raw = String(rawText ?? '').replace(/^\uFEFF/, '').trim();
-      if (!raw) {
-        throw new Error('Es wurde kein JSON-Inhalt übergeben.');
+    // Liest eine Datei zuverlaessig als Text.
+    // Android meldet bei Auswahl ueber "Zuletzt" oder Cloud-Anbieter gelegentlich
+    // size === 0, obwohl der Inhalt lesbar waere - deshalb wird IMMER gelesen und
+    // erst das leere Ergebnis als Fehler behandelt.
+    async function readFileAsText(file){
+      let raw = '';
+
+      if (typeof file.text === 'function') {
+        try { raw = await file.text(); } catch (e) { raw = ''; }
       }
 
+      if (!String(raw || '').trim()) {
+        raw = await new Promise((resolve) => {
+          try {
+            const reader = new FileReader();
+            reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+            reader.onerror = () => resolve('');
+            reader.readAsText(file);
+          } catch (e) {
+            resolve('');
+          }
+        });
+      }
+
+      raw = String(raw || '').replace(/^\uFEFF/, '').trim();
+
+      if (!raw) {
+        throw new Error(
+          `Die Datei "${file.name || 'JSON-Datei'}" wurde als leer übergeben (${file.size ?? 0} Byte).\n\n` +
+          'Das passiert, wenn die Datei nicht aus dem lokalen Speicher stammt. ' +
+          'Bitte im Auswahldialog auf "Durchsuchen" bzw. "Interner Speicher" wechseln ' +
+          'und die Datei direkt im Ordner Download auswählen – nicht über "Zuletzt" oder einen Cloud-Dienst.'
+        );
+      }
+
+      return raw;
+    }
+
+    // Verarbeitet den JSON-Text und ersetzt den Stand erst nach erfolgreicher Pruefung.
+    function applyImportedJson(raw){
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error('Der Inhalt enthält kein gültiges Spülprotokoll-Objekt.');
+        throw new Error('Die Datei enthält kein gültiges Spülprotokoll-Objekt.');
       }
 
-      // Kompatibilitaet: aktuelle Exporte, alte 2.x-Dateien, "einfach"-Varianten
-      // und Zwischenversionen.
       const sourceMeta = (parsed.meta && typeof parsed.meta === 'object') ? parsed.meta : parsed;
       const importedRows = Array.isArray(parsed.rows)
         ? parsed.rows
-        : (Array.isArray(parsed.data?.rows)
-            ? parsed.data.rows
-            : (Array.isArray(parsed.entries) ? parsed.entries : null));
+        : (Array.isArray(parsed.data?.rows) ? parsed.data.rows : null);
 
       if (!importedRows) {
-        throw new Error('Keine Datensätze ("rows") im JSON gefunden.');
+        throw new Error('Keine Datensätze ("rows") in der JSON-Datei gefunden.');
       }
 
-      const nextState = {
+      state = {
         meta: {
-          site: sourceMeta.site || sourceMeta.einsatzort || '',
-          client: sourceMeta.client || sourceMeta.auftraggeber || '',
-          performedBy: sourceMeta.performedBy || sourceMeta.probenehmer || ''
+          site: sourceMeta.site || '',
+          client: sourceMeta.client || '',
+          performedBy: sourceMeta.performedBy || ''
         },
         rows: importedRows.length
           ? importedRows.map((r,i)=>normalizeImportedRow(r, i+1))
           : makeDefaultState().rows
       };
 
-      // Den aktuellen Stand erst ersetzen, nachdem Parsen + Validierung erfolgreich waren.
-      state = nextState;
       saveState();
       renderAll();
       toast(`Import erfolgreich · ${importedRows.length} Zeilen`);
     }
 
-    function reportImportError(err){
-      console.error('JSON-Import fehlgeschlagen:', err);
-      let detail = err?.message || String(err);
-      if (err instanceof SyntaxError) {
-        detail = 'Der ausgewählte Inhalt ist kein gültiges JSON.';
-      }
-      alert('Import fehlgeschlagen.\n\n' + detail + '\n\nDie vorhandenen Daten wurden nicht verändert.');
+    function renderFooterVersion(){
+      const el = document.getElementById('appFooter');
+      if (el) el.textContent = `Made with Love © · Version ${APP_VERSION}`;
     }
 
     loadState();
     renderAll();
     bindEvents();
+    renderFooterVersion();
   
 function sanitizeFilenamePart(value) {
   return String(value || "")
@@ -2343,7 +2244,9 @@ window.addEventListener('pagehide', prepareForPrint);
     });
 
     bar.classList.toggle('has-query', !!terms.length);
-    if (count) count.textContent = terms.length ? `${shown}/${trs.length}` : `${trs.length}`;
+    // Zaehler nur bei aktiver Suche anzeigen - sonst stand dort eine
+    // kontextlose Zahl (Anzahl aller Zeilen) neben dem Suchfeld.
+    if (count) count.textContent = terms.length ? `${shown}/${trs.length}` : '';
   }
 
   window.applyRowFilter = applyRowFilter;
