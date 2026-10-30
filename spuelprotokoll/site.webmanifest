@@ -1,7 +1,7 @@
 {
   "name": "Spülprotokoll – Thermische Desinfektion",
   "short_name": "Spülprotokoll",
-  "start_url": "./index.html",
+  "start_url": "/worktools/spuelprotokoll/",
   "display": "standalone",
   "background_color": "#f4f8fc",
   "theme_color": "#1e3a8a",
@@ -16,5 +16,9 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "description": "Protokoll zur thermischen Desinfektion.",
+  "id": "/worktools/spuelprotokoll/",
+  "scope": "/worktools/spuelprotokoll/",
+  "orientation": "portrait"
 }
