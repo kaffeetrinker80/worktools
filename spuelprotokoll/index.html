@@ -1397,6 +1397,38 @@ select.note-preset{
   #tableBody tr.row-missing-resident input[data-field="resident"]{ border-color:inherit !important; background:transparent !important; box-shadow:none !important; }
 }
 
+/* ===== v2.4.10 · KW/WW-Paare: fehlende Gegenseite + Begründung ===== */
+#tableBody input.temp-missing{
+  border-color:#dc2626 !important;
+  background:#fef2f2 !important;
+  box-shadow:0 0 0 2px rgba(220,38,38,.25) !important;
+}
+.reason-chips{ display:none; }
+.mobile-outlet.outlet-missing .reason-chips{
+  display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; align-items:center;
+}
+.reason-chips .reason-lbl{ font-size:.78rem; color:#b91c1c; font-weight:700; width:100%; }
+.reason-chips button{
+  border:1px solid #fca5a5; background:#fff; color:#991b1b;
+  border-radius:999px; padding:6px 10px; font-size:.82rem; cursor:pointer; min-height:34px;
+}
+.reason-chips button:active{ background:#fee2e2; }
+@media print{
+  .reason-chips{ display:none !important; }
+  #tableBody input.temp-missing{ border-color:inherit !important; background:transparent !important; box-shadow:none !important; }
+}
+
+/* ===== v2.4.11 · Spülzeit-Countdown ===== */
+.flush-timer{ display:none; }
+.flush-timer.running, .flush-timer.done{
+  display:block; margin-top:4px; text-align:center;
+  font-size:.82rem; font-weight:700; font-variant-numeric:tabular-nums;
+  border-radius:8px; padding:3px 4px;
+}
+.flush-timer.running{ background:#fef3c7; color:#92400e; }
+.flush-timer.done{ background:#dcfce7; color:#166534; }
+@media print{ .flush-timer{ display:none !important; } }
+
 </style>
 </head>
 <body>
@@ -1405,7 +1437,7 @@ select.note-preset{
     <div id="fieldWarn" class="field-warn" role="alert">
       <span class="field-warn-ico" aria-hidden="true">⚠️</span>
       <span id="fieldWarnText" class="field-warn-text"></span>
-      <button type="button" id="fieldWarnGo" class="field-warn-go">Jetzt eintragen</button>
+      <button type="button" id="fieldWarnGo" class="field-warn-go">Zum Feld</button>
       <button type="button" id="fieldWarnClose" class="field-warn-close" aria-label="Hinweis schließen">×</button>
     </div>
 
@@ -1498,7 +1530,7 @@ select.note-preset{
   <button id="fabNextRow" class="fab-next-row" title="Zur nächsten freien Zeile">⬇︎</button>
 
   <script>
-    const APP_VERSION = '2.4.9';
+    const APP_VERSION = '2.4.11';
     const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_1_9';
     const DEFAULT_ROWS = 14;
     // v2.4.9: Vorlagen für Auffälligkeiten (Dropdown über der Bemerkung). Hier anpassen.
@@ -1668,7 +1700,7 @@ select.note-preset{
                 <div class="mobile-temps">
                   <div class="mobile-temps-title">Temperaturen (°C)</div>
 
-                  <div class="mobile-outlet">
+                  <div class="mobile-outlet" data-outlet="kitchen">
                     <div class="mobile-outlet-name">Küche</div>
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
@@ -1680,9 +1712,10 @@ select.note-preset{
                         <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwKitchen" data-index="${idx}" value="${escapeAttr(row.wwKitchen)}">
                       </label>
                     </div>
+                    <div class="reason-chips" data-reason-for="${idx}"></div>
                   </div>
 
-                  <div class="mobile-outlet">
+                  <div class="mobile-outlet" data-outlet="bath">
                     <div class="mobile-outlet-name">Bad Waschbecken</div>
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
@@ -1694,9 +1727,10 @@ select.note-preset{
                         <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwBathWb" data-index="${idx}" value="${escapeAttr(row.wwBathWb)}">
                       </label>
                     </div>
+                    <div class="reason-chips" data-reason-for="${idx}"></div>
                   </div>
 
-                  <div class="mobile-outlet">
+                  <div class="mobile-outlet" data-outlet="tub">
                     <div class="mobile-outlet-name">Wanne / Dusche</div>
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
@@ -1708,9 +1742,10 @@ select.note-preset{
                         <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwTubShower" data-index="${idx}" value="${escapeAttr(row.wwTubShower)}">
                       </label>
                     </div>
+                    <div class="reason-chips" data-reason-for="${idx}"></div>
                   </div>
 
-                  <div class="mobile-outlet">
+                  <div class="mobile-outlet" data-outlet="guest">
                     <div class="mobile-outlet-name">Gäste-Bad / WC</div>
                     <div class="mobile-grid-2">
                       <label class="mobile-stack mobile-kw">
@@ -1722,6 +1757,7 @@ select.note-preset{
                         <input type="text" inputmode="decimal" class="num-input" placeholder="°C" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}">
                       </label>
                     </div>
+                    <div class="reason-chips" data-reason-for="${idx}"></div>
                   </div>
                 </div>
 
@@ -2356,111 +2392,325 @@ window.addEventListener('pagehide', prepareForPrint);
 
 </script>
 <script>
-/* ===== v2.4.9 · Warnung bei vergessener Lage / Bewohner =====
-   Eine Zeile gilt als "begonnen", sobald mindestens eine Temperatur drinsteht
-   oder Uhrzeit UND Stockwerk gesetzt sind. Fehlt dann Lage / Bewohner, wird gewarnt,
-   wenn du ein anderes Feld der Zeile antippst oder die Zeile verlässt. */
+/* ===== v2.4.11 · Spülzeit-Countdown =====
+   Sobald in ein Temperaturfeld eine Zahl eingetragen wird (= Temperatur konstant),
+   läuft für diese Stelle ein Countdown über FLUSH_SECONDS. Mehrere Stellen parallel möglich.
+   Zeitbasis sind echte Zeitstempel → stimmt auch nach Bildschirmsperre. */
+window.FLUSH_SECONDS = 180;   // Mindest-Spülzeit pro Stelle (3 min). Hier anpassen.
+window.fmtFlushSec = function(sec){
+  sec = Math.max(0, Math.round(sec));
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+};
 (function(){
-  const TEMP_FIELDS = ['kwKitchen','wwKitchen','kwBathWb','wwBathWb','kwTubShower','wwTubShower','kwGuestWc','wwGuestWc'];
-  // Felder, bei deren Antippen noch NICHT gewarnt wird (natürliche Reihenfolge: Zeit → Stockwerk → Lage)
-  const NO_TRIGGER_FIELDS = ['resident','date','time','floor'];
-  const warned = {};   // idx -> { inside:bool, left:bool }
+  const KEY = 'spuelprotokoll_arbeitsnachweis_flushtimers';
+  const FIELDS = {
+    kwKitchen:'Küche KW', wwKitchen:'Küche WW', kwBathWb:'Bad WB KW', wwBathWb:'Bad WB WW',
+    kwTubShower:'Wanne/Dusche KW', wwTubShower:'Wanne/Dusche WW', kwGuestWc:'Gäste-WC KW', wwGuestWc:'Gäste-WC WW'
+  };
+  const isNum = v => /^\s*-?\d+(?:[.,]\d+)?\s*$/.test(String(v ?? ''));
+  const tbody = document.getElementById('tableBody');
+  let timers = {};   // "idx:field" -> { start:ms, done:bool }
+  try { timers = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ timers = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(timers)); } catch(e){} };
+
+  function remaining(k){
+    const t = timers[k]; if (!t) return 0;
+    return Math.max(0, window.FLUSH_SECONDS - (Date.now() - t.start) / 1000);
+  }
+  window.flushRemaining = (idx, field) => timers[`${idx}:${field}`] ? Math.ceil(remaining(`${idx}:${field}`)) : 0;
+
+  // Badges unter jedes Temperaturfeld hängen (nach jedem Rendern)
+  function ensureBadges(){
+    tbody.querySelectorAll('input[data-field]').forEach(inp => {
+      if (!FIELDS[inp.dataset.field]) return;
+      const nxt = inp.nextElementSibling;
+      if (nxt && nxt.classList.contains('flush-timer')) return;
+      const b = document.createElement('span');
+      b.className = 'flush-timer';
+      b.dataset.timerFor = `${inp.dataset.index}:${inp.dataset.field}`;
+      inp.insertAdjacentElement('afterend', b);
+    });
+  }
+
+  function paint(){
+    tbody.querySelectorAll('.flush-timer').forEach(b => {
+      const k = b.dataset.timerFor, t = timers[k];
+      if (!t){ b.className = 'flush-timer'; b.textContent = ''; return; }
+      const rest = remaining(k);
+      if (rest > 0){
+        b.className = 'flush-timer running';
+        b.textContent = `⏱ ${window.fmtFlushSec(Math.ceil(rest))}`;
+      } else {
+        b.className = 'flush-timer done';
+        b.textContent = `✓ ${Math.round(window.FLUSH_SECONDS / 60)} min`;
+      }
+    });
+  }
+
+  let tick = null, wake = null;
+  async function wakeOn(){
+    try { if (!wake && navigator.wakeLock) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch(e){}
+  }
+  function wakeOff(){ try { if (wake) wake.release(); } catch(e){} wake = null; }
+
+  function step(){
+    const finished = [];
+    Object.keys(timers).forEach(k => {
+      const t = timers[k];
+      if (!t.done && remaining(k) <= 0){ t.done = true; finished.push(k); }
+    });
+    if (finished.length){
+      save();
+      const names = finished.map(k => { const [i, f] = k.split(':'); return `Zeile ${+i + 1} ${FIELDS[f]}`; });
+      toast(`✓ ${Math.round(window.FLUSH_SECONDS / 60)} min gespült: ${names.join(', ')}`);
+      try { if (navigator.vibrate) navigator.vibrate([400, 150, 400]); } catch(e){}
+    }
+    paint();
+    const running = Object.keys(timers).some(k => !timers[k].done);
+    if (running){ if (!tick) tick = setInterval(step, 1000); wakeOn(); }
+    else { clearInterval(tick); tick = null; wakeOff(); }
+  }
+
+  // Start bei erster Zahl, Löschen wenn Feld leer / keine Zahl mehr (z. B. Grund "abgest.")
+  tbody.addEventListener('input', (e) => {
+    const f = e.target.dataset.field;
+    if (!FIELDS[f]) return;
+    const k = `${e.target.dataset.index}:${f}`;
+    if (isNum(e.target.value)){
+      if (!timers[k]) { timers[k] = { start: Date.now(), done:false }; save(); }
+    } else if (timers[k]) { delete timers[k]; save(); }
+    step();
+  });
+  // Grund-Knopf schreibt Text ins Feld → evtl. Timer weg
+  tbody.addEventListener('click', (e) => {
+    if (!(e.target.closest && e.target.closest('[data-reason-code]'))) return;
+    setTimeout(prune, 0);
+  });
+
+  // Timer ohne passende Zahl im Feld entfernen (Zeile geleert, Import, Alles leeren)
+  function prune(){
+    let changed = false;
+    Object.keys(timers).forEach(k => {
+      const [i, f] = k.split(':');
+      const row = state.rows[+i];
+      if (!row || !isNum(row[f])) { delete timers[k]; changed = true; }
+    });
+    if (changed) save();
+    step();
+  }
+  window.flushTimersRefresh = function(){ ensureBadges(); prune(); };
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) step(); });
+  ensureBadges(); prune();
+})();
+</script>
+<script>
+/* ===== v2.4.9 / v2.4.10 · Warnung bei vergessenen Feldern =====
+   1) Lage / Bewohner: Zeile gilt als "begonnen", sobald mind. eine Temperatur drinsteht
+      oder Uhrzeit UND Stockwerk gesetzt sind.
+   2) KW/WW-Paare: Steht bei einer Entnahmestelle nur KW oder nur WW, muss die Gegenseite
+      kommen – oder ein Grund (wird als Kurztext ins leere Feld geschrieben, z. B. "abgest.").
+   Gewarnt wird beim Antippen eines anderen Felds bzw. beim Verlassen der Zeile. */
+(function(){
+  const OUTLETS = [
+    { key:'kitchen', name:'Küche',          kw:'kwKitchen',   ww:'wwKitchen' , short:'Küche' },
+    { key:'bath',    name:'Bad Waschbecken', kw:'kwBathWb',    ww:'wwBathWb' , short:'Bad WB' },
+    { key:'tub',     name:'Wanne / Dusche', kw:'kwTubShower', ww:'wwTubShower' , short:'Wanne/Dusche' },
+    { key:'guest',   name:'Gäste-Bad / WC', kw:'kwGuestWc',   ww:'wwGuestWc' , short:'Gäste-WC' }
+  ];
+  // Gründe: [Beschriftung, Kurztext im Feld/Ausdruck]. Hier anpassen.
+  const REASONS = {
+    ww: [['Abgestellt','abgest.'], ['Nur KW-Strang','nur KW'], ['Defekt','defekt'], ['Nicht zugänglich','n. zug.']],
+    kw: [['Abgestellt','abgest.'], ['Defekt','defekt'], ['Nicht zugänglich','n. zug.']]
+  };
+  const TEMP_FIELDS = OUTLETS.flatMap(o => [o.kw, o.ww]);
+  const FLUSH_SECONDS = window.FLUSH_SECONDS;
+  const fmtSec = window.fmtFlushSec;
+  const NO_RESIDENT_TRIGGER = ['resident','date','time','floor'];
+
+  const warned = {};   // "idx:issue" -> { inside, left }
   const tbody = document.getElementById('tableBody');
   const banner = document.getElementById('fieldWarn');
   const bannerText = document.getElementById('fieldWarnText');
-  let bannerRow = null;
-  let bannerTimer = null;
+  let bannerRow = null, bannerFocus = null, bannerTimer = null;
 
-  function hasVal(v){ return String(v ?? '').trim() !== ''; }
+  const hasVal = v => String(v ?? '').trim() !== '';
+  const rows = () => tbody.querySelectorAll(':scope > tr');
+  const rowEl = idx => rows()[idx] || null;
 
   function rowNeedsResident(row){
     if (!row || hasVal(row.resident)) return false;
-    const anyTemp = TEMP_FIELDS.some(f => hasVal(row[f]));
-    return anyTemp || (hasVal(row.time) && hasVal(row.floor));
+    return TEMP_FIELDS.some(f => hasVal(row[f])) || (hasVal(row.time) && hasVal(row.floor));
+  }
+  // 'kw' / 'ww' = diese Seite fehlt; null = ok (beide oder keine)
+  function outletMissing(row, o){
+    const k = hasVal(row?.[o.kw]), w = hasVal(row?.[o.ww]);
+    if (k && !w) return 'ww';
+    if (w && !k) return 'kw';
+    return null;
   }
 
-  function rowEl(idx){ return tbody.querySelectorAll(':scope > tr')[idx] || null; }
-
-  function setMark(idx, on){
-    const tr = rowEl(idx);
-    if (tr) tr.classList.toggle('row-missing-resident', !!on);
+  /* ---------- Markierungen ---------- */
+  function markResident(idx, on){
+    const tr = rowEl(idx); if (tr) tr.classList.toggle('row-missing-resident', !!on);
+  }
+  function markOutlet(idx, o, side){
+    const tr = rowEl(idx); if (!tr) return;
+    [o.kw, o.ww].forEach(f => {
+      tr.querySelectorAll(`[data-field="${f}"]`).forEach(el =>
+        el.classList.toggle('temp-missing', !!side && f === (side === 'kw' ? o.kw : o.ww)));
+    });
+    const box = tr.querySelector(`.mobile-outlet[data-outlet="${o.key}"]`);
+    if (!box) return;
+    box.classList.toggle('outlet-missing', !!side);
+    const chips = box.querySelector('.reason-chips');
+    if (!chips) return;
+    if (!side){ chips.innerHTML = ''; return; }
+    if (chips.dataset.side === side && chips.innerHTML) return;
+    chips.dataset.side = side;
+    chips.innerHTML = `<span class="reason-lbl">${side === 'ww' ? 'Warm' : 'Kalt'} fehlt – Temperatur eintragen oder Grund:</span>` +
+      REASONS[side].map(([label, code]) =>
+        `<button type="button" data-reason-idx="${idx}" data-reason-outlet="${o.key}" data-reason-code="${escapeAttr(code)}">${escapeHtml(label)}</button>`).join('');
+  }
+  function refreshRow(idx, onlyWarned){
+    const row = state.rows[idx];
+    const r = rowNeedsResident(row);
+    if (!onlyWarned || !r || warned[`${idx}:resident`]) markResident(idx, r);
+    OUTLETS.forEach(o => {
+      const side = outletMissing(row, o);
+      if (!onlyWarned || !side || warned[`${idx}:${o.key}`]) markOutlet(idx, o, side);
+    });
   }
 
+  /* ---------- Hinweis-Leiste ---------- */
   function hideBanner(){
     banner.classList.remove('show');
-    bannerRow = null;
+    bannerRow = null; bannerFocus = null;
     clearTimeout(bannerTimer);
   }
-
-  function showBanner(idx){
-    bannerRow = idx;
-    bannerText.textContent = `Zeile ${idx + 1}: Lage / Bewohner fehlt.`;
+  function showBanner(idx, issues){
+    const groups = {};
+    issues.forEach(i => { (groups[i.grp] = groups[i.grp] || []).push(i.text); });
+    const texts = Object.entries(groups).map(([g, list]) => list.filter(Boolean).length ? `${g}: ${list.filter(Boolean).join(', ')}` : g);
+    bannerRow = idx; bannerFocus = issues[0].field;
+    bannerText.textContent = `Zeile ${idx + 1}: ${texts.join(' · ')}.`;
     banner.classList.add('show');
     clearTimeout(bannerTimer);
     bannerTimer = setTimeout(hideBanner, 7000);
     try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch(e){}
   }
 
-  // phase: 'inside' (anderes Feld in der Zeile) oder 'left' (Zeile verlassen)
-  function check(idx, phase){
+  /* ---------- Prüfung ----------
+     phase 'inside': anderes Feld in der Zeile angetippt (focusField = dieses Feld)
+     phase 'left'  : Zeile verlassen */
+  // withOutlets: KW/WW-Paare und Spülzeit erst prüfen, wenn du wirklich zur nächsten
+  // Zeile (nächster Bewohner) gehst – nicht beim Wechsel zwischen Stellen derselben Zeile
+  // (z. B. 3 Stellen WW im Bad gleichzeitig spülen).
+  function check(idx, phase, focusField, withOutlets){
     const row = state.rows[idx];
-    if (!rowNeedsResident(row)){
-      setMark(idx, false);
-      delete warned[idx];
-      return;
+    if (!row) return;
+    const issues = [];
+    if (rowNeedsResident(row) && (phase === 'left' || !NO_RESIDENT_TRIGGER.includes(focusField))){
+      issues.push({ key:'resident', grp:'Lage / Bewohner fehlt', text:'', field:'resident' });
     }
-    setMark(idx, true);
-    const w = warned[idx] || (warned[idx] = { inside:false, left:false });
-    if (w[phase]) return;              // pro Zeile und Phase nur einmal vibrieren
-    w[phase] = true;
-    if (phase === 'inside') w.left = false;
-    showBanner(idx);
+    if (withOutlets){
+      OUTLETS.forEach(o => {
+        const side = outletMissing(row, o);
+        if (!side) return;
+        issues.push({ key:o.key, grp:`${side === 'ww' ? 'WW' : 'KW'} fehlt`, text:o.short, field: side === 'ww' ? o.ww : o.kw });
+      });
+      TEMP_FIELDS.forEach(f => {
+        const rest = window.flushRemaining ? window.flushRemaining(idx, f) : 0;
+        if (rest > 0){
+          const o = OUTLETS.find(x => x.kw === f || x.ww === f);
+          issues.push({ key:`run-${f}`, grp:'Spülzeit läuft noch', text:`${o.short} ${f === o.ww ? 'WW' : 'KW'} ${fmtSec(rest)}`, field:f });
+        }
+      });
+    }
+    // nur neue Probleme (pro Zeile/Phase einmal) lösen Vibration aus
+    const fresh = issues.filter(i => {
+      const w = warned[`${idx}:${i.key}`] || (warned[`${idx}:${i.key}`] = { inside:false, left:false });
+      if (w[phase]) return false;
+      w[phase] = true;
+      if (phase === 'inside') w.left = false;
+      return true;
+    });
+    refreshRow(idx, true);
+    if (fresh.length) showBanner(idx, issues);
+  }
+
+  // erledigte Probleme sofort aufräumen
+  function settle(idx){
+    const row = state.rows[idx];
+    if (!rowNeedsResident(row)) { delete warned[`${idx}:resident`]; markResident(idx, false); }
+    OUTLETS.forEach(o => {
+      if (!outletMissing(row, o)) { delete warned[`${idx}:${o.key}`]; markOutlet(idx, o, null); }
+    });
+    if (bannerRow === idx){
+      const stillOpen = Object.keys(warned).some(k => k.startsWith(`${idx}:`));
+      if (!stillOpen) hideBanner();
+    }
   }
 
   function idxOf(el){
     if (!el || !el.closest) return null;
     const tr = el.closest('#tableBody > tr');
     if (!tr) return null;
-    const i = Array.prototype.indexOf.call(tbody.querySelectorAll(':scope > tr'), tr);
+    const i = Array.prototype.indexOf.call(rows(), tr);
     return i >= 0 ? i : null;
+  }
+  function fieldOf(el){
+    if (el.dataset.field) return el.dataset.field;
+    if (el.dataset.notePreset !== undefined) return 'notePreset';
+    if (el.dataset.reasonCode !== undefined) return null;   // Grund-Buttons lösen nichts aus
+    return null;
   }
 
   let lastRow = null;
-
   tbody.addEventListener('focusin', (e) => {
     const idx = idxOf(e.target);
     if (idx === null) return;
-    if (lastRow !== null && lastRow !== idx) check(lastRow, 'left');
+    if (lastRow !== null && lastRow !== idx) check(lastRow, 'left', null, true);
     lastRow = idx;
     if (e.target.dataset.clear !== undefined) return;
-    const field = e.target.dataset.field || (e.target.dataset.notePreset !== undefined ? 'notePreset' : '');
-    if (!field || NO_TRIGGER_FIELDS.includes(field)) return;
-    check(idx, 'inside');
+    const field = fieldOf(e.target);
+    if (!field) return;
+    check(idx, 'inside', field, false);
   });
 
-  // Zeile verlassen, ohne ein anderes Feld anzutippen (z. B. Tastatur zu, weggescrollt)
   tbody.addEventListener('focusout', (e) => {
     const idx = idxOf(e.target);
     if (idx === null) return;
     setTimeout(() => {
       const nowIdx = idxOf(document.activeElement);
-      if (nowIdx === idx) return;
-      if (nowIdx === null) { check(idx, 'left'); lastRow = null; }
+      // Tastatur zu / weggetippt: nur Lage prüfen – du stehst ja evtl. noch beim Spülen
+      if (nowIdx === null && !banner.contains(document.activeElement)) check(idx, 'left', null, false);
     }, 150);
   });
 
-  // Sobald Lage / Bewohner eingetragen wird: Markierung sofort weg
   tbody.addEventListener('input', (e) => {
-    if (e.target.dataset.field !== 'resident') return;
-    const idx = Number(e.target.dataset.index);
-    if (hasVal(e.target.value)){
-      setMark(idx, false);
-      delete warned[idx];
-      if (bannerRow === idx) hideBanner();
-    }
+    const f = e.target.dataset.field;
+    if (f !== 'resident' && !TEMP_FIELDS.includes(f)) return;
+    settle(Number(e.target.dataset.index));
   });
 
-  // Auffälligkeiten-Dropdown: hängt den Text an die Bemerkung an (Freitext bleibt möglich)
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('[data-reason-code]');
+    if (!btn) return;
+    const idx = Number(btn.dataset.reasonIdx);
+    const o = OUTLETS.find(x => x.key === btn.dataset.reasonOutlet);
+    const row = state.rows[idx];
+    if (!o || !row) return;
+    const side = outletMissing(row, o);
+    if (!side) return;
+    row[side === 'ww' ? o.ww : o.kw] = btn.dataset.reasonCode;
+    saveState();
+    syncPrintMirrors();
+    settle(idx);
+    toast(`${o.name}: ${side === 'ww' ? 'WW' : 'KW'} = „${btn.dataset.reasonCode}“`);
+  });
+
+  // Auffälligkeiten-Dropdown (v2.4.9)
   tbody.addEventListener('change', (e) => {
     const sel = e.target;
     if (!sel.classList || !sel.classList.contains('note-preset')) return;
@@ -2470,10 +2720,7 @@ window.addEventListener('pagehide', prepareForPrint);
     const row = state.rows[idx];
     if (!row || !val) return;
     const cur = String(row.notes || '').trim();
-    if (cur.toLowerCase().includes(val.toLowerCase())){
-      toast('Steht schon in der Bemerkung.');
-      return;
-    }
+    if (cur.toLowerCase().includes(val.toLowerCase())){ toast('Steht schon in der Bemerkung.'); return; }
     row.notes = cur ? `${cur.replace(/[;,.\s]+$/, '')}; ${val}` : val;
     if (!row.date) row.date = todayISO();
     if (!row.time) row.time = nowHM();
@@ -2483,27 +2730,29 @@ window.addEventListener('pagehide', prepareForPrint);
 
   document.getElementById('fieldWarnClose').addEventListener('click', hideBanner);
   document.getElementById('fieldWarnGo').addEventListener('click', () => {
-    const idx = bannerRow;
+    const idx = bannerRow, field = bannerFocus;
     hideBanner();
-    if (idx === null) return;
-    const tr = rowEl(idx);
-    if (!tr) return;
-    const target = Array.from(tr.querySelectorAll('[data-field="resident"]')).find(el => el.offsetParent !== null);
+    if (idx === null || !field) return;
+    const tr = rowEl(idx); if (!tr) return;
+    const target = Array.from(tr.querySelectorAll(`[data-field="${field}"]`)).find(el => el.offsetParent !== null);
     if (!target) return;
     target.scrollIntoView({ behavior:'smooth', block:'center' });
     setTimeout(() => target.focus({ preventScroll:true }), 350);
   });
 
-  // Nach jedem Neuaufbau der Tabelle (Import, Zeile leeren, neue Zeile) Markierungen setzen
-  function markAll(){
-    state.rows.forEach((row, idx) => setMark(idx, rowNeedsResident(row)));
-  }
+  // "Nächste freie Zeile"-Pfeil = zum nächsten Bewohner → volle Prüfung der aktuellen Zeile
+  const fab = document.getElementById('fabNextRow');
+  if (fab) fab.addEventListener('click', () => { if (lastRow !== null) check(lastRow, 'left', null, true); }, true);
+
+  // Nach Neuaufbau der Tabelle (Laden, Import, Zeile leeren) alle offenen Lücken markieren
+  function markAll(){ state.rows.forEach((_, idx) => refreshRow(idx, false)); }
   const origRender = window.renderRows;
   if (typeof origRender === 'function'){
     window.renderRows = function(){
       origRender.apply(this, arguments);
       Object.keys(warned).forEach(k => delete warned[k]);
       markAll();
+      if (window.flushTimersRefresh) window.flushTimersRefresh();
     };
     renderRows = window.renderRows;
   }
