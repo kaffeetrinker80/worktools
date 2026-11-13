@@ -1356,11 +1356,58 @@ th .sub{
   }
 }
 
+/* ===== v2.4.9 · Warnung bei fehlender Lage / Bewohner + Auffälligkeiten-Dropdown ===== */
+#tableBody tr.row-missing-resident input[data-field="resident"]{
+  border-color:#dc2626 !important;
+  background:#fef2f2 !important;
+  box-shadow:0 0 0 2px rgba(220,38,38,.25) !important;
+}
+#tableBody tr.row-missing-resident .resident-stack > span{ color:#dc2626 !important; font-weight:700; }
+#tableBody tr.row-missing-resident .resident-stack > span::after{ content:" – fehlt!"; }
+#tableBody tr.row-missing-resident .mobile-row-card{ border-color:#dc2626 !important; }
+.field-warn{
+  position:fixed; left:50%; bottom:18px; transform:translate(-50%, 20px);
+  display:flex; align-items:center; gap:10px;
+  width:max-content; max-width:94vw;
+  background:#7f1d1d; color:#fff;
+  padding:10px 10px 10px 14px; border-radius:14px;
+  box-shadow:0 10px 24px rgba(0,0,0,.3);
+  font-size:.9rem; z-index:10000;
+  opacity:0; pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
+}
+.field-warn.show{ opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
+.field-warn-text{ flex:1 1 auto; line-height:1.3; }
+.field-warn-go{
+  flex:0 0 auto; border:0; border-radius:10px; padding:8px 12px;
+  background:#fff; color:#7f1d1d; font-weight:700; font-size:.88rem; cursor:pointer;
+}
+.field-warn-close{
+  flex:0 0 auto; border:0; background:transparent; color:#fff;
+  font-size:1.3rem; line-height:1; padding:4px 6px; cursor:pointer;
+}
+select.note-preset{
+  width:100%; margin:0 0 6px 0; font-size:.85rem; color:#374151;
+}
+@media screen and (max-width: 800px){
+  select.note-preset{ font-size:16px; min-height:40px; }
+}
+@media print{
+  select.note-preset, .field-warn{ display:none !important; }
+  #tableBody tr.row-missing-resident input[data-field="resident"]{ border-color:inherit !important; background:transparent !important; box-shadow:none !important; }
+}
+
 </style>
 </head>
 <body>
   <div class="app">
     <div id="toast" class="toast" aria-live="polite"></div>
+    <div id="fieldWarn" class="field-warn" role="alert">
+      <span class="field-warn-ico" aria-hidden="true">⚠️</span>
+      <span id="fieldWarnText" class="field-warn-text"></span>
+      <button type="button" id="fieldWarnGo" class="field-warn-go">Jetzt eintragen</button>
+      <button type="button" id="fieldWarnClose" class="field-warn-close" aria-label="Hinweis schließen">×</button>
+    </div>
 
     <div class="header">
       <div class="header-top">
@@ -1451,9 +1498,24 @@ th .sub{
   <button id="fabNextRow" class="fab-next-row" title="Zur nächsten freien Zeile">⬇︎</button>
 
   <script>
-    const APP_VERSION = '2.4.8';
+    const APP_VERSION = '2.4.9';
     const STORAGE_KEY = 'spuelprotokoll_arbeitsnachweis_v2_1_9';
     const DEFAULT_ROWS = 14;
+    // v2.4.9: Vorlagen für Auffälligkeiten (Dropdown über der Bemerkung). Hier anpassen.
+    const NOTE_PRESETS = [
+      'Kein Zutritt',
+      'Bewohner nicht angetroffen',
+      'Entnahmestelle nicht vorhanden',
+      'WW-Zieltemperatur nicht erreicht',
+      'Wasser trüb / verfärbt',
+      'Geruch auffällig',
+      'Durchfluss gering',
+      'Strahlregler verkalkt / verschmutzt',
+      'Armatur defekt / tropft'
+    ];
+    function notePresetSelectHtml(idx){
+      return `<select class="note-preset" data-note-preset="${idx}" aria-label="Auffälligkeit hinzufügen"><option value="">＋ Auffälligkeit wählen …</option>${NOTE_PRESETS.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('')}</select>`;
+    }
     const FLOOR_OPTIONS = ['', 'UG', 'EG', '1. OG', '2. OG', '3. OG', '4. OG', '5. OG', '6. OG', '7. OG'];
 
     function todayISO(){
@@ -1598,7 +1660,7 @@ th .sub{
                   </label>
                 </div>
 
-                <label class="mobile-stack">
+                <label class="mobile-stack resident-stack">
                   <span>Lage / Bewohner</span>
                   <input type="text" placeholder="z. B. EG · Zimmer 12" data-field="resident" data-index="${idx}" value="${escapeAttr(row.resident)}">
                 </label>
@@ -1665,6 +1727,7 @@ th .sub{
 
                 <label class="mobile-stack">
                   <span>Bemerkung</span>
+                  ${notePresetSelectHtml(idx)}
                   <textarea data-field="notes" data-index="${idx}" placeholder="Nur Auffälligkeiten oder Besonderheiten">${escapeHtml(row.notes)}</textarea>
                 </label>
               </div>
@@ -1696,7 +1759,7 @@ th .sub{
           <td class="temp-col kw-col" data-label="Gäste-Bad / WC KW (min. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="kwGuestWc" data-index="${idx}" value="${escapeAttr(row.kwGuestWc)}"></td>
           <td class="temp-col ww-col" data-label="Gäste-Bad / WC WW (max. °C)"><input type="text" inputmode="decimal" class="num-input" data-field="wwGuestWc" data-index="${idx}" value="${escapeAttr(row.wwGuestWc)}"></td>
           <td class="temp-col aerator-col" data-label="Strahlregler getauscht (Anz.)"><input type="text" inputmode="numeric" class="num-input" data-field="aeratorCount" data-index="${idx}" value="${escapeAttr(row.aeratorCount)}"></td>
-          <td class="notes-col" data-label="Bemerkung"><textarea data-field="notes" data-index="${idx}">${escapeHtml(row.notes)}</textarea></td>
+          <td class="notes-col" data-label="Bemerkung">${notePresetSelectHtml(idx)}<textarea data-field="notes" data-index="${idx}">${escapeHtml(row.notes)}</textarea></td>
         `;
         tbody.appendChild(tr);
       });
@@ -2291,6 +2354,161 @@ window.addEventListener('pagehide', prepareForPrint);
   });
 })();
 
+</script>
+<script>
+/* ===== v2.4.9 · Warnung bei vergessener Lage / Bewohner =====
+   Eine Zeile gilt als "begonnen", sobald mindestens eine Temperatur drinsteht
+   oder Uhrzeit UND Stockwerk gesetzt sind. Fehlt dann Lage / Bewohner, wird gewarnt,
+   wenn du ein anderes Feld der Zeile antippst oder die Zeile verlässt. */
+(function(){
+  const TEMP_FIELDS = ['kwKitchen','wwKitchen','kwBathWb','wwBathWb','kwTubShower','wwTubShower','kwGuestWc','wwGuestWc'];
+  // Felder, bei deren Antippen noch NICHT gewarnt wird (natürliche Reihenfolge: Zeit → Stockwerk → Lage)
+  const NO_TRIGGER_FIELDS = ['resident','date','time','floor'];
+  const warned = {};   // idx -> { inside:bool, left:bool }
+  const tbody = document.getElementById('tableBody');
+  const banner = document.getElementById('fieldWarn');
+  const bannerText = document.getElementById('fieldWarnText');
+  let bannerRow = null;
+  let bannerTimer = null;
+
+  function hasVal(v){ return String(v ?? '').trim() !== ''; }
+
+  function rowNeedsResident(row){
+    if (!row || hasVal(row.resident)) return false;
+    const anyTemp = TEMP_FIELDS.some(f => hasVal(row[f]));
+    return anyTemp || (hasVal(row.time) && hasVal(row.floor));
+  }
+
+  function rowEl(idx){ return tbody.querySelectorAll(':scope > tr')[idx] || null; }
+
+  function setMark(idx, on){
+    const tr = rowEl(idx);
+    if (tr) tr.classList.toggle('row-missing-resident', !!on);
+  }
+
+  function hideBanner(){
+    banner.classList.remove('show');
+    bannerRow = null;
+    clearTimeout(bannerTimer);
+  }
+
+  function showBanner(idx){
+    bannerRow = idx;
+    bannerText.textContent = `Zeile ${idx + 1}: Lage / Bewohner fehlt.`;
+    banner.classList.add('show');
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(hideBanner, 7000);
+    try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch(e){}
+  }
+
+  // phase: 'inside' (anderes Feld in der Zeile) oder 'left' (Zeile verlassen)
+  function check(idx, phase){
+    const row = state.rows[idx];
+    if (!rowNeedsResident(row)){
+      setMark(idx, false);
+      delete warned[idx];
+      return;
+    }
+    setMark(idx, true);
+    const w = warned[idx] || (warned[idx] = { inside:false, left:false });
+    if (w[phase]) return;              // pro Zeile und Phase nur einmal vibrieren
+    w[phase] = true;
+    if (phase === 'inside') w.left = false;
+    showBanner(idx);
+  }
+
+  function idxOf(el){
+    if (!el || !el.closest) return null;
+    const tr = el.closest('#tableBody > tr');
+    if (!tr) return null;
+    const i = Array.prototype.indexOf.call(tbody.querySelectorAll(':scope > tr'), tr);
+    return i >= 0 ? i : null;
+  }
+
+  let lastRow = null;
+
+  tbody.addEventListener('focusin', (e) => {
+    const idx = idxOf(e.target);
+    if (idx === null) return;
+    if (lastRow !== null && lastRow !== idx) check(lastRow, 'left');
+    lastRow = idx;
+    if (e.target.dataset.clear !== undefined) return;
+    const field = e.target.dataset.field || (e.target.dataset.notePreset !== undefined ? 'notePreset' : '');
+    if (!field || NO_TRIGGER_FIELDS.includes(field)) return;
+    check(idx, 'inside');
+  });
+
+  // Zeile verlassen, ohne ein anderes Feld anzutippen (z. B. Tastatur zu, weggescrollt)
+  tbody.addEventListener('focusout', (e) => {
+    const idx = idxOf(e.target);
+    if (idx === null) return;
+    setTimeout(() => {
+      const nowIdx = idxOf(document.activeElement);
+      if (nowIdx === idx) return;
+      if (nowIdx === null) { check(idx, 'left'); lastRow = null; }
+    }, 150);
+  });
+
+  // Sobald Lage / Bewohner eingetragen wird: Markierung sofort weg
+  tbody.addEventListener('input', (e) => {
+    if (e.target.dataset.field !== 'resident') return;
+    const idx = Number(e.target.dataset.index);
+    if (hasVal(e.target.value)){
+      setMark(idx, false);
+      delete warned[idx];
+      if (bannerRow === idx) hideBanner();
+    }
+  });
+
+  // Auffälligkeiten-Dropdown: hängt den Text an die Bemerkung an (Freitext bleibt möglich)
+  tbody.addEventListener('change', (e) => {
+    const sel = e.target;
+    if (!sel.classList || !sel.classList.contains('note-preset')) return;
+    const idx = Number(sel.dataset.notePreset);
+    const val = sel.value;
+    sel.value = '';
+    const row = state.rows[idx];
+    if (!row || !val) return;
+    const cur = String(row.notes || '').trim();
+    if (cur.toLowerCase().includes(val.toLowerCase())){
+      toast('Steht schon in der Bemerkung.');
+      return;
+    }
+    row.notes = cur ? `${cur.replace(/[;,.\s]+$/, '')}; ${val}` : val;
+    if (!row.date) row.date = todayISO();
+    if (!row.time) row.time = nowHM();
+    saveState();
+    syncPrintMirrors();
+  });
+
+  document.getElementById('fieldWarnClose').addEventListener('click', hideBanner);
+  document.getElementById('fieldWarnGo').addEventListener('click', () => {
+    const idx = bannerRow;
+    hideBanner();
+    if (idx === null) return;
+    const tr = rowEl(idx);
+    if (!tr) return;
+    const target = Array.from(tr.querySelectorAll('[data-field="resident"]')).find(el => el.offsetParent !== null);
+    if (!target) return;
+    target.scrollIntoView({ behavior:'smooth', block:'center' });
+    setTimeout(() => target.focus({ preventScroll:true }), 350);
+  });
+
+  // Nach jedem Neuaufbau der Tabelle (Import, Zeile leeren, neue Zeile) Markierungen setzen
+  function markAll(){
+    state.rows.forEach((row, idx) => setMark(idx, rowNeedsResident(row)));
+  }
+  const origRender = window.renderRows;
+  if (typeof origRender === 'function'){
+    window.renderRows = function(){
+      origRender.apply(this, arguments);
+      Object.keys(warned).forEach(k => delete warned[k]);
+      markAll();
+    };
+    renderRows = window.renderRows;
+  }
+  markAll();
+})();
 </script>
 </body>
 </html>
